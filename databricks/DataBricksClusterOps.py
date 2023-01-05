@@ -239,7 +239,7 @@ if __name__ == "__main__":
 
     # To generate a new token:
     # choose your user name - User Settings - Access tokens - generate new token
-    DATABRICKS_TOKEN = "dapi7d6171065b2e919d0ab1fe31bbe26adc-3"
+    DATABRICKS_TOKEN = "your token"
     DATABRICKS_HOST = "adb-4286500221395801.1.azuredatabricks.net" # without 'https://'
     client = DataBricksClusterOps(host='https://' + DATABRICKS_HOST, token=DATABRICKS_TOKEN)
     # client.print_clusters()

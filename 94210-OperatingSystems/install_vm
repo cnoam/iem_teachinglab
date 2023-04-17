@@ -1,0 +1,11 @@
+#!/bin/bash -eux
+
+# run this script on a fresh ubuntu (virtual) machine 
+# to prepare it for the xv6 practice
+sudo apt update
+sudo apt install -y build-essential qemu qemu-kvm
+git clone https://github.com/noam1023/xv6-public.git
+cd xv6-public/
+# To check that the installation works:
+# make qemu-nox 
+# # kill the process by CTRL A, x

@@ -1,18 +1,27 @@
-# Configuring Databicks clusters for Moodle users
+# Configuring Databricks clusters for Moodle users
 
 Students use Moodle to assign themselves into groups. 
 
 This data is used to automatically generate the same structure in Databricks workspace.
 
-First, save the groups data as CSV to your PC.
+First, save the groups data as CSV to your PC. Remove the "..." line before the headers. Replace non English group names.
 
-Then, create a token (instruction are in the python file)
-Edit the python file to use your CSV.
+Then, create a token (instructions are in the python file)
 
-Run `python3 DataBricksClusterOps.py`
+Run `python3 DataBricksClusterOps.py path/to/csv-file`
 
 Check the workspace: you should see all the users, all the groups, and all the clusters.
+Each cluster has permission ('restart') for the group created.
 
-Last step: (currently manually): Attach each cluster with the group(s) you want.
+## [OBSOLETE] Last step:  Attach each cluster with the group(s) you want
 
+### Manually (as a backup procedure only)
+Open the 'compute' -> "all-purpose-compute" tab. click the 3dots on the right -> "edit permissions". 
+click the "select user" and select the group for this cluster (e.g. "cluster_20" --> "g20"). in the Permission column choose 'can restart' and finally the "+ Add" button.
+
+**THEORETICALLY** this should be done once only, since the clusters and groups can be unmodified between semesters.
+
+
+# The proper way - terraform
+https://learn.microsoft.com/en-us/azure/databricks/security/auth-authz/access-control/cluster-acl#terraform-integration
 

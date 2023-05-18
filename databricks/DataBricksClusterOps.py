@@ -1,3 +1,4 @@
+import json
 import requests
 from databricks_cli.sdk.api_client import ApiClient
 from databricks_cli.clusters.api import ClusterApi
@@ -33,7 +34,10 @@ class DataBricksClusterOps:
         """
         clusters_api = ClusterApi(self.api_client)
         clusters_list = clusters_api.list_clusters()
-        return clusters_list['clusters']
+        try:
+            return clusters_list['clusters']
+        except KeyError:
+            return []
 
     def print_clusters(self):
         """ will print something like
@@ -65,7 +69,7 @@ class DataBricksClusterOps:
         """
         return ClusterApi(self.api_client).create_cluster(json_spec)
 
-    def create_cluster(self, name: str):
+    def create_cluster(self, name: str, policy_id:str):
         """
         Create a cluster in this host based on one specific template.
         This is a helper method.
@@ -105,13 +109,22 @@ class DataBricksClusterOps:
               "enable_elastic_disk": true,
               "cluster_source": "UI",
               "init_scripts": [],
-              "policy_id": "6063781CC90049CA",
+              "policy_id": "$policy_id",
               "data_security_mode": "NONE",
               "runtime_engine": "STANDARD"
         }""")
-        tmp = template.substitute(cluster_name=name)
+        tmp = template.substitute(cluster_name=name, policy_id=policy_id)
         json_spec = json.loads(tmp)
         return self.create_cluster_from_spec(json_spec)
+
+    def cluster_from_name(self, name:str):
+        clusters = self.get_clusters()
+        r = list(filter(lambda c: c['cluster_name'] == name, clusters))
+        if len(r) == 0:
+            raise KeyError(f'{name} not found in the list of clusters')
+        if len(r) > 1:
+            raise KeyError(f'There are multiple clusters with name:{name}.')
+        return r[0]
 
     def delete_cluster(self, name):
         """Terminate a cluster, but do not delete it.
@@ -120,18 +133,54 @@ class DataBricksClusterOps:
         :raise KeyError if name not found or not unique
         """
 
-        clusters = self.get_clusters()
-        r = list(filter(lambda c: c['cluster_name'] == name, clusters))
-        if len(r) == 0:
-            raise KeyError(f'{name} not found in the list of clusters')
-        if len(r) > 1:
-            raise KeyError(f'There are multiple clusters with name:{name}. Refuse to delete')
-        r = r[0]
+        r = self.cluster_from_name(name)
         ClusterApi(self.api_client).delete_cluster(cluster_id=r['cluster_id'])
 
-    ##
-    ##
-    ##
+    def permanent_delete_cluster(self, cluster_id:str, verbose:bool=False):
+        if verbose:
+            print(f"permanent delete cluster {cluster_id}")
+        ClusterApi(self.api_client).permanent_delete(cluster_id=cluster_id)
+
+    def permanent_delete_all_clusters(self,verbose:bool=False, unsafe:bool=False):
+        """Delete forever all the clusters in this workspace"""
+        if not unsafe:
+            ok = input("About to permanently delete ALL CLUSTERS. If this is ok, type 'yes': ")
+            if ok != 'yes':
+                print("Cancelled.")
+                return
+        clusters = self.get_clusters()
+        for cluster in clusters:
+            self.permanent_delete_cluster(cluster['cluster_id'],verbose)
+
+    def edit_cluster_permissions(self, cluster_id, config:dict) -> None:
+        """
+        Edit access permissions for a cluster.
+        see    https://redocly.github.io/redoc/?url=https://learn.microsoft.com/azure/databricks/_extras/api-refs/permissions-2.0-azure.yaml
+
+        :param: config - dict: configuration to apply to the cluster
+                Exactly 1 of virtual_cluster_size, num_workers or autoscale must be specified
+        """
+        headers = {"Authorization": f"Bearer {self.token}"}
+        url = f'{self.host}/api/2.0/permissions/clusters/{cluster_id}'
+        response = requests.api.patch(url=url, headers=headers, data=json.dumps(config))
+        response.raise_for_status()
+
+    def add_cluster_permission(self,cluster_id:str, group_name:str )-> None:
+        config = { "access_control_list": [ {"group_name":group_name, "permission_level": "CAN_RESTART"}]}
+        self.edit_cluster_permissions(cluster_id,config)
+
+    def attach_groups_to_clusters(self, groups:list, verbose:bool=False )-> None:
+        """
+        For each group (in the format gNUMBER), attach it to a cluster with the name cluster_NUMBER
+        :param: groups . list of group names.
+        """
+        for gname in groups:
+            gid = int(gname[1:])
+            cluster_name = f"cluster_{gid}"
+            if verbose:
+                print( f"attaching group {gid} to {cluster_name}")
+            self.add_cluster_permission(self.cluster_from_name(cluster_name)['cluster_id'],gname)
+
     def create_group(self,group_name: str):
         """
         :param group_name:
@@ -178,14 +227,14 @@ class DataBricksClusterOps:
         return num_ok
 
 
-def create_users_from_moodle(dbapi: DataBricksClusterOps, filename:str) -> int :
+def create_users_from_moodle(dbapi: DataBricksClusterOps, filename:str, verbose:bool) -> int :
     """
     Read Moodle user groups, and create Databricks groups with these users
     The groups and users MUST NOT exist before in Databricks workspace.
 
     :param dbapi: initialized connection to Databricks API
     :param filename: CSV file in Moodle format, group assignment
-    :return: number of users created in the workspace
+    :return: number of groups created in the workspace
     :raise HTTPstatus if any of the requests failed
     """
     from MoodleFileParser import MoodleFileParser
@@ -215,45 +264,74 @@ def create_users_from_moodle(dbapi: DataBricksClusterOps, filename:str) -> int :
         for u in users:
             response = dbapi.add_member_to_group(u, group_name, is_user=True)
             response.raise_for_status()
-    return nCreated
+
+        if verbose:
+            print(f"{group}",end=' ')
+    if verbose:
+        print('\n')
+    return len(groups)
 
 
 def test_user_creation_from_moodle(client):
     create_users_from_moodle(client, '/home/cnoam/Desktop/94290w2022.csv')
 
 
-def create_clusters(how_many:int):
+def create_clusters(how_many:int, verbose:bool = False):
     for i in range(how_many):
-        resp1 = client.create_cluster( f"cluster_{i}") # create the cluster and turn it ON
+        resp1 = client.create_cluster( f"cluster_{i}", policy_id=policy_id) # create the cluster and turn it ON
         if resp1:
             client.delete_cluster(f"cluster_{i}")  # turn the cluster OFF. We don't want to run it now.
         else:
             print(f"Failed created cluster {i}")
+        if verbose:
+            print(f"cluster {i}",end=' ')
+    if verbose:
+        print('\n')
+
 
 if __name__ == "__main__":
-    # host = os.getenv('DATABRICKS_HOST')
-    # token = os.getenv('DATABRICKS_TOKEN')
-    # if host is None or token is None:
-    #     raise RuntimeError('must set the env vars!')
-    # These will be in an env var
+    from dotenv import load_dotenv
+    load_dotenv()
+
+    import sys,os
+    x = sys.argv
+    if len(sys.argv) != 2:
+        print("Usage: prog groups_in_moodle.csv")
+        exit(1)
+
+    host = os.getenv('DATABRICKS_HOST')
+    token = os.getenv('DATABRICKS_TOKEN')
+    policy_id=os.getenv('POLICY_ID')
+    if host is None or token is None:
+        raise RuntimeError('must set the env vars!')
+
+    fname = sys.argv[1]
 
     # To generate a new token:
-    # choose your user name - User Settings - Access tokens - generate new token
-    DATABRICKS_TOKEN = "your token"
-    DATABRICKS_HOST = "adb-4286500221395801.1.azuredatabricks.net" # without 'https://'
-    client = DataBricksClusterOps(host='https://' + DATABRICKS_HOST, token=DATABRICKS_TOKEN)
-    # client.print_clusters()
-    create_clusters(32)
+    # From Azure portal, choose the course's Databricks workspace (or create it if this is the first time).
+    # Launch the Workspace
+    # you will arrive to a url similar to https://adb-7838547822330032.12.azuredatabricks.net/?o=7838547822330032#
+    #
+    # choose your username - User Settings - Access tokens - generate new token
+    #
+    # Using/Creating a policy:
+    #  https://learn.microsoft.com/en-us/azure/databricks/administration-guide/clusters/policies
+    # (Cluster policies require the Premium plan)
+    # Using the UI: open the DBR portal - compute (in the left pane), Policies tab. Choose "Shared Compute". Copy the policy ID
 
-    #client.delete_cluster("cluster_2")
-    #resp = client.create_group("unittesting")
-    #print("create group:", resp.status_code)
+    client = DataBricksClusterOps(host='https://' + host, token=token)
+    #client.print_clusters()
 
-    # n = client.create_users(['test_user1', 'test_user2', 'test_user3'])
-    # assert n == 3
+    # If you need to purge all clusters in this workspace: (need to type 'yes')
+    # client.permanent_delete_all_clusters(verbose=True)
 
-    #test_user_creation_from_moodle(client)
+    nGroups = create_users_from_moodle(client, fname, verbose=True)
+    create_clusters(nGroups,verbose=True)
+
+    allgroups = [ f"g{n}" for n in range(nGroups+1)]
+    client.attach_groups_to_clusters(allgroups, verbose=True)
+
 
     print("Once the groups and users are created, you can go to the DataBricks portal to add permission to use the workspace.\n "
-          "choose your name - Admin Console. Choose 'all_student_groups'. Choose 'Entitelements'. Select 'Workspace access' checkbox")
+          "choose your name - Admin Console. Choose 'all_student_groups'. Choose 'Entitlements'. Select 'Workspace access' checkbox")
 

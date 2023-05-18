@@ -1,1 +1,2 @@
 databricks-cli
+python-dotenv

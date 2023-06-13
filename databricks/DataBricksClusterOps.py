@@ -87,8 +87,8 @@ class DataBricksClusterOps:
         # good luck using f"..." with json docs.
         template = Template("""{
               "autoscale": {
-                  "min_workers": 2,
-                  "max_workers": 6
+                  "min_workers": 1,
+                  "max_workers": 1
               },
               "cluster_name": "$cluster_name",
               "spark_version": "11.3.x-scala2.12",
@@ -105,7 +105,7 @@ class DataBricksClusterOps:
               "ssh_public_keys": [],
               "custom_tags": {},
               "spark_env_vars": {},
-              "autotermination_minutes": 15,
+              "autotermination_minutes": 10,
               "enable_elastic_disk": true,
               "cluster_source": "UI",
               "init_scripts": [],
@@ -328,7 +328,7 @@ if __name__ == "__main__":
     nGroups = create_users_from_moodle(client, fname, verbose=True)
     create_clusters(nGroups,verbose=True)
 
-    allgroups = [ f"g{n}" for n in range(nGroups+1)]
+    allgroups = [ f"g{n+1}" for n in range(nGroups)]
     client.attach_groups_to_clusters(allgroups, verbose=True)
 
 

@@ -26,18 +26,23 @@ class DataBricksClusterOps:
         self.api_client = ApiClient(host=host,token=token)
         self.token = token
         self.host = host
+        self.cached_clusters = None
 
 
     def get_clusters(self):
         """ get the list of currently defined clusters (both online and offline)
         :return list( dict( cluster parameters))
         """
+        if self.cached_clusters is not None:
+            return self.cached_clusters
+
         clusters_api = ClusterApi(self.api_client)
         clusters_list = clusters_api.list_clusters()
         try:
-            return clusters_list['clusters']
+            self.cached_clusters = clusters_list['clusters']
         except KeyError:
             return []
+        return self.cached_clusters
 
     def print_clusters(self):
         """ will print something like

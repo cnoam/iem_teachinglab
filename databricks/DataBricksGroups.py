@@ -19,7 +19,10 @@ class DataBricksGroups:
         self.groups_api = GroupsApi(self.api_client)
 
     def get_group_members(self, groupname:str) -> list:
-        return self.groups_api.list_members(groupname)['members']
+        try:
+            return self.groups_api.list_members(groupname)['members']
+        except KeyError:
+            return []
 
 
 if __name__ == "__main__":
@@ -29,4 +32,13 @@ if __name__ == "__main__":
 
     host = 'https://' + os.getenv('DATABRICKS_HOST')
     token = os.getenv('DATABRICKS_TOKEN')
-    print(DataBricksGroups(host=host, token=token).get_group_members('g10'))
+    dbr = DataBricksGroups(host=host, token=token)
+    for i in range(52):
+        name = 'g'+str(i+1)
+        members = dbr.get_group_members(name)
+        try:
+            first = members[0]
+            second = members[1]
+            print(f"{i}, {first['user_name']}, {second['user_name']}")
+        except IndexError:
+            print(f"{i}: no pair.")

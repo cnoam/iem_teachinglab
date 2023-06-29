@@ -65,8 +65,8 @@ if __name__ == "__main__":
     load_dotenv()
     host = os.getenv('DATABRICKS_HOST')
     token = os.getenv('DATABRICKS_TOKEN')
-    termination_watermark_minutes = os.getenv('DATABRICKS_MAX_UPTIME', 180)
-    warning_watermark_minutes = os.getenv('DATABRICKS_WARN_UPTIME', 120)
+    termination_watermark_minutes = os.getenv('DATABRICKS_MAX_UPTIME', 3*60+30)
+    warning_watermark_minutes = os.getenv('DATABRICKS_WARN_UPTIME', 3*60)
     client = DataBricksClusterOps(host='https://' + host, token=token)
 
     check_running_clusters(client, uptime_db)
@@ -82,17 +82,20 @@ if __name__ == "__main__":
     # expected to have very few messages.
     for cid,v in uptime_db.items():
         total_time = v.uptime + v.cumulative
+        hours = total_time.seconds // 3600
+        minutes = (total_time.seconds - hours * 3600) // 60
         cluster_name = cluster_id_to_cluster_name(clusters, cid)
         if total_time > terminate_cluster_threshold:
-            logger.info(f"cluster {cid} will be terminated NOW. It is up for {total_time}")
+            logger.info(f"cluster {cluster_name} will be terminated NOW. It is up for {total_time}")
+
             send_emails("Your Cluster will be stopped now.",
-                        body="Your cluster is used for too long during the last day",
+                        body=f"Your cluster is used for too long during the last day.({hours}h{minutes}m , and the quota is {termination_watermark_minutes}minutes) and will be terminated soon. ",
                         recipients = get_emails_address(cluster_name))
             client.delete_cluster(cluster_name) # this will turn the cluster OFF, but not erase it.
 
         elif total_time > send_alert_threshold:
-            logger.info(f"cluster {cid} will be terminated soon. It is up for {total_time}")
-            send_emails("Your Cluster is running too long!", body= f"Your cluster is used for {total_time} during the last day.\n It will be turned OFF when reaching {terminate_cluster_threshold}",
+            logger.info(f"You cluster {cluster_name} time quota is almost used!  It is up for {total_time}")
+            send_emails(f"Your Cluster  '{cluster_name}' time quota is almost used!", body= f"Your cluster is used for {hours}h{minutes}m during the last day.\n It will be turned OFF when reaching {termination_watermark_minutes}minutes",
                         recipients=get_emails_address(cluster_name))
         else:
             logger.debug(f"cluster {cid} checked. It is up for {total_time}")

@@ -1,2 +1,4 @@
-databricks-cli
+# MUST NOT install databricks
+databricks-cli==0.17.7
 python-dotenv
+pyrecord==1.0.1

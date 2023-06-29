@@ -5,8 +5,11 @@ cluster30 --> g_30 --> cnoam@here.com
 """
 
 import os
-from databricks.DataBricksGroups import DataBricksGroups
-
+# HACK
+if __name__ == "__main__":
+    from databricks.DataBricksGroups import DataBricksGroups
+else:
+    from DataBricksGroups import DataBricksGroups
 from dotenv import load_dotenv
 load_dotenv()
 host = 'https://' + os.getenv('DATABRICKS_HOST')
@@ -23,6 +26,7 @@ def get_emails_address(cluster_name: str) -> list:
         addr.append(m['user_name'])
     return addr
 
+
 def send_emails(subject:str, body: str, recipients: list[str]):
     import smtplib
     from email.mime.text import MIMEText
@@ -30,8 +34,10 @@ def send_emails(subject:str, body: str, recipients: list[str]):
     #host = "tx.technion.ac.il"
     #username = "dds.lab@technion.ac.il"
     sender = "dds.lab.technion@gmail.com"
-    password = "nvexibmqakecgigl"
-
+    # When using gmail, generate an application password.
+    # see https://support.google.com/accounts/answer/185833?hl=en
+    password = os.getenv("SMTP_PASSWORD")
+    assert(password and len(password) > 6)
     msg = MIMEText(body)
     msg['Subject'] = subject
     msg['From'] = sender

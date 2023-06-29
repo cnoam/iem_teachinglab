@@ -25,3 +25,33 @@ click the "select user" and select the group for this cluster (e.g. "cluster_20"
 # The proper way - terraform
 https://learn.microsoft.com/en-us/azure/databricks/security/auth-authz/access-control/cluster-acl#terraform-integration
 
+# Running polling periodically 
+Use crontab:
+
+As user azureuser (the default user in azure VM): `crontab -e`
+
+add these lines:
+```
+*/10 * * * * /home/azureuser/periodic_poll.sh
+
+# run every midnight
+0 0 * * * unlink /home/azureuser/iem_teachinglab/databricks/cluster_uptimes
+```
+In /home/azureuser, create the file:
+```
+~$ cat periodic_poll.sh 
+#!/bin/bash -eu
+cd /home/azureuser/iem_teachinglab/databricks
+source venv/bin/activate
+python poll_clusters.py
+deactivate
+```
+and `$ chmod +x ~/periodic_poll.sh`
+
+To debug job stdout  `sudo apt-get install postfix`
+
+In the installation, choose "local"
+
+and then periodically:  `cat /var/mail/azureuser`
+
+The output of cron itself is at `/var/log/syslog`

@@ -1,4 +1,13 @@
 """
+
+probably requires py version >= 3.10.2
+https://www.itsupportwale.com/blog/how-to-upgrade-to-python-3-10-on-ubuntu-18-04-and-20-04-lts/
+
+sudo apt install python3.10 python3.10-dev python3.10-venv
+python3.10 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
 This script is called periodically (e.g. by cron).
 It checks if any of the running Databricks clusters exceeded total uptime.
 

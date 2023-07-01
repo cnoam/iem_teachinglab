@@ -72,8 +72,6 @@ if __name__ == "__main__":
     check_running_clusters(client, uptime_db)
 
     clusters = client.get_clusters()
-    with open('cluster_uptimes', 'wb') as datafile:
-        pickle.dump(uptime_db, datafile)
 
     # now that we have the updated times, run a check and act accordingly
     send_alert_threshold = datetime.timedelta(minutes=warning_watermark_minutes)
@@ -89,14 +87,23 @@ if __name__ == "__main__":
             logger.info(f"cluster {cluster_name} will be terminated NOW. It is up for {total_time}")
 
             send_emails("Your Cluster will be stopped now.",
-                        body=f"Your cluster is used for too long during the last day.({hours}h{minutes}m , and the quota is {termination_watermark_minutes}minutes) and will be terminated soon. ",
+                        body=f"Your cluster is used for too long during the last day.({hours}h{minutes}m , quota is {termination_watermark_minutes}minutes) and will be terminated soon. ",
                         recipients = get_emails_address(cluster_name))
             client.delete_cluster(cluster_name) # this will turn the cluster OFF, but not erase it.
 
-        elif total_time > send_alert_threshold:
+        elif (total_time > send_alert_threshold) and not v.warning_sent:
+            v.warning_sent = True
             logger.info(f"You cluster {cluster_name} time quota is almost used!  It is up for {total_time}")
-            send_emails(f"Your Cluster  '{cluster_name}' time quota is almost used!", body= f"Your cluster is used for {hours}h{minutes}m during the last day.\n It will be turned OFF when reaching {termination_watermark_minutes}minutes",
+            send_emails(f"Your Cluster  '{cluster_name}' time quota is almost used!",
+                        body=f"""Your cluster is used for {hours}h{minutes}m during the last day.\n\
+   It will be turned OFF when reaching {termination_watermark_minutes} minutes.\n\
+   This message is sent at most once a day\n\
+   The time quota is reset at midnight.\n\n""",
                         recipients=get_emails_address(cluster_name))
         else:
             logger.debug(f"cluster {cid} checked. It is up for {total_time}")
+
+    with open('cluster_uptimes', 'wb') as datafile:
+        pickle.dump(uptime_db, datafile)
+
     logger.info('Exiting successfully')

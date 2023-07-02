@@ -83,17 +83,18 @@ if __name__ == "__main__":
         hours = total_time.seconds // 3600
         minutes = (total_time.seconds - hours * 3600) // 60
         cluster_name = cluster_id_to_cluster_name(clusters, cid)
-        if total_time > terminate_cluster_threshold:
+        if (total_time > terminate_cluster_threshold) and not v.force_terminated:
+            v.force_terminated = True
             logger.info(f"cluster {cluster_name} will be terminated NOW. It is up for {total_time}")
 
-            send_emails("Your Cluster will be stopped now.",
-                        body=f"Your cluster is used for too long during the last day.({hours}h{minutes}m , quota is {termination_watermark_minutes}minutes) and will be terminated soon. ",
+            send_emails(f"Your Cluster ({cluster_name})will be stopped now.",
+                        body=f"Your cluster is used for too long during the last day.({hours}h{minutes}m , quota is {termination_watermark_minutes} minutes) and will be terminated soon. \n\n",
                         recipients = get_emails_address(cluster_name))
             client.delete_cluster(cluster_name) # this will turn the cluster OFF, but not erase it.
 
         elif (total_time > send_alert_threshold) and not v.warning_sent:
             v.warning_sent = True
-            logger.info(f"You cluster {cluster_name} time quota is almost used!  It is up for {total_time}")
+            logger.info(f"cluster {cluster_name} time quota is almost used!  It is up for {total_time}")
             send_emails(f"Your Cluster  '{cluster_name}' time quota is almost used!",
                         body=f"""Your cluster is used for {hours}h{minutes}m during the last day.\n\
    It will be turned OFF when reaching {termination_watermark_minutes} minutes.\n\
@@ -101,7 +102,7 @@ if __name__ == "__main__":
    The time quota is reset at midnight.\n\n""",
                         recipients=get_emails_address(cluster_name))
         else:
-            logger.debug(f"cluster {cid} checked. It is up for {total_time}")
+            logger.debug(f"cluster {cluster_name} checked. It is up for {total_time}")
 
     with open('cluster_uptimes', 'wb') as datafile:
         pickle.dump(uptime_db, datafile)

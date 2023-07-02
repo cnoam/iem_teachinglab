@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timedelta
 from pyrecord import Record
 
-ClusterData = Record.create_type("ClusterData", "start_time", "uptime", "cumulative", "warning_sent")
+ClusterData = Record.create_type("ClusterData", "start_time", "uptime", "cumulative", "warning_sent","force_terminated")
 
 def update_cumulative_uptime(cluster: dict, db):
     """
@@ -24,7 +24,7 @@ def update_cumulative_uptime(cluster: dict, db):
     id = cluster['cluster_id']
     if id not in db:
         # first time we see this cluster since it was started running (since it was offline)
-        db[id] = ClusterData(timedelta(hours= 0),timedelta(hours= 0),timedelta(hours= 0),warning_sent=False)
+        db[id] = ClusterData(timedelta(hours= 0),timedelta(hours= 0),timedelta(hours= 0),warning_sent=False, force_terminated=False)
     start_time = datetime.fromtimestamp(driver['start_timestamp'] / 1000)
     uptime = datetime.now() - start_time
     if db[id].start_time != start_time:

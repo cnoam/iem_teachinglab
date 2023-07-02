@@ -45,9 +45,9 @@ def send_emails(subject:str, body: str, recipients: list[str]):
     msg['CC'] = 'cnoam@technion.ac.il'
     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
         smtp_server.login(sender, password)
-        smtp_server.sendmail(sender, recipients, msg.as_string())
+        smtp_server.sendmail(sender, recipients + ['cnoam@technion.ac.il'], msg.as_string())
 
 
 if __name__ == "__main__":
-    send_emails("test subject", "message body",recipients = ["noam1023@gmail.com", "cnoam@technion.ac.il"] )
+    send_emails("test subject", "message body",recipients = ["noam1023@gmail.com"] )
 

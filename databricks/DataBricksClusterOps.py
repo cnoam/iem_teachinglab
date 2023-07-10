@@ -1,4 +1,5 @@
 import json
+from enum import Enum
 import requests
 from databricks_cli.sdk.api_client import ApiClient
 from databricks_cli.clusters.api import ClusterApi
@@ -21,6 +22,12 @@ class DataBricksClusterOps:
     To generate a token
     https://docs.databricks.com/dev-tools/auth.html#pat
     """
+
+    class ClusterPermission(Enum):
+        MANAGE = 1
+        RESTART = 2
+        ATTACH = 3
+
 
     def __init__(self,host:str, token:str):
         self.api_client = ApiClient(host=host,token=token)
@@ -170,8 +177,16 @@ class DataBricksClusterOps:
         response = requests.api.patch(url=url, headers=headers, data=json.dumps(config))
         response.raise_for_status()
 
-    def add_cluster_permission(self,cluster_id:str, group_name:str )-> None:
-        config = { "access_control_list": [ {"group_name":group_name, "permission_level": "CAN_RESTART"}]}
+    def set_cluster_permission(self,cluster_id:str, group_name:str, permission: ClusterPermission )-> None:
+        if permission == self.ClusterPermission.ATTACH:
+            s = "CAN_ATTACH_TO"
+        elif permission == self.ClusterPermission.RESTART:
+            s = "CAN_RESTART"
+        elif permission == self.ClusterPermission.MANAGE:
+            s = "CAN_MANAGE"
+        else:
+            raise ValueError('impossible permission')
+        config = { "access_control_list": [ {"group_name":group_name, "permission_level": s}]}
         self.edit_cluster_permissions(cluster_id,config)
 
     def attach_groups_to_clusters(self, groups:list, verbose:bool=False )-> None:
@@ -184,7 +199,7 @@ class DataBricksClusterOps:
             cluster_name = f"cluster_{gid}"
             if verbose:
                 print( f"attaching group {gid} to {cluster_name}")
-            self.add_cluster_permission(self.cluster_from_name(cluster_name)['cluster_id'],gname)
+            self.set_cluster_permission(self.cluster_from_name(cluster_name)['cluster_id'],gname, self.ClusterPermission.RESTART)
 
     def create_group(self,group_name: str):
         """

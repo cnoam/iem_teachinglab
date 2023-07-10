@@ -91,6 +91,9 @@ if __name__ == "__main__":
                         body=f"Your cluster is used for too long during the last day.({hours}h{minutes}m , quota is {termination_watermark_minutes} minutes) and will be terminated soon. \n\n",
                         recipients = get_emails_address(cluster_name))
             client.delete_cluster(cluster_name) # this will turn the cluster OFF, but not erase it.
+            # prevent users from restarting the cluster
+            group_name = "g" + cluster_name[8:]
+            client.set_cluster_permission(cid,group_name=group_name, permission=client.ClusterPermission.ATTACH)
 
         elif (total_time > send_alert_threshold) and not v.warning_sent:
             v.warning_sent = True

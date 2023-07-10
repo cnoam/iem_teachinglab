@@ -32,12 +32,12 @@ As user azureuser (the default user in azure VM): `crontab -e`
 
 add these lines:
 ```
-*/10 * * * * /home/azureuser/periodic_poll.sh
+5/10 * * * * /home/azureuser/periodic_poll.sh
 
 # run every midnight
-0 0 * * * unlink /home/azureuser/iem_teachinglab/databricks/cluster_uptimes
+0 0 * * * /home/azureuser/iem_teachinglab/databricks/restore_permissions.sh
 ```
-In /home/azureuser, create the file:
+In /home/azureuser, create the files:
 ```
 ~$ cat periodic_poll.sh 
 #!/bin/bash -eu
@@ -45,8 +45,17 @@ cd /home/azureuser/iem_teachinglab/databricks
 source venv/bin/activate
 python poll_clusters.py
 deactivate
+
+
+~$ cat restore_permissions.sh 
+#!/bin/bash -eu
+cd /home/azureuser/iem_teachinglab/databricks
+source venv/bin/activate
+rm -f cluster_uptimes
+python restore_cluster_permissions.py
+deactivate
 ```
-and `$ chmod +x ~/periodic_poll.sh`
+and `$ chmod +x ~/*.sh`
 
 To debug job stdout  `sudo apt-get install postfix`
 

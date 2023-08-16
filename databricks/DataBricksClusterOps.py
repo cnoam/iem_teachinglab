@@ -162,7 +162,7 @@ class DataBricksClusterOps:
                 return
         clusters = self.get_clusters()
         for cluster in clusters:
-            self.permanent_delete_cluster(cluster['cluster_id'],verbose)
+            self.permanent_delete_cluster(cluster['cluster_id'], verbose)
 
     def edit_cluster_permissions(self, cluster_id, config:dict) -> None:
         """
@@ -226,7 +226,7 @@ class DataBricksClusterOps:
         data = '{ "%s": "%s", "parent_name": "%s" }' % (attr, member_name, group_name)
         return requests.api.post(url=url, headers=headers, data=data)
 
-    def create_users(self,users: list):
+    def create_users(self, users: list):
         """
         Add users to Databricks workspace.
         If a user is already added, the cluster will return 409 and will not add the user again.
@@ -234,14 +234,48 @@ class DataBricksClusterOps:
         :param users: list(string of user's email)
         :return: number of successfully added users
         """
+        self.add_or_delete_users(users, delete_user=False)
+
+    def delete_users(self, users: list):
+        """
+        Delete users from Databricks workspace.
+        If a user is already deleted, the cluster will return 404 and will not delete the user again.
+
+        :param users: list(string of user's email)
+        :return: number of successfully deleted users
+        """
+        return self.add_or_delete_users(users, delete_user=True)
+
+    def list_users(self):
+        """Get a dictionary of all users in the workspace
+        See the docs how to filter the returned list by attributes or filtering. """
         headers = {"Authorization": f"Bearer {self.token}"}
-        url = f'{self.host}/api/2.0/preview/scim/v2/Users'
+        response = requests.get(url=f"{self.host}/api/2.0/preview/scim/v2/Users?&count=10000", headers=headers)
+        response.raise_for_status()
+        return response.json()
+
+    def get_user_details(self, id):
+        """given user ID (as a string containing integer), return the user details"""
+        # https://docs.databricks.com/api/latest/scim/index.html#operation/getUser
+        headers = {"Authorization": f"Bearer {self.token}"}
+        response = requests.get(url=f"{self.host}/api/2.0/preview/scim/v2/Users/{id}", headers=headers)
+        response.raise_for_status()
+        return response.json()
+
+    def add_or_delete_users(self, users: list[int], delete_user: bool):
+        headers = {"Authorization": f"Bearer {self.token}"}
+
         num_ok = 0
         for user in users:
-            if len(user) == 0:
-                continue
-            data = """{{"schemas":["urn:ietf:params:scim:schemas:core:2.0:User"],"userName":"{user}"}}""".format(user=user)
-            response = requests.api.post(url=url, headers=headers, data=data)
+            if delete_user:
+                id = user
+                url = f"{self.host}/api/2.0/preview/scim/v2/Users/{id}"
+                response = requests.api.delete(url, headers=headers)
+                response.raise_for_status()
+            else:
+                url = f'{self.host}/api/2.0/preview/scim/v2/Users'
+                data = """{{"schemas":["urn:ietf:params:scim:schemas:core:2.0:User"],"userName":"{user}"}}""".format(user=user)
+                response = requests.api.post(url=url, headers=headers, data=data)
             if response:  # this format of checking will cover also 201, 304 etc.
                 num_ok += 1
         return num_ok
@@ -309,6 +343,25 @@ def create_clusters(how_many:int, verbose:bool = False):
         print('\n')
 
 
+def delete_all_users(exception_list: list[str]):
+    users = client.list_users()
+    users_to_delete = filter(lambda u: u['emails'][0]['value'] not in exception_list, users['Resources'])
+    id_to_delete = [u['id'] for u in users_to_delete]
+    num_deleted = client.delete_users(id_to_delete)
+    print(f"deleted {num_deleted} users")
+
+
+def create_clusters_and_users(moodle_filename: str):
+    nGroups = create_users_from_moodle(client, moodle_filename, verbose=True)
+    create_clusters(nGroups, verbose=True)
+
+    allgroups = [f"g{n + 1}" for n in range(nGroups)]
+    client.attach_groups_to_clusters(allgroups, verbose=True)
+
+    print("Once the groups and users are created, you can go to the DataBricks portal to add permission to use the workspace.\n "
+          "choose your name - Admin Console. Choose 'all_student_groups'. Choose 'Entitlements'. Select 'Workspace access' checkbox")
+
+
 if __name__ == "__main__":
     from dotenv import load_dotenv
     load_dotenv()
@@ -340,18 +393,16 @@ if __name__ == "__main__":
     # Using the UI: open the DBR portal - compute (in the left pane), Policies tab. Choose "Shared Compute". Copy the policy ID
 
     client = DataBricksClusterOps(host='https://' + host, token=token)
-    #client.print_clusters()
 
-    # If you need to purge all clusters in this workspace: (need to type 'yes')
+    client.print_clusters()
+
+    # delete all users in this workspace except for a few:
+    # (it will not delete the groups
+    # delete_all_users(exception_list =['cnoam@technion.ac.il', 'ilanit.sobol@campus.technion.ac.il'])
+
+    # purge all clusters in this workspace: (need to type 'yes')
     # client.permanent_delete_all_clusters(verbose=True)
 
-    nGroups = create_users_from_moodle(client, fname, verbose=True)
-    create_clusters(nGroups,verbose=True)
-
-    allgroups = [ f"g{n+1}" for n in range(nGroups)]
-    client.attach_groups_to_clusters(allgroups, verbose=True)
-
-
-    print("Once the groups and users are created, you can go to the DataBricks portal to add permission to use the workspace.\n "
-          "choose your name - Admin Console. Choose 'all_student_groups'. Choose 'Entitlements'. Select 'Workspace access' checkbox")
+    # Given a Moodle file, create users and groups in Databricks workspace
+    # create_clusters_and_users(fname)
 

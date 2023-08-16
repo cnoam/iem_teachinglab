@@ -1,10 +1,11 @@
 import json
 from enum import Enum
+
 import requests
-from databricks_cli.sdk.api_client import ApiClient
 from databricks_cli.clusters.api import ClusterApi
 from databricks_cli.dbfs.api import DbfsApi
 from databricks_cli.dbfs.dbfs_path import DbfsPath
+from databricks_cli.sdk.api_client import ApiClient
 
 
 class DataBricksClusterOps:
@@ -28,13 +29,11 @@ class DataBricksClusterOps:
         RESTART = 2
         ATTACH = 3
 
-
-    def __init__(self,host:str, token:str):
-        self.api_client = ApiClient(host=host,token=token)
+    def __init__(self, host: str, token: str):
+        self.api_client = ApiClient(host=host, token=token)
         self.token = token
         self.host = host
         self.cached_clusters = None
-
 
     def get_clusters(self):
         """ get the list of currently defined clusters (both online and offline)
@@ -81,7 +80,7 @@ class DataBricksClusterOps:
         """
         return ClusterApi(self.api_client).create_cluster(json_spec)
 
-    def create_cluster(self, name: str, policy_id:str):
+    def create_cluster(self, name: str, policy_id: str):
         """
         Create a cluster in this host based on one specific template.
         This is a helper method.
@@ -129,7 +128,7 @@ class DataBricksClusterOps:
         json_spec = json.loads(tmp)
         return self.create_cluster_from_spec(json_spec)
 
-    def cluster_from_name(self, name:str):
+    def cluster_from_name(self, name: str):
         clusters = self.get_clusters()
         r = list(filter(lambda c: c['cluster_name'] == name, clusters))
         if len(r) == 0:
@@ -148,12 +147,12 @@ class DataBricksClusterOps:
         r = self.cluster_from_name(name)
         ClusterApi(self.api_client).delete_cluster(cluster_id=r['cluster_id'])
 
-    def permanent_delete_cluster(self, cluster_id:str, verbose:bool=False):
+    def permanent_delete_cluster(self, cluster_id: str, verbose: bool = False):
         if verbose:
             print(f"permanent delete cluster {cluster_id}")
         ClusterApi(self.api_client).permanent_delete(cluster_id=cluster_id)
 
-    def permanent_delete_all_clusters(self,verbose:bool=False, unsafe:bool=False):
+    def permanent_delete_all_clusters(self, verbose: bool = False, unsafe: bool = False):
         """Delete forever all the clusters in this workspace"""
         if not unsafe:
             ok = input("About to permanently delete ALL CLUSTERS. If this is ok, type 'yes': ")
@@ -164,7 +163,7 @@ class DataBricksClusterOps:
         for cluster in clusters:
             self.permanent_delete_cluster(cluster['cluster_id'], verbose)
 
-    def edit_cluster_permissions(self, cluster_id, config:dict) -> None:
+    def edit_cluster_permissions(self, cluster_id, config: dict) -> None:
         """
         Edit access permissions for a cluster.
         see    https://redocly.github.io/redoc/?url=https://learn.microsoft.com/azure/databricks/_extras/api-refs/permissions-2.0-azure.yaml
@@ -177,7 +176,7 @@ class DataBricksClusterOps:
         response = requests.api.patch(url=url, headers=headers, data=json.dumps(config))
         response.raise_for_status()
 
-    def set_cluster_permission(self,cluster_id:str, group_name:str, permission: ClusterPermission )-> None:
+    def set_cluster_permission(self, cluster_id: str, group_name: str, permission: ClusterPermission) -> None:
         if permission == self.ClusterPermission.ATTACH:
             s = "CAN_ATTACH_TO"
         elif permission == self.ClusterPermission.RESTART:
@@ -186,10 +185,10 @@ class DataBricksClusterOps:
             s = "CAN_MANAGE"
         else:
             raise ValueError('impossible permission')
-        config = { "access_control_list": [ {"group_name":group_name, "permission_level": s}]}
-        self.edit_cluster_permissions(cluster_id,config)
+        config = {"access_control_list": [{"group_name": group_name, "permission_level": s}]}
+        self.edit_cluster_permissions(cluster_id, config)
 
-    def attach_groups_to_clusters(self, groups:list, verbose:bool=False )-> None:
+    def attach_groups_to_clusters(self, groups: list, verbose: bool = False) -> None:
         """
         For each group (in the format gNUMBER), attach it to a cluster with the name cluster_NUMBER
         :param: groups . list of group names.
@@ -198,10 +197,10 @@ class DataBricksClusterOps:
             gid = int(gname[1:])
             cluster_name = f"cluster_{gid}"
             if verbose:
-                print( f"attaching group {gid} to {cluster_name}")
-            self.set_cluster_permission(self.cluster_from_name(cluster_name)['cluster_id'],gname, self.ClusterPermission.RESTART)
+                print(f"attaching group {gid} to {cluster_name}")
+            self.set_cluster_permission(self.cluster_from_name(cluster_name)['cluster_id'], gname, self.ClusterPermission.RESTART)
 
-    def create_group(self,group_name: str):
+    def create_group(self, group_name: str):
         """
         :param group_name:
         :return: the http response
@@ -281,7 +280,7 @@ class DataBricksClusterOps:
         return num_ok
 
 
-def create_users_from_moodle(dbapi: DataBricksClusterOps, filename:str, verbose:bool) -> int :
+def create_users_from_moodle(dbapi: DataBricksClusterOps, filename: str, verbose: bool) -> int:
     """
     Read Moodle user groups, and create Databricks groups with these users
     The groups and users MUST NOT exist before in Databricks workspace.
@@ -303,13 +302,13 @@ def create_users_from_moodle(dbapi: DataBricksClusterOps, filename:str, verbose:
     for group, users in groups.items():
         # the 'users' is full email address, all in the same domain.
         # let's remove the domain -- we know that the name will be unique in a single domain.
-        #shortnames = [u[: u.rfind('@')]  for u in users]
+        # shortnames = [u[: u.rfind('@')]  for u in users]
         group_name = "g" + str(group)
         response = dbapi.create_group(group_name)
         response.raise_for_status()
 
         # Add the newly created group to the "master group"
-        response = dbapi.add_member_to_group(group_name,master_group_name, is_user=False)
+        response = dbapi.add_member_to_group(group_name, master_group_name, is_user=False)
         response.raise_for_status()
 
         nCreated = dbapi.create_users(users)
@@ -320,7 +319,7 @@ def create_users_from_moodle(dbapi: DataBricksClusterOps, filename:str, verbose:
             response.raise_for_status()
 
         if verbose:
-            print(f"{group}",end=' ')
+            print(f"{group}", end=' ')
     if verbose:
         print('\n')
     return len(groups)
@@ -330,15 +329,15 @@ def test_user_creation_from_moodle(client):
     create_users_from_moodle(client, '/home/cnoam/Desktop/94290w2022.csv')
 
 
-def create_clusters(how_many:int, verbose:bool = False):
+def create_clusters(how_many: int, verbose: bool = False):
     for i in range(how_many):
-        resp1 = client.create_cluster( f"cluster_{i}", policy_id=policy_id) # create the cluster and turn it ON
+        resp1 = client.create_cluster(f"cluster_{i}", policy_id=policy_id)  # create the cluster and turn it ON
         if resp1:
             client.delete_cluster(f"cluster_{i}")  # turn the cluster OFF. We don't want to run it now.
         else:
             print(f"Failed created cluster {i}")
         if verbose:
-            print(f"cluster {i}",end=' ')
+            print(f"cluster {i}", end=' ')
     if verbose:
         print('\n')
 
@@ -366,7 +365,8 @@ if __name__ == "__main__":
     from dotenv import load_dotenv
     load_dotenv()
 
-    import sys,os
+    import sys, os
+
     x = sys.argv
     if len(sys.argv) != 2:
         print("Usage: prog groups_in_moodle.csv")
@@ -374,7 +374,7 @@ if __name__ == "__main__":
 
     host = os.getenv('DATABRICKS_HOST')
     token = os.getenv('DATABRICKS_TOKEN')
-    policy_id=os.getenv('POLICY_ID')
+    policy_id = os.getenv('POLICY_ID')
     if host is None or token is None:
         raise RuntimeError('must set the env vars!')
 

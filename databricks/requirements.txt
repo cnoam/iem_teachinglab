@@ -2,3 +2,4 @@
 databricks-cli==0.17.7
 python-dotenv
 pyrecord==1.0.1
+databricks-sdk==0.10.0

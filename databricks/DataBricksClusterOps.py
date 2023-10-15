@@ -262,6 +262,10 @@ class DataBricksClusterOps:
         return response.json()
 
     def add_or_delete_users(self, users: list[int], delete_user: bool):
+        """ Add/delete users to the workspace.
+            If an error happens during the operation-> partial change.
+            see https://docs.databricks.com/api/azure/workspace/users/delete
+        """
         headers = {"Authorization": f"Bearer {self.token}"}
 
         num_ok = 0
@@ -367,10 +371,10 @@ if __name__ == "__main__":
 
     import sys, os
 
-    x = sys.argv
-    if len(sys.argv) != 2:
-        print("Usage: prog groups_in_moodle.csv")
-        exit(1)
+    # x = sys.argv
+    # if len(sys.argv) != 2:
+    #     print("Usage: prog groups_in_moodle.csv")
+    #     exit(1)
 
     host = os.getenv('DATABRICKS_HOST')
     token = os.getenv('DATABRICKS_TOKEN')
@@ -378,7 +382,7 @@ if __name__ == "__main__":
     if host is None or token is None:
         raise RuntimeError('must set the env vars!')
 
-    fname = sys.argv[1]
+    #fname = sys.argv[1]
 
     # To generate a new token:
     # From Azure portal, choose the course's Databricks workspace (or create it if this is the first time).

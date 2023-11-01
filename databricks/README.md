@@ -64,3 +64,10 @@ In the installation, choose "local"
 and then periodically:  `cat /var/mail/azureuser`
 
 The output of cron itself is at `/var/log/syslog`
+
+
+# TEARDOWN
+At the end of the semester, you can delete the whole DBR workspace, or delete the clusters only, the users only, or users and their workspace folders.
+
+To delete the workspace,  (after made sure all content is moved to a safe place), go to the Azure portal, choose Databricks workspace, and click the trashcan icon.  It will take a few minutes to delete, and remove the storage account as well (with name such as "dbstorageqz6q3h5ysfvqy")
+

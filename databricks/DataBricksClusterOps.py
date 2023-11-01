@@ -382,14 +382,14 @@ if __name__ == "__main__":
     if host is None or token is None:
         raise RuntimeError('must set the env vars!')
 
-    #fname = sys.argv[1]
+    fname = sys.argv[1]
 
     # To generate a new token:
     # From Azure portal, choose the course's Databricks workspace (or create it if this is the first time).
     # Launch the Workspace
     # you will arrive to a url similar to https://adb-7838547822330032.12.azuredatabricks.net/?o=7838547822330032#
     #
-    # choose your username - User Settings - Access tokens - generate new token
+    # choose your username - User Settings - Developer - Access tokens - generate new token
     #
     # Using/Creating a policy:
     #  https://learn.microsoft.com/en-us/azure/databricks/administration-guide/clusters/policies
@@ -401,11 +401,11 @@ if __name__ == "__main__":
     client.print_clusters()
 
     # delete all users in this workspace except for a few:
-    # (it will not delete the groups
+    # (it will not delete the groups)
     # delete_all_users(exception_list =['cnoam@technion.ac.il', 'ilanit.sobol@campus.technion.ac.il'])
-
+    # print("To delete the workspace folders of the deleted users, use DatabricksClusterOps.py script")
     # purge all clusters in this workspace: (need to type 'yes')
-    # client.permanent_delete_all_clusters(verbose=True)
+    #client.permanent_delete_all_clusters(verbose=True)
 
     # Given a Moodle file, create users and groups in Databricks workspace
     # create_clusters_and_users(fname)

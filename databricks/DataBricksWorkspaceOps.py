@@ -16,6 +16,11 @@ def list_users_dirs(token, host):
 
 
 def delete_user_folders(token, host, exclusion_list):
+    """ Delete the workspace folders of all users except for the ones in the exclusion list.
+    NOTE: if you get an error such as:
+    "databricks.sdk.core.DatabricksError: Folder dds.cloud@technion.ac.il is protected"
+    it means that the user still exists. You need to first delete the user (from UI or script) and then run this script.
+    """
     w = WorkspaceClient(token=token, host=host)
     exclusion_list = ['/Users/' +i for i in exclusion_list]
     user_folders = list_users_dirs(token, host)

@@ -37,7 +37,9 @@ class MoodleFileParser:
                 rowcount += 1
                 out[rowcount] = []
                 user1 = row[index_email1]
-                user2 = row[index_email2]
+                if len(row) > index_email1+1:
+                    user2 = row[index_email2]
+                else: user2 = ''
                 if user1 != '': out[rowcount].append(user1)
                 if user2 != '': out[rowcount].append(user2)
                 if user3 != '': out[rowcount].append(user3)

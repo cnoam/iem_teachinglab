@@ -71,3 +71,21 @@ At the end of the semester, you can delete the whole DBR workspace, or delete th
 
 To delete the workspace,  (after made sure all content is moved to a safe place), go to the Azure portal, choose Databricks workspace, and click the trashcan icon.  It will take a few minutes to delete, and remove the storage account as well (with name such as "dbstorageqz6q3h5ysfvqy")
 
+
+# More information
+The MS Teams file https://teams.microsoft.com/_?culture=en-us&country=us#/apps/d7958adf-f419-46fa-941b-1b946497ef84/sections/MyNotebook
+contains important info:
+ - disabling cluster creation by users
+ - more!
+ 
+ # Download files or directories from dbfs
+ The dbfs is an abstraction above MS storage or Amazon S3. Accessing the files can be using REST API, GUI or command line tool
+
+ ## Downloading using the CLI
+ - Install the current version of databricks cli (v0.18 in my ubuntu 22.04).
+ - Generate a personal access token using the UI.
+ - copy the URL (including 'https://'):    `export DATABRICKS_HOST=https://adb-4286500221395801.1.azuredatabricks.net`
+ - copy the token:    `export DATABRICKS_TOKEN="dapi07a*************`
+ - check it works ok:   ` databricks  fs ls dbfs:/`
+
+Now you can download a whole directory tree using `databricks fs cp -r dbfs://SRC DST`

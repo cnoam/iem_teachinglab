@@ -7,6 +7,8 @@ from databricks_cli.dbfs.api import DbfsApi
 from databricks_cli.dbfs.dbfs_path import DbfsPath
 from databricks_cli.sdk.api_client import ApiClient
 
+dry_run = False
+
 
 class DataBricksClusterOps:
     """
@@ -78,7 +80,10 @@ class DataBricksClusterOps:
         :param api_client:
         :param json_spec:  json doc that defines the cluster
         """
-        return ClusterApi(self.api_client).create_cluster(json_spec)
+        new_cluster = ClusterApi(self.api_client).create_cluster(json_spec)
+        if new_cluster:
+            self.cached_clusters = None
+        return new_cluster
 
     def create_cluster(self, name: str, policy_id: str):
         """
@@ -120,7 +125,6 @@ class DataBricksClusterOps:
               "enable_elastic_disk": true,
               "cluster_source": "UI",
               "init_scripts": [],
-              "policy_id": "$policy_id",
               "data_security_mode": "NONE",
               "runtime_engine": "STANDARD"
         }""")
@@ -143,7 +147,10 @@ class DataBricksClusterOps:
         :return: None
         :raise KeyError if name not found or not unique
         """
-
+        global dry_run
+        if dry_run:
+            print(f"FAKE: delete cluster {name}")
+            return
         r = self.cluster_from_name(name)
         ClusterApi(self.api_client).delete_cluster(cluster_id=r['cluster_id'])
 
@@ -225,7 +232,7 @@ class DataBricksClusterOps:
         data = '{ "%s": "%s", "parent_name": "%s" }' % (attr, member_name, group_name)
         return requests.api.post(url=url, headers=headers, data=data)
 
-    def create_users(self, users: list):
+    def create_users(self, users: list) -> int:
         """
         Add users to Databricks workspace.
         If a user is already added, the cluster will return 409 and will not add the user again.
@@ -233,7 +240,7 @@ class DataBricksClusterOps:
         :param users: list(string of user's email)
         :return: number of successfully added users
         """
-        self.add_or_delete_users(users, delete_user=False)
+        return self.add_or_delete_users(users, delete_user=False)
 
     def delete_users(self, users: list):
         """
@@ -295,13 +302,24 @@ def create_users_from_moodle(dbapi: DataBricksClusterOps, filename: str, verbose
     :raise HTTPstatus if any of the requests failed
     """
     from MoodleFileParser import MoodleFileParser
+
+    if dry_run:
+        return 0
+
+    def raise_for_status_unless_exists(res):
+         if 400 <= res.status_code < 500:
+             text = json.loads(res.text)
+             if text['error_code'] == "RESOURCE_ALREADY_EXISTS":
+                return
+             response.raise_for_status()
+
     groups = MoodleFileParser.parse_moodle_csv(filename)
 
     # create a master group that contains all the groups. This will make it
     # easy for the admin to give access.
     master_group_name = "all_student_groups"
     response = dbapi.create_group(master_group_name)
-    response.raise_for_status()
+    raise_for_status_unless_exists(response)
 
     for group, users in groups.items():
         # the 'users' is full email address, all in the same domain.
@@ -309,11 +327,11 @@ def create_users_from_moodle(dbapi: DataBricksClusterOps, filename: str, verbose
         # shortnames = [u[: u.rfind('@')]  for u in users]
         group_name = "g" + str(group)
         response = dbapi.create_group(group_name)
-        response.raise_for_status()
+        raise_for_status_unless_exists(response)
 
         # Add the newly created group to the "master group"
         response = dbapi.add_member_to_group(group_name, master_group_name, is_user=False)
-        response.raise_for_status()
+        raise_for_status_unless_exists(response)
 
         nCreated = dbapi.create_users(users)
         if nCreated != len(users):
@@ -334,14 +352,23 @@ def test_user_creation_from_moodle(client):
 
 
 def create_clusters(how_many: int, verbose: bool = False):
+    global dry_run
+    if dry_run:
+        print(f"FAKE: create {how_many} clusters")
+        return
+
     for i in range(how_many):
-        resp1 = client.create_cluster(f"cluster_{i}", policy_id=policy_id)  # create the cluster and turn it ON
-        if resp1:
-            client.delete_cluster(f"cluster_{i}")  # turn the cluster OFF. We don't want to run it now.
-        else:
-            print(f"Failed created cluster {i}")
-        if verbose:
-            print(f"cluster {i}", end=' ')
+        try:
+            resp1 = client.create_cluster(f"cluster_{i}", policy_id=policy_id)  # create the cluster and turn it ON
+            if resp1:
+                client.delete_cluster(f"cluster_{i}")  # turn the cluster OFF. We don't want to run it now.
+            else:
+                print(f"Failed created cluster {i}")
+            if verbose:
+                print(f"cluster {i}", end=' ')
+        except AttributeError as e:
+            print(f"{e}  ==> skipped")
+
     if verbose:
         print('\n')
 
@@ -362,7 +389,8 @@ def create_clusters_and_users(moodle_filename: str):
     client.attach_groups_to_clusters(allgroups, verbose=True)
 
     print("Once the groups and users are created, you can go to the DataBricks portal to add permission to use the workspace.\n "
-          "choose your name - Admin Console. Choose 'all_student_groups'. Choose 'Entitlements'. Select 'Workspace access' checkbox")
+          "choose your name - Admin Console. 'Identity and access' | 'Groups' .\n"
+          "Choose 'all_student_groups'. Choose 'Entitlements'. Select 'Workspace access' checkbox")
 
 
 if __name__ == "__main__":

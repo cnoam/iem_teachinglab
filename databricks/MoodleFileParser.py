@@ -32,7 +32,7 @@ class MoodleFileParser:
                     continue  # skip header
                 if len(row) == 0:
                     continue
-                if len(row) == 23:
+                if len(row) >= 23:
                     user3 = row[index_email3]
                 rowcount += 1
                 out[rowcount] = []
@@ -47,4 +47,5 @@ class MoodleFileParser:
 
 
 if __name__ == "__main__":
-    MoodleFileParser.parse_moodle_csv('/home/cnoam/Desktop/94290w2022.csv')
+    out = MoodleFileParser.parse_moodle_csv('/home/cnoam/Downloads/Groupself-selection_00094290.01_2024-01-14.csv')
+    out

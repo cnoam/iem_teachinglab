@@ -13,29 +13,51 @@ Run `python3 DataBricksClusterOps.py path/to/csv-file`
 Check the workspace: you should see all the users, all the groups, and all the clusters.
 Each cluster has permission ('restart') for the group created.
 
-## [OBSOLETE] Last step:  Attach each cluster with the group(s) you want
-
-### Manually (as a backup procedure only)
-Open the 'compute' -> "all-purpose-compute" tab. click the 3dots on the right -> "edit permissions". 
-click the "select user" and select the group for this cluster (e.g. "cluster_20" --> "g20"). in the Permission column choose 'can restart' and finally the "+ Add" button.
-
-**THEORETICALLY** this should be done once only, since the clusters and groups can be unmodified between semesters.
-
-
 # The proper way - terraform
 https://learn.microsoft.com/en-us/azure/databricks/security/auth-authz/access-control/cluster-acl#terraform-integration
 
-# Running polling periodically 
-Use crontab:
+# Enforcing quota
+In order to save money, I defined the following policy:
 
-As user azureuser (the default user in azure VM): `crontab -e`
+  Each cluster can be up (comulative time) up to T minutes every day. <br>
+  At midnight the count is reset.<br>
+  When a cluster reaches (or exceeds) the quota, it is terminated and cannot be turned on until the next cyle (next day)
+
+
+## Running The policy checking
+
+The polling process runs in a small VM in the cloud.
+
+Follow the steps below to perform polling periodically.
+
+IMPORTANT: make sure the env vars are correctly set!
+1. Create a VM
+2. `ssh azureuser@172.206.249.112`
+3. `sudo apt update`
+4. `sudo apt install -y python3-venv`
+5. `git clone https://github.com/cnoam/iem_teachinglab.git`
+6. `cd ~/iem_teachinglab/databricks`
+7. `python3 -m venv venv`
+8. `source venv/bin/activate`
+9. `pip install -r requirements.txt`
+10. `deactivate`
+11. add at the end of ~/.bashrc:
+```asciidoc
+export DATABRICKS_HOST="adb-4286500221395801.1.azuredatabricks.net"
+export DATABRICKS_TOKEN="****"
+export SMTP_PASSWORD="****"
+```
+or simply copy the `.env` file from your working dir.
+
+12. As user azureuser (the default user in azure VM): `crontab -e`
 
 add these lines:
 ```
-5/10 * * * * /home/azureuser/periodic_poll.sh
+# Check every 15 minutes: 23:00, 23:15, 23:30, 23:45, 00:00 ... 
+*/15 * * * * /home/azureuser/periodic_poll.sh
 
-# run every midnight
-0 0 * * * /home/azureuser/iem_teachinglab/databricks/restore_permissions.sh
+# run every midnight + a little, to avoid clashing with the other job
+9 0 * * * /home/azureuser/iem_teachinglab/restore_permissions.sh
 ```
 In /home/azureuser, create the files:
 ```

@@ -4,6 +4,7 @@ This is needed to restore normal operation after revoking permissions.
 """
 
 import logging
+import requests
 from DataBricksClusterOps import DataBricksClusterOps
 
 if __name__ == "__main__":
@@ -22,8 +23,13 @@ if __name__ == "__main__":
     token = os.getenv('DATABRICKS_TOKEN')
 
     client = DataBricksClusterOps(host='https://' + host, token=token)
+    x=client.get_clusters()
     for c in client.get_clusters():
         group_name = "g" + c['cluster_name'][8:]
-        client.set_cluster_permission(c["cluster_id"], group_name=group_name, permission=client.ClusterPermission.RESTART)
+        try:
+            client.set_cluster_permission(c["cluster_id"], group_name=group_name, permission=client.ClusterPermission.RESTART)
+            logger.info(f"Checked {c['cluster_id']}")
+        except requests.HTTPError as e:
+            logger.error(f"{e}, group {group_name}")
 
     logger.info('Exiting successfully')

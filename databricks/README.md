@@ -117,8 +117,3 @@ Now you can download a whole directory tree using `databricks fs cp -r dbfs://SR
 When a DBR workspace is created in Azure, a new Azure storage account is created. This storage account is managed ONLY by the DBR.
 All users of the DBR workspace can read and write to anywhere in this storage, including UNMOUNTING directories.
 
-I prepared some data files (some of them must not be shared with students) in a storage account "lab94290", mounted this storage;
-
-Then read the data into a Spark Dataframe, did the processing I needed, and saved as Parquet file to the dbfs. Also saved the secret part to the lab94290.
-
-Then UNMOUNTed the lab94290. To mount it, a user must have SAS key (or other keys not acessible to students).

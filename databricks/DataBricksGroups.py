@@ -24,21 +24,27 @@ class DataBricksGroups:
         except KeyError:
             return []
 
+    def list_all(self):
+        return self.groups_api.list_all()
+
 
 if __name__ == "__main__":
     import os
+    import re
     from dotenv import load_dotenv
     load_dotenv()
 
     host = 'https://' + os.getenv('DATABRICKS_HOST')
     token = os.getenv('DATABRICKS_TOKEN')
     dbr = DataBricksGroups(host=host, token=token)
-    for i in range(52):
-        name = 'g'+str(i+1)
+    names = dbr.list_all()['group_names']
+    names = [n for n in names if re.match(r'g\d{1,2}',n)]
+
+    for name in names:
         members = dbr.get_group_members(name)
-        try:
-            first = members[0]
-            second = members[1]
-            print(f"{i}, {first['user_name']}, {second['user_name']}")
-        except IndexError:
-            print(f"{i}: no pair.")
+        print(f"{name}: " , end='')
+        for name in members:
+            a = name['user_name']
+            a = a[0:a.find('@')]
+            print(f"{a}  ", end='')
+        print("\n")

@@ -47,4 +47,4 @@ if __name__ == "__main__":
             a = name['user_name']
             a = a[0:a.find('@')]
             print(f"{a}  ", end='')
-        print("\n")
+        print("")

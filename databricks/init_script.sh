@@ -10,4 +10,9 @@
 
 /databricks/python/bin/python -m spacy download en_core_web_sm
 
+######
+# NOTE: If a library is needed for a short period, or for part of the clusters, it is 
+# better to install the lib directly to the cluster. 
+# see https://learn.microsoft.com/en-us/azure/databricks/libraries/workspace-libraries#--install-a-workspace-library-onto-a-cluster
+
 

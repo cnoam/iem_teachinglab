@@ -13,6 +13,9 @@ Run `python3 DataBricksClusterOps.py path/to/csv-file`
 Check the workspace: you should see all the users, all the groups, and all the clusters.
 Each cluster has permission ('restart') for the group created.
 
+## Old Clusters are deleted
+By default, clusters that are not used for 30 days are deleted. see https://kb.databricks.com/en_US/clusters/pin-cluster-configurations-using-the-api
+
 # The proper way - terraform
 https://learn.microsoft.com/en-us/azure/databricks/security/auth-authz/access-control/cluster-acl#terraform-integration
 
@@ -73,6 +76,7 @@ deactivate
 #!/bin/bash -eu
 cd /home/azureuser/iem_teachinglab/databricks
 source venv/bin/activate
+
 rm -f cluster_uptimes
 python restore_cluster_permissions.py
 deactivate

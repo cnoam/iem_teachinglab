@@ -1,6 +1,6 @@
 import json
 from enum import Enum
-
+import logging
 import requests
 from databricks_cli.clusters.api import ClusterApi
 from databricks_cli.dbfs.api import DbfsApi
@@ -8,6 +8,11 @@ from databricks_cli.dbfs.dbfs_path import DbfsPath
 from databricks_cli.sdk.api_client import ApiClient
 
 dry_run = False
+
+logger = logging.getLogger('DBR_cluster_ops')
+logger.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+logger.addHandler(ch)
 
 
 class DataBricksClusterOps:
@@ -31,10 +36,10 @@ class DataBricksClusterOps:
         RESTART = 2
         ATTACH = 3
 
-    def __init__(self, host: str, token: str):
-        self.api_client = ApiClient(host=host, token=token)
-        self.token = token
-        self.host = host
+    def __init__(self, host_: str, token_: str):
+        self.api_client = ApiClient(host=host_, token=token_)
+        self.token = token_
+        self.host = host_
         self.cached_clusters = None
 
     def get_clusters(self):
@@ -66,7 +71,6 @@ class DataBricksClusterOps:
         """
         NOT TESTED
         Download a file
-        :param api_client: instance of ApiClient
         :param dbfs_source_file_path: 'dbfs:/tmp/users/someone@example.com//hello-world.txt'
         """
         dbfs_path = DbfsPath(dbfs_source_file_path)
@@ -77,7 +81,6 @@ class DataBricksClusterOps:
     def create_cluster_from_spec(self, json_spec: dict):
         """
         Create a new cluster
-        :param api_client:
         :param json_spec:  json doc that defines the cluster
         """
         new_cluster = ClusterApi(self.api_client).create_cluster(json_spec)
@@ -90,7 +93,7 @@ class DataBricksClusterOps:
         Create a cluster in this host based on one specific template.
         This is a helper method.
         Change the template to your liking.
-        Cluster name are not unique in Databricks workspace, so I add enforcing here name uniqness
+        Cluster name are not unique in Databricks workspace, so I add enforcing here name uniqueness
         :raise AttributeError
         :return HttpResponse
         """
@@ -260,11 +263,11 @@ class DataBricksClusterOps:
         response.raise_for_status()
         return response.json()
 
-    def get_user_details(self, id):
+    def get_user_details(self, id_):
         """given user ID (as a string containing integer), return the user details"""
         # https://docs.databricks.com/api/latest/scim/index.html#operation/getUser
         headers = {"Authorization": f"Bearer {self.token}"}
-        response = requests.get(url=f"{self.host}/api/2.0/preview/scim/v2/Users/{id}", headers=headers)
+        response = requests.get(url=f"{self.host}/api/2.0/preview/scim/v2/Users/{id_}", headers=headers)
         response.raise_for_status()
         return response.json()
 
@@ -289,6 +292,45 @@ class DataBricksClusterOps:
             if response:  # this format of checking will cover also 201, 304 etc.
                 num_ok += 1
         return num_ok
+
+    def install_libraries(self, cluster_id: str, libraries: list[dict]) -> requests.Response:
+        """
+        Install libraries on a cluster
+        :param cluster_id: the cluster to install the libraries on
+        :param libraries: list of libraries to install. The list is in the format specified in the API docs
+        https://docs.databricks.com/api/workspace/libraries/install
+        """
+        """
+        {
+          "cluster_id": "string",
+          "libraries": [
+            {
+              "jar": "string",
+              "egg": "string",
+              "pypi": {
+                "package": "string",
+                "repo": "string"
+              },
+              "maven": {
+                "coordinates": "string",
+                "repo": "string",
+                "exclusions": [
+                  "string"
+                ]
+              },
+              "cran": {
+                "package": "string",
+                "repo": "string"
+              },
+              "whl": "string"
+            }
+          ]
+        }
+        """
+        headers = {"Authorization": f"Bearer {self.token}"}
+        url = f'{self.host}/api/2.0/libraries/install'
+        data = json.dumps({"cluster_id": cluster_id, "libraries": libraries})
+        return requests.api.post(url=url, headers=headers, data=data)
 
 
 def create_users_from_moodle(dbapi: DataBricksClusterOps, filename: str, verbose: bool) -> int:
@@ -393,6 +435,24 @@ def create_clusters_and_users(moodle_filename: str):
           "Choose 'all_student_groups'. Choose 'Entitlements'. Select 'Workspace access' checkbox")
 
 
+def install_libs_for_NLP(c :DataBricksClusterOps):
+    """Install the libraries needed for the NLP task to all the clusters"""
+    clusters = c.get_clusters()
+    #clusters_ids = [c['cluster_id'] for c in clusters]
+    for cluster in clusters:
+        cid = cluster['cluster_id']
+        result = c.install_libraries(cid, [
+            {"pypi": {"package": "spark-nlp", "repo": "https://pypi.org/simple"}},
+            {"pypi": {"package": "nltk", "repo": "https://pypi.org/simple"}},
+            {"pypi": {"package": "spacy", "repo": "https://pypi.org/simple"}},
+            {"pypi": {"package": "gensim", "repo": "https://pypi.org/simple"}},
+            {"maven": {"coordinates": "com.johnsnowlabs.nlp:spark-nlp_2.12:5.1.2"}}  # add your own maven library here
+        ])
+        if result:
+            logger.info("Installed libraries to cluster " + cid  + "("+ cluster['cluster_name'] + ")")
+        else:
+            logger.error("Failed to install libraries to cluster " + cid)
+
 if __name__ == "__main__":
     from dotenv import load_dotenv
     load_dotenv()
@@ -410,7 +470,7 @@ if __name__ == "__main__":
     if host is None or token is None:
         raise RuntimeError('must set the env vars!')
 
-    fname = sys.argv[1]
+    #fname = sys.argv[1]
 
     # To generate a new token:
     # From Azure portal, choose the course's Databricks workspace (or create it if this is the first time).
@@ -424,7 +484,8 @@ if __name__ == "__main__":
     # (Cluster policies require the Premium plan)
     # Using the UI: open the DBR portal - compute (in the left pane), Policies tab. Choose "Shared Compute". Copy the policy ID
 
-    client = DataBricksClusterOps(host='https://' + host, token=token)
+    client = DataBricksClusterOps(host_='https://' + host, token_=token)
+    #install_libs_for_NLP(client)
 
     client.print_clusters()
 

@@ -22,7 +22,7 @@ if __name__ == "__main__":
     host = os.getenv('DATABRICKS_HOST')
     token = os.getenv('DATABRICKS_TOKEN')
 
-    client = DataBricksClusterOps(host='https://' + host, token=token)
+    client = DataBricksClusterOps(host_='https://' + host, token_=token)
     x=client.get_clusters()
     for c in client.get_clusters():
         group_name = "g" + c['cluster_name'][8:]

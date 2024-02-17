@@ -67,7 +67,7 @@ if __name__ == "__main__":
     token = os.getenv('DATABRICKS_TOKEN')
     termination_watermark_minutes = os.getenv('DATABRICKS_MAX_UPTIME', 3*60+30)
     warning_watermark_minutes = os.getenv('DATABRICKS_WARN_UPTIME', 3*60)
-    client = DataBricksClusterOps(host='https://' + host, token=token)
+    client = DataBricksClusterOps(host_='https://' + host, token_=token)
 
     check_running_clusters(client, uptime_db)
 

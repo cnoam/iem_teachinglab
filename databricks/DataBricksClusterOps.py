@@ -332,6 +332,52 @@ class DataBricksClusterOps:
         data = json.dumps({"cluster_id": cluster_id, "libraries": libraries})
         return requests.api.post(url=url, headers=headers, data=data)
 
+    def update_configuration(self, cluster: dict, config: dict) -> requests.Response:
+        """
+        Update the configuration of a cluster
+        :param cluster: the cluster to update. A dictionary containing the cluster's details as returned by the API
+        :param config: the new configuration using the json format specified in the API docs
+
+        see https://docs.databricks.com/api/azure/workspace/clusters/edit for the format of the config
+
+        """
+        headers = {"Authorization": f"Bearer {self.token}"}
+        url = f'{self.host}/api/2.0/clusters/edit'
+        data = json.dumps(config)
+        return requests.api.post(url=url, headers=headers, data=data)
+
+    def update_auto_termination(self, cluster: dict, minutes: int) -> requests.Response:
+        """
+        Update the auto-termination time of a cluster
+        :param cluster: the cluster to update
+        :param minutes: the new auto-termination time in minutes
+
+        The doc at https://docs.databricks.com/api/azure/workspace/clusters/edit is wrong. both autoscale and node_type_id are mandatory
+        """
+
+        if cluster['autotermination_minutes'] == minutes:
+            res = requests.Response() # make it look like a successful response
+            res.status_code = 200
+            return res
+        if 'autoscale' not in cluster:
+            #raise ValueError("Cluster must have autoscale field")
+            res = requests.Response()
+            res.status_code = 400
+            return res
+        new_config = {'cluster_id': cluster['cluster_id'],
+                      'cluster_name': cluster['cluster_name'],
+                      'spark_version': cluster['spark_version'],
+                      'autoscale': cluster['autoscale'],
+                      'node_type_id': cluster['node_type_id'],
+                      # all the above are mandatory
+                      'autotermination_minutes': minutes,
+                      }
+
+        # note: originaly I did
+        # new_config = cluster
+        # update needed fields
+        # but it didn't work because the original cluster has more fields than the ones that are allowed to be updated
+        return self.update_configuration(cluster, new_config)
 
 def create_users_from_moodle(dbapi: DataBricksClusterOps, filename: str, verbose: bool) -> int:
     """
@@ -453,6 +499,17 @@ def install_libs_for_NLP(c :DataBricksClusterOps):
         else:
             logger.error("Failed to install libraries to cluster " + cid)
 
+def update_auto_termination(c: DataBricksClusterOps, minutes: int):
+    """Set the auto-termination time of all the clusters to the given number of minutes"""
+    clusters = c.get_clusters()
+    for cluster in clusters:
+        cid = cluster['cluster_id']
+        result = c.update_auto_termination(cluster, minutes)
+        if result:
+            logger.info("Updated auto-termination time of cluster " + cid + " to " + str(minutes) + " minutes")
+        else:
+            logger.error("Failed to update auto-termination time of cluster " + cid + " to " + str(minutes) + " minutes")
+
 if __name__ == "__main__":
     from dotenv import load_dotenv
     load_dotenv()
@@ -486,6 +543,7 @@ if __name__ == "__main__":
 
     client = DataBricksClusterOps(host_='https://' + host, token_=token)
     #install_libs_for_NLP(client)
+    update_auto_termination(client, 22)
 
     client.print_clusters()
 

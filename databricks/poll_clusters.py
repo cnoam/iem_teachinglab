@@ -24,6 +24,7 @@ in crontab (use crontab -e as the user who owns the script):
 */10 * * * * python /home/USERNAME/path/to/poll_cluster.py
 """
 
+DATABASE_FILE_NAME = 'cluster_uptimes.db'
 
 import logging
 from DataBricksGroups import DataBricksGroups
@@ -41,8 +42,10 @@ def get_emails_address(cluster_name: str, g:DataBricksGroups) -> list:
         addr.append(m['user_name'])
     return addr
 
+from databricks.database.db_operations import DB
 
-def check_running_clusters(client, uptime_db:dict):
+
+def check_running_clusters(client, uptime_db:DB):
     """check and update 'uptime_db'
     """
     clusters = client.get_clusters()
@@ -55,8 +58,19 @@ def cluster_id_to_cluster_name(clusters, id:int)->str:
     return cluster['cluster_name']
 
 
+def dump_cluster_uptime(db: DB):
+    result = db.cursor.execute("SELECT * FROM cluster_uptimes")
+    for k,v in result.fetchall():
+        print(k,v)
+
+
 def main():
-    import pickle, datetime, os
+    import datetime
+
+    db = DB(DATABASE_FILE_NAME)
+    dump_cluster_uptime(db)
+    print("--------------")
+    exit(0)
     logger = logging.getLogger('CLUSTER_POLL')
     logger.setLevel(logging.DEBUG)
     ch = logging.StreamHandler()
@@ -65,13 +79,9 @@ def main():
     logger.addHandler(ch)
     logger.info('Checking clusters...')
 
-    try:
-        with open('cluster_uptimes','rb') as datafile:
-            uptime_db = pickle.load(datafile)
-    except FileNotFoundError:
-        uptime_db = {}
 
     from dotenv import load_dotenv
+    import os
 
     load_dotenv()
     host = os.getenv('DATABRICKS_HOST')
@@ -83,7 +93,8 @@ def main():
     warning_watermark_minutes = float(os.getenv('DATABRICKS_WARN_UPTIME', 3*60))
     client = DataBricksClusterOps(host_='https://' + host, token_=token)
     dbr_groups = DataBricksGroups(host='https://' + host, token=token)
-    check_running_clusters(client, uptime_db)
+
+    check_running_clusters(client, db)
 
     clusters = client.get_clusters()
 

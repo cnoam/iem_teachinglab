@@ -1,3 +1,5 @@
 cluster_uptimes
 .env
-.idea
+.idea/
+*.db
+__pycache__

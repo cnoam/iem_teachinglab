@@ -3,3 +3,5 @@ cluster_uptimes
 .idea/
 venv/
 student_backups/
+*.db
+__pycache__

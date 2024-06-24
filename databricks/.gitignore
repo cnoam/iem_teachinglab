@@ -1,2 +1,4 @@
 cluster_uptimes
 .env
+*.db
+__pycache__

@@ -450,7 +450,8 @@ def create_clusters(how_many: int, verbose: bool = False):
         print(f"FAKE: create {how_many} clusters")
         return
 
-    for i in range(how_many):
+    for j in range(how_many):
+        i = j +1
         try:
             resp1 = client.create_cluster(f"cluster_{i}", policy_id=policy_id)  # create the cluster and turn it ON
             if resp1:

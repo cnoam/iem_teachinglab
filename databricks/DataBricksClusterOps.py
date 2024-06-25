@@ -107,10 +107,10 @@ class DataBricksClusterOps:
         template = Template("""{
               "autoscale": {
                   "min_workers": 1,
-                  "max_workers": 1
+                  "max_workers": 3
               },
               "cluster_name": "$cluster_name",
-              "spark_version": "11.3.x-scala2.12",
+              "spark_version": "14.3.x-scala2.12",
               "spark_conf": {
                   "spark.databricks.delta.preview.enabled": "true"
               },
@@ -123,8 +123,13 @@ class DataBricksClusterOps:
               "driver_node_type_id": "Standard_DS3_v2",
               "ssh_public_keys": [],
               "custom_tags": {},
-              "spark_env_vars": {},
-              "autotermination_minutes": 10,
+              "cluster_log_conf": {
+                  "dbfs": {
+                    "destination": "dbfs:/cluster-logs"
+                  }
+              },
+              "spark_env_vars": {"PYSPARK_PYTHON": "/databricks/python3/bin/python3"},
+              "autotermination_minutes": 14,
               "enable_elastic_disk": true,
               "cluster_source": "UI",
               "init_scripts": [],

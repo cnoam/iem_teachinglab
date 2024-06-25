@@ -1,3 +1,4 @@
+import logging
 
 class MoodleFileParser:
     """this class has helper methods to parse files created by Moodle
@@ -17,9 +18,7 @@ class MoodleFileParser:
         import csv
         out = {}
         rowcount = 0
-        index_email1 = 12
-        index_email2 = 17
-        index_email3 = 22
+
         with open(filename) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
             for row in csv_reader:
@@ -28,6 +27,10 @@ class MoodleFileParser:
                 if rowcount == 0:
                     if row[0] != 'Group ID':
                         raise Exception('unexpected CSV format')
+                    col_names = row
+                    index_email1 = col_names.index('Member 1 Email')
+                    index_email2 = col_names.index('Member 2 Email')
+                    index_email3 =  col_names.index('Member 3 Email')
                     rowcount = 1
                     continue  # skip header
                 if len(row) == 0:
@@ -35,6 +38,9 @@ class MoodleFileParser:
                 if len(row) >= 23:
                     user3 = row[index_email3]
                 rowcount += 1
+                if len(row) < index_email1:
+                    logging.error(f"skipping invalid row in CSV file: {row}")
+                    continue
                 out[rowcount] = []
                 user1 = row[index_email1]
                 if len(row) > index_email1+1:

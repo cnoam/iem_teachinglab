@@ -516,25 +516,9 @@ def update_auto_termination(c: DataBricksClusterOps, minutes: int):
         else:
             logger.error("Failed to update auto-termination time of cluster " + cid + " to " + str(minutes) + " minutes")
 
-if __name__ == "__main__":
-    from dotenv import load_dotenv
-    load_dotenv()
 
-    import sys, os
-
-    # x = sys.argv
-    # if len(sys.argv) != 2:
-    #     print("Usage: prog groups_in_moodle.csv")
-    #     exit(1)
-
-    host = os.getenv('DATABRICKS_HOST')
-    token = os.getenv('DATABRICKS_TOKEN')
-    policy_id = os.getenv('POLICY_ID')
-    if host is None or token is None:
-        raise RuntimeError('must set the env vars!')
-
-    #fname = sys.argv[1]
-
+def print_usage():
+    print("""
     # To generate a new token:
     # From Azure portal, choose the course's Databricks workspace (or create it if this is the first time).
     # Launch the Workspace
@@ -546,20 +530,50 @@ if __name__ == "__main__":
     #  https://learn.microsoft.com/en-us/azure/databricks/administration-guide/clusters/policies
     # (Cluster policies require the Premium plan)
     # Using the UI: open the DBR portal - compute (in the left pane), Policies tab. Choose "Shared Compute". Copy the policy ID
+    """)
+
+if __name__ == "__main__":
+    from dotenv import load_dotenv
+    load_dotenv()
+
+    import os, argparse
+
+
+
+    host = os.getenv('DATABRICKS_HOST')
+    token = os.getenv('DATABRICKS_TOKEN')
+    policy_id = os.getenv('POLICY_ID')
+    if host is None or token is None:
+        raise RuntimeError('must set the env vars!')
 
     client = DataBricksClusterOps(host_='https://' + host, token_=token)
+
+    parser = argparse.ArgumentParser(description="Process a CSV file (optional)")
+
+    # Optional argument for CSV file
+    parser.add_argument("--create_from_csv", type=str, help="Path to the CSV file")
+
+    # Optional argument with flag for printing
+    parser.add_argument("--print", action="store_true", default=False, help="Print the cluster names")
+
+    # Parse arguments from command line
+    args = parser.parse_args()
     #install_libs_for_NLP(client)
-    update_auto_termination(client, 22)
+    if args.create_from_csv:
+        # Given a Moodle file, create users and groups in Databricks workspace
+        create_clusters_and_users(args.create_from_csv)
+        update_auto_termination(client, 22)
 
-    client.print_clusters()
+    if args.print:
+        client.print_clusters()
 
-    # delete all users in this workspace except for a few:
-    # (it will not delete the groups)
-    # delete_all_users(exception_list =['cnoam@technion.ac.il', 'ilanit.sobol@campus.technion.ac.il'])
-    # print("To delete the workspace folders of the deleted users, use DatabricksClusterOps.py script")
-    # purge all clusters in this workspace: (need to type 'yes')
-    #client.permanent_delete_all_clusters(verbose=True)
+    if args.delete_all_users:
+        # delete all users in this workspace except for a few:
+        # (it will not delete the groups)
+        delete_all_users(exception_list =['cnoam@technion.ac.il', 'ilanit.sobol@campus.technion.ac.il'])
+        # print("To delete the workspace folders of the deleted users, use DatabricksClusterOps.py script")
 
-    # Given a Moodle file, create users and groups in Databricks workspace
-    # create_clusters_and_users(fname)
+    if args.purge_clusters:
+        # purge all clusters in this workspace: (need to type 'yes')
+        client.permanent_delete_all_clusters(verbose=True)
 

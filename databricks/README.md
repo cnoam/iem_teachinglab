@@ -8,7 +8,12 @@ First, save the groups data as CSV to your PC. Remove the "..." line before the 
 
 Then, create a token (instructions are in the python file)
 
-Run `python3 DataBricksClusterOps.py path/to/csv-file`
+```
+cd databricks 
+source venv/bin/activate
+pip install -r requirements.txt
+``` 
+Run `python3 DataBricksClusterOps.py --create_from_csv path/to/csv-file`
 
 Check the workspace: you should see all the users, all the groups, and all the clusters.
 Each cluster has permission ('restart') for the group created.
@@ -22,7 +27,7 @@ https://learn.microsoft.com/en-us/azure/databricks/security/auth-authz/access-co
 # Enforcing quota
 In order to save money, I defined the following policy:
 
-  Each cluster can be up (comulative time) up to T minutes every day. <br>
+  Each cluster can be up (cumulative time) to T minutes every day. <br>
   At midnight the count is reset.<br>
   When a cluster reaches (or exceeds) the quota, it is terminated and cannot be turned on until the next cyle (next day)
 
@@ -120,4 +125,18 @@ Now you can download a whole directory tree using `databricks fs cp -r dbfs://SR
 # Setting Access permissions to data storage
 When a DBR workspace is created in Azure, a new Azure storage account is created. This storage account is managed ONLY by the DBR.
 All users of the DBR workspace can read and write to anywhere in this storage, including UNMOUNTING directories.
+
+
+# Exact steps taken to create workspace with users for course 96224
+
+2024-06-24
+- In the Azure portal, I created Databricks workspace, with a new Resource Group, in the course' subscription
+- created API token, valid for 60 days, and updated file .env
+- updated the DATABRICKS_HOSTNAME in .env
+- downloaded the students group CSV file, edited invalid group names (though I think it does not matter)
+  - removed the first line, which is before the headers line
+- added command line args to the parser
+- strengthen the CSV file reader for Moodle
+
+2024-06-26: debugging broken DBR API. after fixing, I created groups and clusters, but permissions are not yet connected.
 

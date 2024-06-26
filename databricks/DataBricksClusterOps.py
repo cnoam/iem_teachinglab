@@ -7,6 +7,8 @@ from databricks_cli.dbfs.api import DbfsApi
 from databricks_cli.dbfs.dbfs_path import DbfsPath
 from databricks_cli.sdk.api_client import ApiClient
 
+from DataBricksGroups import DataBricksGroups
+
 dry_run = False
 
 logger = logging.getLogger('DBR_cluster_ops')
@@ -188,7 +190,7 @@ class DataBricksClusterOps:
         """
         headers = {"Authorization": f"Bearer {self.token}"}
         url = f'{self.host}/api/2.0/permissions/clusters/{cluster_id}'
-        response = requests.api.patch(url=url, headers=headers, data=json.dumps(config))
+        response = requests.api.put(url=url, headers=headers, data=json.dumps(config))
         response.raise_for_status()
 
     def set_cluster_permission(self, cluster_id: str, group_name: str, permission: ClusterPermission) -> None:
@@ -214,89 +216,6 @@ class DataBricksClusterOps:
             if verbose:
                 print(f"attaching group {gid} to {cluster_name}")
             self.set_cluster_permission(self.cluster_from_name(cluster_name)['cluster_id'], gname, self.ClusterPermission.RESTART)
-
-    def create_group(self, group_name: str):
-        """
-        :param group_name:
-        :return: the http response
-        """
-        headers = {"Authorization": f"Bearer {self.token}"}
-        url = f'{self.host}/api/2.0/groups/create'
-        data = '{ "group_name": "%s" }' % group_name
-        return requests.api.post(url=url, headers=headers, data=data)
-
-    def add_member_to_group(self, member_name: str, group_name: str, is_user: bool):
-        """
-        Add a databricks user to a group.
-        Both user and group MUST exist.
-        :param member_name     user or group name to add
-        :param group_name the parent group (where we want to add the member)
-        :param is_user True if adding a user, False if adding a group
-        :return: the http response
-        """
-        headers = {"Authorization": f"Bearer {self.token}"}
-        url = f'{self.host}/api/2.0/groups/add-member'
-        attr = 'user_name' if is_user else 'group_name'
-        data = '{ "%s": "%s", "parent_name": "%s" }' % (attr, member_name, group_name)
-        return requests.api.post(url=url, headers=headers, data=data)
-
-    def create_users(self, users: list) -> int:
-        """
-        Add users to Databricks workspace.
-        If a user is already added, the cluster will return 409 and will not add the user again.
-
-        :param users: list(string of user's email)
-        :return: number of successfully added users
-        """
-        return self.add_or_delete_users(users, delete_user=False)
-
-    def delete_users(self, users: list):
-        """
-        Delete users from Databricks workspace.
-        If a user is already deleted, the cluster will return 404 and will not delete the user again.
-
-        :param users: list(string of user's email)
-        :return: number of successfully deleted users
-        """
-        return self.add_or_delete_users(users, delete_user=True)
-
-    def list_users(self):
-        """Get a dictionary of all users in the workspace
-        See the docs how to filter the returned list by attributes or filtering. """
-        headers = {"Authorization": f"Bearer {self.token}"}
-        response = requests.get(url=f"{self.host}/api/2.0/preview/scim/v2/Users?&count=10000", headers=headers)
-        response.raise_for_status()
-        return response.json()
-
-    def get_user_details(self, id_):
-        """given user ID (as a string containing integer), return the user details"""
-        # https://docs.databricks.com/api/latest/scim/index.html#operation/getUser
-        headers = {"Authorization": f"Bearer {self.token}"}
-        response = requests.get(url=f"{self.host}/api/2.0/preview/scim/v2/Users/{id_}", headers=headers)
-        response.raise_for_status()
-        return response.json()
-
-    def add_or_delete_users(self, users: list[int], delete_user: bool):
-        """ Add/delete users to the workspace.
-            If an error happens during the operation-> partial change.
-            see https://docs.databricks.com/api/azure/workspace/users/delete
-        """
-        headers = {"Authorization": f"Bearer {self.token}"}
-
-        num_ok = 0
-        for user in users:
-            if delete_user:
-                id = user
-                url = f"{self.host}/api/2.0/preview/scim/v2/Users/{id}"
-                response = requests.api.delete(url, headers=headers)
-                response.raise_for_status()
-            else:
-                url = f'{self.host}/api/2.0/preview/scim/v2/Users'
-                data = """{{"schemas":["urn:ietf:params:scim:schemas:core:2.0:User"],"userName":"{user}"}}""".format(user=user)
-                response = requests.api.post(url=url, headers=headers, data=data)
-            if response:  # this format of checking will cover also 201, 304 etc.
-                num_ok += 1
-        return num_ok
 
     def install_libraries(self, cluster_id: str, libraries: list[dict]) -> requests.Response:
         """
@@ -402,16 +321,18 @@ def create_users_from_moodle(dbapi: DataBricksClusterOps, filename: str, verbose
     def raise_for_status_unless_exists(res):
          if 400 <= res.status_code < 500:
              text = json.loads(res.text)
-             if text['error_code'] == "RESOURCE_ALREADY_EXISTS":
+             if text['status'] == "409":
                 return
              response.raise_for_status()
 
     groups = MoodleFileParser.parse_moodle_csv(filename)
 
+    groups_api = DataBricksGroups(host=dbapi.host, token=dbapi.token)
+
     # create a master group that contains all the groups. This will make it
     # easy for the admin to give access.
     master_group_name = "all_student_groups"
-    response = dbapi.create_group(master_group_name)
+    response = groups_api.create_group(master_group_name)
     raise_for_status_unless_exists(response)
 
     for group, users in groups.items():
@@ -419,18 +340,18 @@ def create_users_from_moodle(dbapi: DataBricksClusterOps, filename: str, verbose
         # let's remove the domain -- we know that the name will be unique in a single domain.
         # shortnames = [u[: u.rfind('@')]  for u in users]
         group_name = "g" + str(group)
-        response = dbapi.create_group(group_name)
+        response = groups_api.create_group(group_name)
         raise_for_status_unless_exists(response)
 
         # Add the newly created group to the "master group"
-        response = dbapi.add_member_to_group(group_name, master_group_name, is_user=False)
+        response = groups_api.add_member_to_group(group_name, master_group_name, is_user=False)
         raise_for_status_unless_exists(response)
 
-        nCreated = dbapi.create_users(users)
+        nCreated = groups_api.create_users(users)
         if nCreated != len(users):
             print(f"Warning: at least one of {users} was not created")
         for u in users:
-            response = dbapi.add_member_to_group(u, group_name, is_user=True)
+            response = groups_api.add_member_to_group(u, group_name, is_user=True)
             response.raise_for_status()
 
         if verbose:
@@ -467,11 +388,11 @@ def create_clusters(how_many: int, verbose: bool = False):
         print('\n')
 
 
-def delete_all_users(exception_list: list[str]):
-    users = client.list_users()
+def delete_all_users(groups_api: DataBricksGroups, exception_list: list[str]):
+    users = groups_api.list_users()
     users_to_delete = filter(lambda u: u['emails'][0]['value'] not in exception_list, users['Resources'])
     id_to_delete = [u['id'] for u in users_to_delete]
-    num_deleted = client.delete_users(id_to_delete)
+    num_deleted = groups_api.delete_users(id_to_delete)
     print(f"deleted {num_deleted} users")
 
 
@@ -534,35 +455,29 @@ def print_usage():
 
 if __name__ == "__main__":
     from dotenv import load_dotenv
-    load_dotenv()
-
     import os, argparse
-
-
+    load_dotenv()
 
     host = os.getenv('DATABRICKS_HOST')
     token = os.getenv('DATABRICKS_TOKEN')
-    policy_id = os.getenv('POLICY_ID')
+    policy_id = os.getenv('POLICY_ID','')
     if host is None or token is None:
         raise RuntimeError('must set the env vars!')
 
     client = DataBricksClusterOps(host_='https://' + host, token_=token)
 
     parser = argparse.ArgumentParser(description="Process a CSV file (optional)")
-
-    # Optional argument for CSV file
     parser.add_argument("--create_from_csv", type=str, help="Path to the CSV file")
-
-    # Optional argument with flag for printing
     parser.add_argument("--print", action="store_true", default=False, help="Print the cluster names")
-
-    # Parse arguments from command line
+    parser.add_argument("--delete_all_users", action="store_true", default=False, help="Delete all workspace users except the VIP")
+    parser.add_argument("--purge_clusters", action="store_true", default=False,   help="Delete all clusters (need to type 'yes') ")
     args = parser.parse_args()
+
     #install_libs_for_NLP(client)
     if args.create_from_csv:
         # Given a Moodle file, create users and groups in Databricks workspace
         create_clusters_and_users(args.create_from_csv)
-        update_auto_termination(client, 22)
+        update_auto_termination(client, 22) # 22 minutes
 
     if args.print:
         client.print_clusters()
@@ -570,8 +485,9 @@ if __name__ == "__main__":
     if args.delete_all_users:
         # delete all users in this workspace except for a few:
         # (it will not delete the groups)
-        delete_all_users(exception_list =['cnoam@technion.ac.il', 'ilanit.sobol@campus.technion.ac.il'])
-        # print("To delete the workspace folders of the deleted users, use DatabricksClusterOps.py script")
+        g = DataBricksGroups(host,token)
+        delete_all_users(groups_api=g, exception_list =['cnoam@technion.ac.il'])
+        print("To delete the workspace folders of the deleted users, use DatabricksClusterOps.py script")
 
     if args.purge_clusters:
         # purge all clusters in this workspace: (need to type 'yes')

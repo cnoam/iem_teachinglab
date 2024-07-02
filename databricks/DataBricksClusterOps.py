@@ -303,6 +303,18 @@ class DataBricksClusterOps:
         # but it didn't work because the original cluster has more fields than the ones that are allowed to be updated
         return self.update_configuration(cluster, new_config)
 
+    def pin_cluster(self, cluster: dict):
+        """Pin a cluster, so it will not be auto-deleted from the workspace"""
+        _data = {}
+        cluster_id = cluster['cluster_id']
+        if cluster_id is not None:
+            _data['cluster_id'] = cluster_id
+        headers = {"Authorization": f"Bearer {self.token}"}
+        url = f'{self.host}/api/2.0/clusters/pin'
+        response = requests.post(url,json.dumps(_data), headers=headers)
+        response.raise_for_status()
+
+
 def create_users_from_moodle(dbapi: DataBricksClusterOps, filename: str, verbose: bool) -> int:
     """
     Read Moodle user groups, and create Databricks groups with these users
@@ -438,6 +450,13 @@ def update_auto_termination(c: DataBricksClusterOps, minutes: int):
             logger.error("Failed to update auto-termination time of cluster " + cid + " to " + str(minutes) + " minutes")
 
 
+def pin_clusters(client):
+    """PIN all the clusters in the workspace."""
+    clusters = client.get_clusters()
+    for c in clusters:
+        client.pin_cluster(c)
+
+
 def print_usage():
     print("""
     # To generate a new token:
@@ -478,6 +497,7 @@ if __name__ == "__main__":
         # Given a Moodle file, create users and groups in Databricks workspace
         create_clusters_and_users(args.create_from_csv)
         update_auto_termination(client, 22) # 22 minutes
+        pin_clusters(client)
 
     if args.print:
         client.print_clusters()

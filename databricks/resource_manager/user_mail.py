@@ -5,12 +5,12 @@ cluster30 --> g_30 --> cnoam@here.com
 """
 
 import os
-# HACK
-if __name__ == "__main__":
-    from databricks.DataBricksGroups import DataBricksGroups
-else:
-    from DataBricksGroups import DataBricksGroups
+from mailjet_rest import Client
+
+
+from ..DataBricksGroups import DataBricksGroups
 from dotenv import load_dotenv
+
 load_dotenv()
 host = 'https://' + os.getenv('DATABRICKS_HOST')
 token = os.getenv('DATABRICKS_TOKEN')
@@ -26,13 +26,9 @@ def get_emails_address(cluster_name: str) -> list:
         addr.append(m['user_name'])
     return addr
 
-
-def send_emails(subject:str, body: str, recipients: list[str]):
+def send_emails_google(subject:str, body: str, recipients: list[str]):
     import smtplib
     from email.mime.text import MIMEText
-    #mx_record = "technion-ac-il.mail.protection.outlook.com"
-    #host = "tx.technion.ac.il"
-    #username = "dds.lab@technion.ac.il"
     sender = "dds.lab.technion@gmail.com"
     # When using gmail, generate an application password.
     # see https://support.google.com/accounts/answer/185833?hl=en
@@ -48,6 +44,32 @@ def send_emails(subject:str, body: str, recipients: list[str]):
         smtp_server.sendmail(sender, recipients + ['cnoam@technion.ac.il'], msg.as_string())
 
 
-if __name__ == "__main__":
-    send_emails("test subject", "message body",recipients = ["noam1023@gmail.com"] )
+def send_emails_azure(subject:str, body: str, recipients: list[str]):
+    from azure.communication.email import EmailClient
 
+    key  = os.getenv('AZURE_EMAIL_ACCESS_KEY')
+    from_ = "DoNotReply@de9384ea-2d1f-4d24-a721-44bab6f65b6f.azurecomm.net"
+
+    connection_string = f"endpoint=https://comm-servicenc.unitedstates.communication.azure.com/;accesskey={key}"
+    client = EmailClient.from_connection_string(connection_string)
+
+    # [{"address": "cnoam@technion.ac.il"}]
+    recipients_list = [{'address': v} for v in recipients]
+
+    message = {
+        "senderAddress": from_,
+        "recipients": {
+            "to": recipients_list,
+        },
+        "content": {
+            "subject": subject,
+            "plainText": body,
+        }
+    }
+
+    poller = client.begin_send(message)
+    result = poller.result()
+
+
+def send_emails(subject:str, body: str, recipients: list[str])->None:
+    return send_emails_azure(subject,body,recipients)

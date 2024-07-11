@@ -75,13 +75,12 @@ cd /home/azureuser/iem_teachinglab/databricks
 source venv/bin/activate
 python poll_clusters.py
 deactivate
-
+logger Periodic Poll finished
 
 ~$ cat restore_permissions.sh 
 #!/bin/bash -eu
 cd /home/azureuser/iem_teachinglab/databricks
 source venv/bin/activate
-
 rm -f cluster_uptimes
 python restore_cluster_permissions.py
 deactivate
@@ -96,11 +95,16 @@ and then periodically:  `cat /var/mail/azureuser`
 
 The output of cron itself is at `/var/log/syslog`
 
+## Verify email sending
+Sending email tends to get stale.
 
 # TEARDOWN
 At the end of the semester, you can delete the whole DBR workspace, or delete the clusters only, the users only, or users and their workspace folders.
 
 To delete the workspace,  (after made sure all content is moved to a safe place), go to the Azure portal, choose Databricks workspace, and click the trashcan icon.  It will take a few minutes to delete, and remove the storage account as well (with name such as "dbstorageqz6q3h5ysfvqy")
+
+**In the quota-checker machine , edit the crontab and comment out the tasks **
+Or just turn it OFF !
 
 
 # More information
@@ -140,3 +144,11 @@ All users of the DBR workspace can read and write to anywhere in this storage, i
 
 2024-06-26: debugging broken DBR API. after fixing, I created groups and clusters, but permissions are not yet connected.
 
+
+
+# Sending email 
+The cron job that monitors the cluster may want to send email messages to users.
+In 2023 I used gmail, but it is no longer viable. I tried Mailjet, but the outlook server tags the message as Unverified and there is no way I can change it.
+So, using Azure: 
+Followed the instructions "Quickstart: How to send an email using Azure Communication Services" in Azure. 
+Created "Communications Service" and "Email Communications Service", connected them to each other, and ran the sample curl code. It worked (sending from my PC in Technion).

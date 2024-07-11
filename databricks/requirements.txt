@@ -1,5 +1,8 @@
 # MUST NOT install databricks
 databricks-cli==0.17.7
+databricks-sdk==0.10.0
 python-dotenv
 pyrecord==1.0.1
-databricks-sdk==0.10.0
+
+# mailjet_rest
+azure-communication-email==1.0.0

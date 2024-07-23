@@ -26,9 +26,21 @@ in crontab (use crontab -e as the user who owns the script):
 
 
 import logging
+from DataBricksGroups import DataBricksGroups
 from DataBricksClusterOps import DataBricksClusterOps
 from resource_manager import cluster_uptime
-from resource_manager.user_mail import send_emails, get_emails_address
+from resource_manager.user_mail import send_emails
+
+
+# {'members': [{'user_name': 'mdana@campus.technion.ac.il'}, {'user_name': 'liat.tsipory@campus.technion.ac.il'}]}
+def get_emails_address(cluster_name: str, g:DataBricksGroups) -> list:
+    """ The cluster name MUST be 'cluster_NNN'
+    """
+    addr = []
+    for m in g.get_group_members("g" + cluster_name[8:]):
+        addr.append(m['user_name'])
+    return addr
+
 
 def check_running_clusters(client, uptime_db:dict):
     """check and update 'uptime_db'
@@ -44,7 +56,7 @@ def cluster_id_to_cluster_name(clusters, id:int)->str:
 
 
 if __name__ == "__main__":
-    import pickle, datetime
+    import pickle, datetime, os
     logger = logging.getLogger('CLUSTER_POLL')
     logger.setLevel(logging.DEBUG)
     ch = logging.StreamHandler()
@@ -60,15 +72,17 @@ if __name__ == "__main__":
         uptime_db = {}
 
     from dotenv import load_dotenv
-    import os
 
     load_dotenv()
     host = os.getenv('DATABRICKS_HOST')
     token = os.getenv('DATABRICKS_TOKEN')
-    termination_watermark_minutes = os.getenv('DATABRICKS_MAX_UPTIME', 3*60+30)
-    warning_watermark_minutes = os.getenv('DATABRICKS_WARN_UPTIME', 3*60)
-    client = DataBricksClusterOps(host_='https://' + host, token_=token)
+    if not host or not token:
+        raise KeyError('DATABRICKS_HOST and/or DATABRICKS_TOKEN are missing')
 
+    termination_watermark_minutes = float(os.getenv('DATABRICKS_MAX_UPTIME', 3*60+30))
+    warning_watermark_minutes = float(os.getenv('DATABRICKS_WARN_UPTIME', 3*60))
+    client = DataBricksClusterOps(host_='https://' + host, token_=token)
+    dbr_groups = DataBricksGroups(host=host, token=token)
     check_running_clusters(client, uptime_db)
 
     clusters = client.get_clusters()
@@ -89,7 +103,7 @@ if __name__ == "__main__":
 
             send_emails(f"Your Cluster ({cluster_name})will be stopped now.",
                         body=f"Your cluster is used for too long during the last day.({hours}h{minutes}m , quota is {termination_watermark_minutes} minutes) and will be terminated soon. \n\n",
-                        recipients = get_emails_address(cluster_name))
+                        recipients = get_emails_address(cluster_name,dbr_groups),logger=logger)
             client.delete_cluster(cluster_name) # this will turn the cluster OFF, but not erase it.
             # prevent users from restarting the cluster
             group_name = "g" + cluster_name[8:]
@@ -103,11 +117,11 @@ if __name__ == "__main__":
    It will be turned OFF when reaching {termination_watermark_minutes} minutes.\n\
    This message is sent at most once a day\n\
    The time quota is reset at midnight.\n\n""",
-                        recipients=get_emails_address(cluster_name))
+                        recipients=get_emails_address(cluster_name,dbr_groups),logger=logger)
         else:
             logger.debug(f"cluster {cluster_name} checked. It is up for {total_time}")
 
-    with open('cluster_uptimes', 'wb') as datafile:
-        pickle.dump(uptime_db, datafile)
+    with open('cluster_uptimes', 'wb') as outf:
+        pickle.dump(uptime_db, outf)
 
     logger.info('Exiting successfully')

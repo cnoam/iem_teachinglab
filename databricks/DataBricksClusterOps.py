@@ -1,4 +1,5 @@
 import json
+import logging
 from enum import Enum
 import requests
 from databricks_cli.clusters.api import ClusterApi
@@ -8,6 +9,7 @@ from databricks_cli.sdk.api_client import ApiClient
 
 from DataBricksGroups import DataBricksGroups
 
+dry_run = False
 
 class DataBricksClusterOps:
     """
@@ -207,7 +209,11 @@ class DataBricksClusterOps:
             cluster_name = f"cluster_{gid}"
             if verbose:
                 print(f"attaching group {gid} to {cluster_name}")
-            self.set_cluster_permission(self.cluster_from_name(cluster_name)['cluster_id'], gname, self.ClusterPermission.RESTART)
+                try:
+                    self.set_cluster_permission(self.cluster_from_name(cluster_name)['cluster_id'], gname, self.ClusterPermission.RESTART)
+                except requests.exceptions.HTTPError as ex:
+                    if ex.response.status_code == 404:
+                        logging.error(f"Attaching group {gid} to {cluster_name} Failed: group not found.")
 
     def install_libraries(self, cluster_id: str, libraries: list[dict]) -> requests.Response:
         """

@@ -89,9 +89,9 @@ def create_clusters(how_many: int, verbose: bool = False):
     for j in range(how_many):
         i = j +1
         try:
-            resp1 = client.create_cluster(f"cluster_{i}", policy_id=policy_id)  # create the cluster and turn it ON
+            resp1 = cluster_api.create_cluster(f"cluster_{i}", policy_id=policy_id)  # create the cluster and turn it ON
             if resp1:
-                client.delete_cluster(f"cluster_{i}")  # turn the cluster OFF. We don't want to run it now.
+                cluster_api.delete_cluster(f"cluster_{i}")  # turn the cluster OFF. We don't want to run it now.
             else:
                 print(f"Failed created cluster {i}")
             if verbose:
@@ -135,11 +135,11 @@ def delete_all_groups(groups_api: DataBricksGroups):
 
 
 def create_clusters_and_users(moodle_filename: str):
-    nGroups = create_users_from_moodle(client, moodle_filename, verbose=True)
+    nGroups = create_users_from_moodle(cluster_api, moodle_filename, verbose=True)
     create_clusters(nGroups, verbose=True)
 
     allgroups = [f"g{n + 1}" for n in range(nGroups)]
-    client.attach_groups_to_clusters(allgroups, verbose=True)
+    cluster_api.attach_groups_to_clusters(allgroups, verbose=True)
 
     print("Once the groups and users are created, you can go to the DataBricks portal to add permission to use the workspace.\n "
           "choose your name - Admin Console. 'Identity and access' | 'Groups' .\n"
@@ -177,7 +177,7 @@ def update_auto_termination(c: DataBricksClusterOps, minutes: int):
             logger.error("Failed to update auto-termination time of cluster " + cid + " to " + str(minutes) + " minutes")
 
 
-def pin_clusters(client):
+def pin_clusters(client: DataBricksClusterOps):
     """PIN all the clusters in the workspace."""
     clusters = client.get_clusters()
     for c in clusters:
@@ -213,22 +213,84 @@ def print_groups():
     pprint.pprint(names)
 
 
-def print_users():
-    groups_api = DataBricksGroups('https://' + host, token)
+def print_users(groups_api: DataBricksGroups):
     values = groups_api.list_users()
     emails =[ x['emails'][0]['value'] for x in values['Resources'] ]
     pprint.pprint(emails)
 
 
-
-def print_user_allocation_clusters():
+def print_user_allocation_clusters(groups_api: DataBricksGroups, cluster_api: DataBricksClusterOps):
     """ print a table  sorted by cluster name:
     [
     [ cluster name, group name, [user_emails,...]]
     ...
-    ]
-    """
+    ]"""
 
+    res = {}
+    clusters = cluster_api.get_clusters()
+    for c in clusters:
+        permissions = cluster_api.get_cluster_permission(c['cluster_id'])
+        # {
+        # "object_id":"/clusters/0626-112719-jy3n8ws2",
+        # "object_type":"cluster",
+        # "access_control_list":
+        #   [  {"group_name":"admins",
+        #       "all_permissions":[
+        #           {"permission_level":"CAN_MANAGE",
+        #            "inherited":true,
+        #            "inherited_from_object":["/clusters/"]}]
+        #        },
+        #       {"group_name":"g13","all_permissions":[{"permission_level":"CAN_RESTART","inherited":false}]}]}'
+
+        # for each cluster, get some info
+        perms = []
+        for g in permissions['access_control_list']:
+            try:
+                perms.append({'group_name': g['group_name'], 'permission': g['all_permissions'][0]['permission_level']} )
+            except KeyError as ex:
+                logger.warning(f"Skipping permissions of user without a group in cluster {c['cluster_name']}")
+
+        matcher = re.compile("^g[\d]{1,2}")
+        user_groups = list(filter(lambda x: matcher.match(x['group_name']), perms))
+        if user_groups:
+            user_names = groups_api.get_group_members(user_groups[0]['group_name'])
+        else:
+            user_names = []
+        res[c['cluster_name']] = { 'groups':user_groups, 'users': user_names}
+
+    # now that we have all the info, print it as we want
+    f = []
+    for k, v in res.items():
+        try:
+            gname = v['groups'][0]['group_name']
+            permission = v['groups'][0]['permission']
+            users = [u['user_name'] for u in v['users']]
+            clipped = [x[: x.find('@')] for x in users]
+        except (KeyError, IndexError):
+            gname = permission = ''
+            clipped = []
+        finally:
+            f.append([k, gname, permission, clipped]
+                     )
+    f.sort(key=lambda x: int(x[0][8:]))  # drop the "cluster_" prefix
+    for line in f:
+        print(f"{line[0]},\t{line[1]},\t, {line[2]},\t {' : '.join(line[3])}")
+
+
+
+def print_user_in_groups(groups_api: DataBricksGroups):
+
+    names = groups_api.list_groups()
+    names = [n for n in names if re.match(r'g\d{1,2}', n)]
+
+    for name in names:
+        members = groups_api.get_group_members(name)
+        print(f"{name}: ", end='')
+        for name in members:
+            a = name['user_name']
+            a = a[0:a.find('@')]
+            print(f"{a}  ", end='')
+        print("")
 
 
 if __name__ == "__main__":
@@ -246,13 +308,16 @@ if __name__ == "__main__":
     if host is None or token is None:
         raise RuntimeError('must set the env vars!')
 
-    client = DataBricksClusterOps(host_='https://' + host, token_=token)
+    groups_api = DataBricksGroups(host='https://' + host, token=token)
+    cluster_api = DataBricksClusterOps(host_='https://' + host, token_=token)
 
     parser = argparse.ArgumentParser(description="Process a CSV file (optional)")
     parser.add_argument("--create_from_csv", type=str, help="Path to the CSV file")
     parser.add_argument("--print_clusters", action="store_true", default=False, help="Print the cluster names")
     parser.add_argument("--print_groups", action="store_true", default=False, help="Print the group names")
     parser.add_argument("--print_users", action="store_true", default=False, help="Print the users names")
+    parser.add_argument("--print_user_groups", action="store_true", default=False, help="Print the users in each group")
+    parser.add_argument("--print_user_groups_clusters", action="store_true", default=False, help="Print a nice table:for each cluster which group is connected and who are the users")
     parser.add_argument("--delete_all_users", action="store_true", default=False, help="Delete all workspace users except the VIP (need to type 'yes')")
     parser.add_argument("--delete_all_groups", action="store_true", default=False, help="Delete all workspace groups (need to type 'yes')")
     parser.add_argument("--purge_clusters", action="store_true", default=False,   help="Delete all clusters (need to type 'yes') ")
@@ -263,17 +328,23 @@ if __name__ == "__main__":
     if args.create_from_csv:
         # Given a Moodle file, create users and groups in Databricks workspace
         create_clusters_and_users(args.create_from_csv)
-        update_auto_termination(client, 22) # 22 minutes
-        pin_clusters(client)
+        update_auto_termination(cluster_api, 22) # 22 minutes
+        pin_clusters(cluster_api)
 
     if args.print_clusters:
-        client.print_clusters()
+        cluster_api.print_clusters()
 
     if args.print_groups:
         print_groups()
 
     if args.print_users:
-        print_users()
+        print_users(groups_api)
+
+    if args.print_user_groups:
+        print_user_in_groups(groups_api)
+
+    if args.print_user_groups_clusters:
+        print_user_allocation_clusters(groups_api=groups_api, cluster_api=cluster_api)
 
     if args.delete_all_users:
         # delete all users in this workspace except for a few:
@@ -291,7 +362,7 @@ if __name__ == "__main__":
 
     if args.purge_clusters:
         # purge all clusters in this workspace: (need to type 'yes')
-        client.permanent_delete_all_clusters(verbose=True)
+        cluster_api.permanent_delete_all_clusters(verbose=True)
 
 
 

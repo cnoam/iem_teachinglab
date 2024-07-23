@@ -121,30 +121,3 @@ class DataBricksGroups:
             if response:  # this format of checking will cover also 201, 304 etc.
                 num_ok += 1
         return num_ok
-
-
-if __name__ == "__main__":
-    import os
-    import re
-    from dotenv import load_dotenv
-
-    load_dotenv()
-
-    host = os.getenv('DATABRICKS_HOST')
-    assert host is not None
-    host = 'https://' + host
-    token = os.getenv('DATABRICKS_TOKEN')
-    assert token is not None
-    groups_api = DataBricksGroups(host=host, token=token)
-
-    names = groups_api.list_groups()
-    names = [n for n in names if re.match(r'g\d{1,2}', n)]
-
-    for name in names:
-        members = groups_api.get_group_members(name)
-        print(f"{name}: ", end='')
-        for name in members:
-            a = name['user_name']
-            a = a[0:a.find('@')]
-            print(f"{a}  ", end='')
-        print("")

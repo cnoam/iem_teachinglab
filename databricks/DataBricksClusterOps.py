@@ -199,6 +199,13 @@ class DataBricksClusterOps:
         config = {"access_control_list": [{"group_name": group_name, "permission_level": s}]}
         self.edit_cluster_permissions(cluster_id, config)
 
+    def get_cluster_permission(self, cluster_id: str):
+        headers = {"Authorization": f"Bearer {self.token}"}
+        url = f'{self.host}/api/2.0/permissions/clusters/{cluster_id}'
+        response = requests.api.get(url=url, headers=headers)
+        response.raise_for_status()
+        return response.json()
+
     def attach_groups_to_clusters(self, groups: list, verbose: bool = False) -> None:
         """
         For each group (in the format gNUMBER), attach it to a cluster with the name cluster_NUMBER

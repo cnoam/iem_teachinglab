@@ -4,7 +4,7 @@
 
 import json
 import logging
-import sys
+import sys, re, pprint
 
 from DataBricksClusterOps import DataBricksClusterOps, DataBricksGroups
 
@@ -34,7 +34,9 @@ def create_users_from_moodle(dbapi: DataBricksClusterOps, filename: str, verbose
     def raise_for_status_unless_exists(res):
          if 400 <= res.status_code < 500:
              text = json.loads(res.text)
-             if text['status'] == "409":
+             # if the code is 409, the schema is '{"schemas":["urn:ietf:params:scim:api:messages:2.0:Error"],"detail":"Group with name all_student_groups already exists.","status":"409"}'
+             # if it is 403, it is { ... , 'error_code': integer}
+             if res.status_code == 409:
                 return
              response.raise_for_status()
 
@@ -102,11 +104,34 @@ def create_clusters(how_many: int, verbose: bool = False):
 
 
 def delete_all_users(groups_api: DataBricksGroups, exception_list: list[str]):
+    ok = input("About to permanently delete ALL USERS. If this is ok, type 'yes': ")
+    if ok != 'yes':
+        print("Cancelled.")
+        return
     users = groups_api.list_users()
     users_to_delete = filter(lambda u: u['emails'][0]['value'] not in exception_list, users['Resources'])
     id_to_delete = [u['id'] for u in users_to_delete]
     num_deleted = groups_api.delete_users(id_to_delete)
     print(f"deleted {num_deleted} users")
+
+
+def delete_all_groups(groups_api: DataBricksGroups):
+    ok = input("About to permanently delete ALL GROUPS. If this is ok, type 'yes': ")
+    if ok != 'yes':
+        print("Cancelled.")
+        return
+    group_names = groups_api.list_groups()
+    p=re.compile("^g[\d]{1,2}")
+
+    names_to_delete = [s for s in group_names if p.match(s)]
+
+    num_deleted = 0
+    for g in names_to_delete:
+        resp_code= groups_api.delete_group(g)
+        num_deleted += resp_code == 200 # https status
+
+    print(f"deleted {num_deleted} groups")
+
 
 
 def create_clusters_and_users(moodle_filename: str):
@@ -180,6 +205,32 @@ def print_usage():
     """)
 
 
+def print_groups():
+    groups_api = DataBricksGroups('https://' + host, token)
+    names = groups_api.list_groups()
+    names = [n for n in names if re.match(r'g\d{1,2}',n)]
+    names.sort(key= lambda x : int(x[1:]))
+    pprint.pprint(names)
+
+
+def print_users():
+    groups_api = DataBricksGroups('https://' + host, token)
+    values = groups_api.list_users()
+    emails =[ x['emails'][0]['value'] for x in values['Resources'] ]
+    pprint.pprint(emails)
+
+
+
+def print_user_allocation_clusters():
+    """ print a table  sorted by cluster name:
+    [
+    [ cluster name, group name, [user_emails,...]]
+    ...
+    ]
+    """
+
+
+
 if __name__ == "__main__":
 
     if len(sys.argv) == 1:
@@ -199,9 +250,13 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Process a CSV file (optional)")
     parser.add_argument("--create_from_csv", type=str, help="Path to the CSV file")
-    parser.add_argument("--print", action="store_true", default=False, help="Print the cluster names")
-    parser.add_argument("--delete_all_users", action="store_true", default=False, help="Delete all workspace users except the VIP")
+    parser.add_argument("--print_clusters", action="store_true", default=False, help="Print the cluster names")
+    parser.add_argument("--print_groups", action="store_true", default=False, help="Print the group names")
+    parser.add_argument("--print_users", action="store_true", default=False, help="Print the users names")
+    parser.add_argument("--delete_all_users", action="store_true", default=False, help="Delete all workspace users except the VIP (need to type 'yes')")
+    parser.add_argument("--delete_all_groups", action="store_true", default=False, help="Delete all workspace groups (need to type 'yes')")
     parser.add_argument("--purge_clusters", action="store_true", default=False,   help="Delete all clusters (need to type 'yes') ")
+    #parser.add_argument("--install_NLP_libs", action="store_true", default=False, help="install  some needed libs")
     args = parser.parse_args()
 
     #install_libs_for_NLP(client)
@@ -211,14 +266,27 @@ if __name__ == "__main__":
         update_auto_termination(client, 22) # 22 minutes
         pin_clusters(client)
 
-    if args.print:
+    if args.print_clusters:
         client.print_clusters()
+
+    if args.print_groups:
+        print_groups()
+
+    if args.print_users:
+        print_users()
 
     if args.delete_all_users:
         # delete all users in this workspace except for a few:
         # (it will not delete the groups)
         g = DataBricksGroups(host,token)
         delete_all_users(groups_api=g, exception_list =['cnoam@technion.ac.il'])
+        print("To delete the workspace folders of the deleted users, use DatabricksClusterOps.py script")
+
+    if args.delete_all_groups:
+        # delete all groups in this workspace
+        # (it will not delete the users)
+        g = DataBricksGroups(host = "https://"+host,token=token)
+        delete_all_groups(groups_api=g)
         print("To delete the workspace folders of the deleted users, use DatabricksClusterOps.py script")
 
     if args.purge_clusters:

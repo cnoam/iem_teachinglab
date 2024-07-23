@@ -13,20 +13,20 @@ class DataBricksGroups:
     This class uses API 2.0 (legacy)
     """
 
-    def __init__(self,host:str, token:str):
-        self.api_client = ApiClient(host=host,token=token)
+    def __init__(self, host: str, token: str):
+        self.api_client = ApiClient(host=host, token=token)
         self.token = token
         self.host = host
         self.groups_api = GroupsApi(self.api_client)
 
-    def get_group_members(self, groupname:str) -> list:
+    def get_group_members(self, groupname: str) -> list:
         try:
             return self.groups_api.list_members(groupname)['members']
         except KeyError:
             return []
 
-    def list_groups(self):
-        return self.groups_api.list_all()
+    def list_groups(self) -> list[str]:
+        return self.groups_api.list_all()['group_names']
 
     def list_users(self):
         """Get a dictionary of all users in the workspace
@@ -36,7 +36,7 @@ class DataBricksGroups:
         response.raise_for_status()
         return response.json()
 
-    def create_group(self, group_name:str):
+    def create_group(self, group_name: str):
         import json
         import requests
 
@@ -47,7 +47,7 @@ class DataBricksGroups:
         # return self.groups_api.create(group_name) #  as of 2024-06-25, this api is broken
         return resp
 
-    def delete_group(self, group_name:str)->int :
+    def delete_group(self, group_name: str) -> int:
         """delete a group.
         :return: HTTP status code 200, 403, 404"""
         try:
@@ -122,25 +122,27 @@ class DataBricksGroups:
                 num_ok += 1
         return num_ok
 
+
 if __name__ == "__main__":
     import os
     import re
     from dotenv import load_dotenv
+
     load_dotenv()
 
-    host =  os.getenv('DATABRICKS_HOST')
+    host = os.getenv('DATABRICKS_HOST')
     assert host is not None
     host = 'https://' + host
     token = os.getenv('DATABRICKS_TOKEN')
     assert token is not None
     groups_api = DataBricksGroups(host=host, token=token)
 
-    names = groups_api.list_groups()['group_names']
-    names = [n for n in names if re.match(r'g\d{1,2}',n)]
+    names = groups_api.list_groups()
+    names = [n for n in names if re.match(r'g\d{1,2}', n)]
 
     for name in names:
         members = groups_api.get_group_members(name)
-        print(f"{name}: " , end='')
+        print(f"{name}: ", end='')
         for name in members:
             a = name['user_name']
             a = a[0:a.find('@')]

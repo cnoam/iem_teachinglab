@@ -26,7 +26,7 @@ class MoodleFileParser:
 
                 if rowcount == 0:
                     if row[0] != 'Group ID':
-                        raise Exception('unexpected CSV format')
+                        raise Exception('unexpected CSV format. First line MUST start with "Group ID"')
                     col_names = row
                     index_email1 = col_names.index('Member 1 Email')
                     index_email2 = col_names.index('Member 2 Email')

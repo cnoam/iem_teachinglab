@@ -321,6 +321,7 @@ if __name__ == "__main__":
     parser.add_argument("--delete_all_users", action="store_true", default=False, help="Delete all workspace users except the VIP (need to type 'yes')")
     parser.add_argument("--delete_all_groups", action="store_true", default=False, help="Delete all workspace groups (need to type 'yes')")
     parser.add_argument("--purge_clusters", action="store_true", default=False,   help="Delete all clusters (need to type 'yes') ")
+    parser.add_argument("--test_email", action="store_true", default=False,   help="Send a test email message")
     #parser.add_argument("--install_NLP_libs", action="store_true", default=False, help="install  some needed libs")
     args = parser.parse_args()
 
@@ -363,6 +364,10 @@ if __name__ == "__main__":
     if args.purge_clusters:
         # purge all clusters in this workspace: (need to type 'yes')
         cluster_api.permanent_delete_all_clusters(verbose=True)
+
+    if args.test_email:
+        from resource_manager.user_mail import send_emails
+        send_emails("test message","body of message", ['dds.lab@technion.ac.il'], logger)
 
 
 

@@ -9,7 +9,8 @@ class MoodleFileParser:
     def __init__(self):
         pass
 
-    def parse_moodle_csv(filename: str):
+    @classmethod
+    def parse_moodle_csv(cls, filename: str):
         """
         read a CSV file containing Group assignment in Moodle.
         Currently limited to 3 members in each group.
@@ -54,4 +55,3 @@ class MoodleFileParser:
 
 if __name__ == "__main__":
     out = MoodleFileParser.parse_moodle_csv('/home/cnoam/Downloads/Groupself-selection_00094290.01_2024-01-14.csv')
-    out

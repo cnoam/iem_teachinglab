@@ -49,14 +49,7 @@ IMPORTANT: make sure the env vars are correctly set!
 8. `source venv/bin/activate`
 9. `pip install -r requirements.txt`
 10. `deactivate`
-11. add at the end of ~/.bashrc:
-```asciidoc
-export DATABRICKS_HOST="adb-4286500221395801.1.azuredatabricks.net"
-export DATABRICKS_TOKEN="****"
-export SMTP_PASSWORD="****"
-```
-or simply copy the `.env` file from your working dir.
-
+11.  copy the `.env` file from your working dir to the same path
 12. As user azureuser (the default user in azure VM): `crontab -e`
 
 add these lines:
@@ -97,6 +90,7 @@ The output of cron itself is at `/var/log/syslog`
 
 ## Verify email sending
 Sending email tends to get stale.
+Check by running `python main.py --test_email` (after activating the venv)
 
 # TEARDOWN
 At the end of the semester, you can delete the whole DBR workspace, or delete the clusters only, the users only, or users and their workspace folders.
@@ -131,24 +125,11 @@ When a DBR workspace is created in Azure, a new Azure storage account is created
 All users of the DBR workspace can read and write to anywhere in this storage, including UNMOUNTING directories.
 
 
-# Exact steps taken to create workspace with users for course 96224
-
-2024-06-24
-- In the Azure portal, I created Databricks workspace, with a new Resource Group, in the course' subscription
-- created API token, valid for 60 days, and updated file .env
-- updated the DATABRICKS_HOSTNAME in .env
-- downloaded the students group CSV file, edited invalid group names (though I think it does not matter)
-  - removed the first line, which is before the headers line
-- added command line args to the parser
-- strengthen the CSV file reader for Moodle
-
-2024-06-26: debugging broken DBR API. after fixing, I created groups and clusters, but permissions are not yet connected.
-
-
-
 # Sending email 
 The cron job that monitors the cluster may want to send email messages to users.
 In 2023 I used gmail, but it is no longer viable. I tried Mailjet, but the outlook server tags the message as Unverified and there is no way I can change it.
 So, using Azure: 
 Followed the instructions "Quickstart: How to send an email using Azure Communication Services" in Azure. 
+
 Created "Communications Service" and "Email Communications Service", connected them to each other, and ran the sample curl code. It worked (sending from my PC in Technion).
+To use it, need to have API key.

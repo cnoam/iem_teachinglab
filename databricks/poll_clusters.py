@@ -55,7 +55,7 @@ def cluster_id_to_cluster_name(clusters, id:int)->str:
     return cluster['cluster_name']
 
 
-if __name__ == "__main__":
+def main():
     import pickle, datetime, os
     logger = logging.getLogger('CLUSTER_POLL')
     logger.setLevel(logging.DEBUG)
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     termination_watermark_minutes = float(os.getenv('DATABRICKS_MAX_UPTIME', 3*60+30))
     warning_watermark_minutes = float(os.getenv('DATABRICKS_WARN_UPTIME', 3*60))
     client = DataBricksClusterOps(host_='https://' + host, token_=token)
-    dbr_groups = DataBricksGroups(host=host, token=token)
+    dbr_groups = DataBricksGroups(host='https://' + host, token=token)
     check_running_clusters(client, uptime_db)
 
     clusters = client.get_clusters()
@@ -125,3 +125,11 @@ if __name__ == "__main__":
         pickle.dump(uptime_db, outf)
 
     logger.info('Exiting successfully')
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as ex:
+        print("Poll clusters crashed! email was sent")
+        send_emails("Poll clusters crashed!", body= str(ex), recipients=['cnoam@technion.ac.il'], logger=None)

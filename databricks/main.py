@@ -322,6 +322,7 @@ if __name__ == "__main__":
     parser.add_argument("--delete_all_groups", action="store_true", default=False, help="Delete all workspace groups (need to type 'yes')")
     parser.add_argument("--purge_clusters", action="store_true", default=False,   help="Delete all clusters (need to type 'yes') ")
     parser.add_argument("--test_email", action="store_true", default=False,   help="Send a test email message")
+    parser.add_argument("--cluster_usage", action="store_true", default=False, help="print stats of cluster usage")
     #parser.add_argument("--install_NLP_libs", action="store_true", default=False, help="install  some needed libs")
     args = parser.parse_args()
 
@@ -368,6 +369,28 @@ if __name__ == "__main__":
     if args.test_email:
         from resource_manager.user_mail import send_emails
         send_emails("test message","body of message", ['dds.lab@technion.ac.il'], logger)
+
+    if args.cluster_usage:
+        import pickle
+        from tabulate import tabulate
+        try:
+            with open('cluster_uptimes', 'rb') as datafile:
+                uptime_db = pickle.load(datafile)
+                pass
+        except FileNotFoundError:
+            uptime_db = {}
+
+        from pyrecord import Record
+        import datetime
+        def to_list(rec: Record)->list:
+            uptime_ = datetime.datetime.utcfromtimestamp(rec.uptime.total_seconds()).strftime("%H:%M")
+            return [uptime_, rec.warning_sent, rec.force_terminated]
+
+        data = [to_list(rec) for rec in uptime_db.values()]
+        data = [[key] + value for key, value in zip(uptime_db.keys(), data)]
+        print(tabulate(data, headers=["ID", "uptime","warn sent", "killed"], tablefmt="github"))
+        total = sum(( u.uptime for u  in uptime_db.values()), datetime.timedelta(0) )
+        print(f"Total time  {total.total_seconds()/3600:.4} hours")
 
 
 

@@ -40,17 +40,21 @@ Follow the steps below to perform polling periodically.
 
 IMPORTANT: make sure the env vars are correctly set!
 1. Create a VM
-2. `ssh azureuser@172.206.249.112`
-3. `sudo apt update`
-4. `sudo apt install -y python3-venv`
-5. `git clone https://github.com/cnoam/iem_teachinglab.git`
-6. `cd ~/iem_teachinglab/databricks`
-7. `python3 -m venv venv`
-8. `source venv/bin/activate`
-9. `pip install -r requirements.txt`
-10. `deactivate`
-11.  copy the `.env` file from your working dir to the same path
-12. As user azureuser (the default user in azure VM): `crontab -e`
+2. `ssh azureuser@quotaserver****.com`
+3. 
+```
+sudo timedatectl set-timezone Israel
+sudo apt update
+sudo apt install -y python3-venv
+git clone https://github.com/cnoam/iem_teachinglab.git
+cd ~/iem_teachinglab/databricks
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+deactivate
+```
+4.  copy the `.env` file from your working dir to the same path 
+5. As user azureuser (the default user in azure VM): `crontab -e`
 
 add these lines:
 ```
@@ -60,7 +64,7 @@ add these lines:
 # run every midnight + a little, to avoid clashing with the other job
 9 0 * * * /home/azureuser/iem_teachinglab/restore_permissions.sh
 ```
-In /home/azureuser, create the files:
+In `/home/azureuser`, create the files:
 ```
 ~$ cat periodic_poll.sh 
 #!/bin/bash -eu

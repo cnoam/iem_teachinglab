@@ -219,63 +219,6 @@ def print_users(groups_api: DataBricksGroups):
     pprint.pprint(emails)
 
 
-def print_user_allocation_clusters(groups_api: DataBricksGroups, cluster_api: DataBricksClusterOps):
-    """ print a table  sorted by cluster name:
-    [
-    [ cluster name, group name, [user_emails,...]]
-    ...
-    ]"""
-
-    res = {}
-    clusters = cluster_api.get_clusters()
-    for c in clusters:
-        permissions = cluster_api.get_cluster_permission(c['cluster_id'])
-        # {
-        # "object_id":"/clusters/0626-112719-jy3n8ws2",
-        # "object_type":"cluster",
-        # "access_control_list":
-        #   [  {"group_name":"admins",
-        #       "all_permissions":[
-        #           {"permission_level":"CAN_MANAGE",
-        #            "inherited":true,
-        #            "inherited_from_object":["/clusters/"]}]
-        #        },
-        #       {"group_name":"g13","all_permissions":[{"permission_level":"CAN_RESTART","inherited":false}]}]}'
-
-        # for each cluster, get some info
-        perms = []
-        for g in permissions['access_control_list']:
-            try:
-                perms.append({'group_name': g['group_name'], 'permission': g['all_permissions'][0]['permission_level']} )
-            except KeyError as ex:
-                logger.warning(f"Skipping permissions of user without a group in cluster {c['cluster_name']}")
-
-        matcher = re.compile("^g[\d]{1,2}")
-        user_groups = list(filter(lambda x: matcher.match(x['group_name']), perms))
-        if user_groups:
-            user_names = groups_api.get_group_members(user_groups[0]['group_name'])
-        else:
-            user_names = []
-        res[c['cluster_name']] = { 'groups':user_groups, 'users': user_names}
-
-    # now that we have all the info, print it as we want
-    f = []
-    for k, v in res.items():
-        try:
-            gname = v['groups'][0]['group_name']
-            permission = v['groups'][0]['permission']
-            users = [u['user_name'] for u in v['users']]
-            clipped = [x[: x.find('@')] for x in users]
-        except (KeyError, IndexError):
-            gname = permission = ''
-            clipped = []
-        finally:
-            f.append([k, gname, permission, clipped]
-                     )
-    f.sort(key=lambda x: int(x[0][8:]))  # drop the "cluster_" prefix
-    for line in f:
-        print(f"{line[0]},\t{line[1]},\t, {line[2]},\t {' : '.join(line[3])}")
-
 
 
 def print_user_in_groups(groups_api: DataBricksGroups):
@@ -295,6 +238,7 @@ def print_user_in_groups(groups_api: DataBricksGroups):
 
 if __name__ == "__main__":
 
+    from resource_manager import stats
     if len(sys.argv) == 1:
         print_usage()
         exit(0)
@@ -346,7 +290,7 @@ if __name__ == "__main__":
         print_user_in_groups(groups_api)
 
     if args.print_user_groups_clusters:
-        print_user_allocation_clusters(groups_api=groups_api, cluster_api=cluster_api)
+        stats.print_user_allocation_clusters(groups_api=groups_api, cluster_api=cluster_api, logger=logger)
 
     if args.delete_all_users:
         # delete all users in this workspace except for a few:

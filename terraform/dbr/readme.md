@@ -3,10 +3,44 @@
 
 1. Download a CSV file from Moodle with 1 or more users (must be email address) in each row.<br>
 Name it "users.csv" and place it in the current directory.<br>
-2. generate a Databricks personal token and store it as 
-`TF_VAR_databricks_token=dapia****`
-3. run `terraform apply`. check that the plan is reasonable.
-4. After it finished, check that the resources in the Databricks portal are as expected: users created, they are in the correct group, the group has correct permissions in the correct cluster. All cluster should be turned OFF.
+
+1. Create a Databricks workspace (I use Azure portal).
+1. generate a Databricks personal token
+  - enter the workspace, user settings,  developer tools, manage access tokens, generate new token.
+  - store it as  `TF_VAR_databricks_token=dapia****` in a **safe** place for env variables.
+
+1. login to the correct DBR profile:
+  `databricks auth login --host adb-3738544368441327.7.azuredatabricks.net`
+  This will open the browser and let you login.
+  The "adb***" is copied from the URL shown in the browser when entering the workspace.
+
+  Calling this command writes a file ~/.databrickscfg
+
+Originally it looked like:
+; The profile defined in the DEFAULT section is to be used as a fallback when no profile is explicitly specified.
+
+```
+[DEFAULT]
+
+[adb-3738544368441327 ]
+host      = adb-3738544368441327.7.azuredatabricks.net
+auth_type = databricks-cli
+```
+
+And to make the `terraform apply` work, I edited it to:
+```
+; The profile defined in the DEFAULT section is to be used as a fallback when no profile is explicitly specified.
+[DEFAULT]
+host      = adb-3738544368441327.7.azuredatabricks.net
+
+[token]
+token=dapi***-3
+[adb-3738544368441327 ]
+host      = adb-3738544368441327.7.azuredatabricks.net
+auth_type = databricks-cli
+```
+1. run `terraform plan`. check that the plan is reasonable.
+1. `terraform apply`. After it finished, check that the resources in the Databricks portal are as expected: users created, they are in the correct group, the group has correct permissions in the correct cluster. All cluster should be turned OFF.
 
 
 ## Modifying properties in existing deployment
@@ -25,7 +59,7 @@ The python code is complex, and I found out that MS/DBR silently breaks the REST
 
 https://registry.terraform.io/providers/databricks/databricks/latest/docs
 
- Note: the credentials are read from ~/.databricksconfig. Make sure they are for the workspace of interest, or the operations will be carried on the wrong WS! Also, the env vars have higher precedence.
+ Note: the credentials are read from ~/.databrickscg. Make sure they are for the workspace of interest, or the operations will be carried on the wrong WS! Also, the env vars have higher precedence.
 
 2024-06-27 16:37 the installed databricks cli is too old (0.18)
 2024-06-27 16:58 installed the newest version (0.222)

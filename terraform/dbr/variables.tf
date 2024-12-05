@@ -41,5 +41,5 @@ variable "max_workers" {
 variable "autotermination_minutes" {
   description = "Auto termination [minutes]"
   type        = number
-  default     = 15
+  default     = 20
 }

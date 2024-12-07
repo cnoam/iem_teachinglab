@@ -32,9 +32,6 @@ def convert_csv(input_file, output_file):
     outfile.write('\n')
     writer = csv.writer(outfile)
 
-    # Skip the "sep=" row
-    next(reader)
-
     #print(reader.fieldnames)
     for row in reader:
       # Extract email addresses from member columns

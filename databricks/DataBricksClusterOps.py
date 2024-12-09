@@ -2,10 +2,16 @@ import json
 import logging
 from enum import Enum
 import requests
-from databricks_cli.clusters.api import ClusterApi
-from databricks_cli.dbfs.api import DbfsApi
-from databricks_cli.dbfs.dbfs_path import DbfsPath
-from databricks_cli.sdk.api_client import ApiClient
+try:
+    from databricks_cli.clusters.api import ClusterApi
+    from databricks_cli.dbfs.api import DbfsApi
+    from databricks_cli.dbfs.dbfs_path import DbfsPath
+    from databricks_cli.sdk.api_client import ApiClient
+except ModuleNotFoundError:
+    print("Did you remember to 'source venv/bin/activate'?\n\n")
+    raise
+
+
 
 from DataBricksGroups import DataBricksGroups
 

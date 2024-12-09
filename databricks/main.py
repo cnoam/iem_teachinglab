@@ -116,12 +116,12 @@ def delete_all_users(groups_api: DataBricksGroups, exception_list: list[str]):
 
 
 def delete_all_groups(groups_api: DataBricksGroups):
-    ok = input("About to permanently delete ALL GROUPS. If this is ok, type 'yes': ")
+    ok = input("About to permanently delete ALL GROUPS matching \"^group_[\d]{2}\". If this is ok, type 'yes': ")
     if ok != 'yes':
         print("Cancelled.")
         return
     group_names = groups_api.list_groups()
-    p=re.compile("^g[\d]{1,2}")
+    p=re.compile("^group_[\d]{2}")
 
     names_to_delete = [s for s in group_names if p.match(s)]
 
@@ -138,7 +138,7 @@ def create_clusters_and_users(moodle_filename: str):
     nGroups = create_users_from_moodle(cluster_api, moodle_filename, verbose=True)
     create_clusters(nGroups, verbose=True)
 
-    allgroups = [f"g{n + 1}" for n in range(nGroups)]
+    allgroups = [f"group_{n + 1}" for n in range(nGroups)]
     cluster_api.attach_groups_to_clusters(allgroups, verbose=True)
 
     print("Once the groups and users are created, you can go to the DataBricks portal to add permission to use the workspace.\n "
@@ -204,28 +204,22 @@ def print_usage():
     Using the UI: open the DBR portal - compute (in the left pane), Policies tab. Choose "Shared Compute". Copy the policy ID
     """)
 
+def _sorted_group_names( names:list)->list :
+    names = [n for n in names if re.match(r'group_\d{2}',n)]
+    names.sort(key= lambda x : int(x[len('group_'):]))
+    return names
 
-def print_groups():
-    groups_api = DataBricksGroups('https://' + host, token)
+def print_groups(groups_api: DataBricksGroups):
     names = groups_api.list_groups()
-    names = [n for n in names if re.match(r'g\d{1,2}',n)]
-    names.sort(key= lambda x : int(x[1:]))
     pprint.pprint(names)
-
 
 def print_users(groups_api: DataBricksGroups):
     values = groups_api.list_users()
     emails =[ x['emails'][0]['value'] for x in values['Resources'] ]
     pprint.pprint(emails)
 
-
-
-
 def print_user_in_groups(groups_api: DataBricksGroups):
-
-    names = groups_api.list_groups()
-    names = [n for n in names if re.match(r'g\d{1,2}', n)]
-
+    names = _sorted_group_names(groups_api.list_groups()) # take only users in 'group_NN' format
     for name in names:
         members = groups_api.get_group_members(name)
         print(f"{name}: ", end='')
@@ -255,6 +249,8 @@ if __name__ == "__main__":
     groups_api = DataBricksGroups(host='https://' + host, token=token)
     cluster_api = DataBricksClusterOps(host_='https://' + host, token_=token)
 
+    print(f"using host={host}, token = {token[0:8]}***")
+    
     parser = argparse.ArgumentParser(description="Process a CSV file (optional)")
     parser.add_argument("--create_from_csv", type=str, help="Path to the CSV file")
     parser.add_argument("--print_clusters", action="store_true", default=False, help="Print the cluster names")
@@ -281,7 +277,7 @@ if __name__ == "__main__":
         cluster_api.print_clusters()
 
     if args.print_groups:
-        print_groups()
+        print_groups(groups_api)
 
     if args.print_users:
         print_users(groups_api)

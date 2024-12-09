@@ -1,4 +1,7 @@
-# Configuring Databricks clusters for Moodle users
+2024-12-05: During 2023 and 2034, I wrote python scripts to deploy the needed Databricks clusters from Moodle CSV file.
+   Then, migrated the code to Terraform. 
+
+# Configuring Databricks clusters for Moodle users [TF has modern implementation]
 
 Students use Moodle to assign themselves into groups. 
 
@@ -22,6 +25,8 @@ Each cluster has permission ('restart') for the group created.
 By default, clusters that are not used for 30 days are deleted. see https://kb.databricks.com/en_US/clusters/pin-cluster-configurations-using-the-api
 
 # The proper way - terraform
+See the code in iem_teachinglab/terraform/dbr
+
 https://learn.microsoft.com/en-us/azure/databricks/security/auth-authz/access-control/cluster-acl#terraform-integration
 
 # Enforcing quota

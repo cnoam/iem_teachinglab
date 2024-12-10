@@ -232,6 +232,21 @@ def print_user_in_groups(groups_api: DataBricksGroups):
             print(f"{a}  ", end='')
         print("")
 
+def check_mandatory_env_vars():
+    ":raise if any of the needed environment variables are not set"
+    must_have = ('DATABRICKS_HOST',
+                 'DATABRICKS_TOKEN',
+                 'AZURE_EMAIL_ACCESS_KEY',
+                 'ADMIN_EMAIL',
+                 'REPORT_RECIPIENT_EMAIL')
+
+    missing_env_vars = []
+    for var in must_have:
+        if var not in os.environ:
+            missing_env_vars.append(var)
+    if missing_env_vars:
+        raise EnvironmentError(f"missing environment variables: {missing_env_vars}")
+
 
 if __name__ == "__main__":
 
@@ -242,12 +257,12 @@ if __name__ == "__main__":
     from dotenv import load_dotenv
     import os, argparse
     load_dotenv()
+    check_mandatory_env_vars()
 
     host = os.getenv('DATABRICKS_HOST')
     token = os.getenv('DATABRICKS_TOKEN')
     policy_id = os.getenv('POLICY_ID','')
-    if host is None or token is None:
-        raise RuntimeError('must set the env vars!')
+
 
     groups_api = DataBricksGroups(host='https://' + host, token=token)
     cluster_api = DataBricksClusterOps(host_='https://' + host, token_=token)
@@ -294,8 +309,9 @@ if __name__ == "__main__":
     if args.delete_all_users:
         # delete all users in this workspace except for a few:
         # (it will not delete the groups)
+        admin_email = os.getenv('ADMIN_EMAIL')
         g = DataBricksGroups(host,token)
-        delete_all_users(groups_api=g, exception_list =['cnoam@technion.ac.il'])
+        delete_all_users(groups_api=g, exception_list =[admin_email])
         print("To delete the workspace folders of the deleted users, use DatabricksClusterOps.py script")
 
     if args.delete_all_groups:

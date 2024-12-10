@@ -26,9 +26,10 @@ in crontab (use crontab -e as the user who owns the script):
 
 
 import logging
+import os
 from DataBricksGroups import DataBricksGroups
 from DataBricksClusterOps import DataBricksClusterOps
-from main import group_name_int
+from main import group_name_int, check_mandatory_env_vars
 from resource_manager import cluster_uptime
 from resource_manager.user_mail import send_emails
 
@@ -75,10 +76,10 @@ def main():
     from dotenv import load_dotenv
 
     load_dotenv()
+    check_mandatory_env_vars()
+
     host = os.getenv('DATABRICKS_HOST')
     token = os.getenv('DATABRICKS_TOKEN')
-    if not host or not token:
-        raise KeyError('DATABRICKS_HOST and/or DATABRICKS_TOKEN are missing')
 
     termination_watermark_minutes = float(os.getenv('DATABRICKS_MAX_UPTIME', 3*60+30))
     warning_watermark_minutes = float(os.getenv('DATABRICKS_WARN_UPTIME', 3*60))
@@ -133,4 +134,4 @@ if __name__ == "__main__":
         main()
     except Exception as ex:
         print("Poll clusters crashed! email was sent")
-        send_emails("Poll clusters crashed!", body= str(ex), recipients=['cnoam@technion.ac.il'], logger=None)
+        send_emails("Poll clusters crashed!", body= str(ex), recipients=[os.getenv('ADMIN_EMAIL')], logger=None)

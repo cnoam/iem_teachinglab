@@ -66,8 +66,8 @@ add these lines:
 # Check every 15 minutes: 23:00, 23:15, 23:30, 23:45, 00:00 ... 
 */15 * * * * /home/azureuser/periodic_poll.sh
 
-# run every midnight + a little, to avoid clashing with the other job
-9 0 * * * /home/azureuser/iem_teachinglab/restore_permissions.sh
+# run every midnight - a little, to avoid clashing with the other job
+55 23 * * * /home/azureuser/iem_teachinglab/end_of_day_ops.sh
 ```
 In `/home/azureuser`, create the files:
 ```
@@ -79,12 +79,12 @@ python poll_clusters.py
 deactivate
 logger Periodic Poll finished
 
-~$ cat restore_permissions.sh 
+~$ cat end_of_day_ops.sh 
 #!/bin/bash -eu
 cd /home/azureuser/iem_teachinglab/databricks
 source venv/bin/activate
+python end_of_day_operations.py
 rm -f cluster_uptimes
-python restore_cluster_permissions.py
 deactivate
 ```
 and `$ chmod +x ~/*.sh`

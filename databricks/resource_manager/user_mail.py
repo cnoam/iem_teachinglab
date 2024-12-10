@@ -54,6 +54,7 @@ def send_emails_azure(subject:str, body: str, recipients: list[str], logger: log
         "content": {
             "subject": subject,
             "plainText": body,
+            "html": body
         }
     }
 

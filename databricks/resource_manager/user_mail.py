@@ -21,10 +21,10 @@ def send_emails_google(subject:str, body: str, recipients: list[str]):
     msg['Subject'] = subject
     msg['From'] = sender
     msg['To'] = ', '.join(recipients)
-    msg['CC'] = 'cnoam@technion.ac.il'
+    msg['CC'] = os.getenv('ADMIN_EMAIL')
     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
         smtp_server.login(sender, password)
-        smtp_server.sendmail(sender, recipients + ['cnoam@technion.ac.il'], msg.as_string())
+        smtp_server.sendmail(sender, recipients, msg.as_string())
 
 
 def send_emails_azure(subject:str, body: str, recipients: list[str], logger: logging.Logger|None):
@@ -36,15 +36,15 @@ def send_emails_azure(subject:str, body: str, recipients: list[str], logger: log
 
     key = os.getenv('AZURE_EMAIL_ACCESS_KEY')
     if not key:
-        raise KeyError("env var AZURE_EMAIL_ACCESS_KEY must be defined")
+        raise EnvironmentError("env var AZURE_EMAIL_ACCESS_KEY must be defined")
+    admin_email = os.getenv('ADMIN_EMAIL')
     from_ = "DoNotReply@de9384ea-2d1f-4d24-a721-44bab6f65b6f.azurecomm.net"   # <<< HARD CODED
 
     connection_string = f"endpoint=https://comm-servicenc.unitedstates.communication.azure.com/;accesskey={key}"
     client = EmailClient.from_connection_string(connection_string)
 
-    # [{"address": "cnoam@technion.ac.il"}]
     recipients_list = [{'address': v} for v in recipients]
-    admin_list = [{'address': 'cnoam@technion.ac.il'}]  # <<< HARD CODED
+    admin_list = [{'address': admin_email }]
     message = {
         "senderAddress": from_,
         "recipients": {

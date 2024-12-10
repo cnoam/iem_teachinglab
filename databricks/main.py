@@ -4,7 +4,7 @@
 
 import json
 import logging
-import sys, re, pprint
+import os, sys, re, pprint
 
 from DataBricksClusterOps import DataBricksClusterOps, DataBricksGroups
 
@@ -255,7 +255,7 @@ if __name__ == "__main__":
         print_usage()
         exit(0)
     from dotenv import load_dotenv
-    import os, argparse
+    import argparse
     load_dotenv()
     check_mandatory_env_vars()
 

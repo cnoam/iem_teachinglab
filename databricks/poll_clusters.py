@@ -28,6 +28,7 @@ in crontab (use crontab -e as the user who owns the script):
 import logging
 from DataBricksGroups import DataBricksGroups
 from DataBricksClusterOps import DataBricksClusterOps
+from main import group_name_int
 from resource_manager import cluster_uptime
 from resource_manager.user_mail import send_emails
 
@@ -37,7 +38,7 @@ def get_emails_address(cluster_name: str, g:DataBricksGroups) -> list:
     """ The cluster name MUST be 'cluster_NNN'
     """
     addr = []
-    for m in g.get_group_members("g" + cluster_name[8:]):
+    for m in g.get_group_members( group_name_int(int(cluster_name[8:])) ):
         addr.append(m['user_name'])
     return addr
 
@@ -106,8 +107,8 @@ def main():
                         recipients = get_emails_address(cluster_name,dbr_groups),logger=logger)
             client.delete_cluster(cluster_name) # this will turn the cluster OFF, but not erase it.
             # prevent users from restarting the cluster
-            group_name = "g" + cluster_name[8:]
-            client.set_cluster_permission(cid,group_name=group_name, permission=client.ClusterPermission.ATTACH)
+            cname_id = int(cluster_name[8:])
+            client.set_cluster_permission(cid,group_name=group_name_int(cname_id), permission=client.ClusterPermission.ATTACH)
 
         elif (total_time > send_alert_threshold) and not v.warning_sent:
             v.warning_sent = True

@@ -15,6 +15,9 @@ logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
 logger.addHandler(ch)
 
+def group_name_int(id_ :int):
+    """Use canonical naming convention to reduce stupid errors"""
+    return f"group_{id_}"
 
 def create_users_from_moodle(dbapi: DataBricksClusterOps, filename: str, verbose: bool) -> int:
     """
@@ -50,11 +53,11 @@ def create_users_from_moodle(dbapi: DataBricksClusterOps, filename: str, verbose
     response = groups_api.create_group(master_group_name)
     raise_for_status_unless_exists(response)
 
-    for group, users in groups.items():
+    for group_id, users in groups.items():
         # the 'users' is full email address, all in the same domain.
         # let's remove the domain -- we know that the name will be unique in a single domain.
         # shortnames = [u[: u.rfind('@')]  for u in users]
-        group_name = "g" + str(group)
+        group_name = group_name_int(group_id)
         response = groups_api.create_group(group_name)
         raise_for_status_unless_exists(response)
 
@@ -70,7 +73,7 @@ def create_users_from_moodle(dbapi: DataBricksClusterOps, filename: str, verbose
             response.raise_for_status()
 
         if verbose:
-            print(f"{group}", end=' ')
+            print(f"{group_name}", end=' ')
     if verbose:
         print('\n')
     return len(groups)

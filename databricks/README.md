@@ -58,16 +58,17 @@ source venv/bin/activate
 pip install -r requirements.txt
 deactivate
 ```
-4.  copy the `.env` file from your working dir to the same path 
+4.  copy the `.env` file from your working dir to the same path.
+    DO NOT add the vars to `.bashrc` since cron will not use them!
 5. As user azureuser (the default user in azure VM): `crontab -e`
 
 add these lines:
 ```
 # Check every 15 minutes: 23:00, 23:15, 23:30, 23:45, 00:00 ... 
-*/15 * * * * /home/azureuser/periodic_poll.sh
+*/15 * * * * /home/azureuser/periodic_poll.sh 2>&1 | systemd-cat -t dbr_scripts
 
 # run every midnight - a little, to avoid clashing with the other job
-55 23 * * * /home/azureuser/iem_teachinglab/end_of_day_ops.sh
+55 23 * * * /home/azureuser/iem_teachinglab/end_of_day_ops.sh 2>&1 | systemd-cat -t dbr_scripts
 ```
 In `/home/azureuser`, create the files:
 ```
@@ -89,16 +90,23 @@ deactivate
 ```
 and `$ chmod +x ~/*.sh`
 
-To debug job stdout  `sudo apt-get install postfix`
 
-In the installation, choose "local"
 
-and then periodically:  `cat /var/mail/azureuser`
+The output of cron itself is at `journalctl` and so are the script outputs.
 
-The output of cron itself is at `/var/log/syslog`
+To see the output of the scripts which cron ran, `journalctl -t dbr_scripts` . Add `-r` to see the latest records first.
+
+## Verify cron works as expected 
+**IMPORTANT** : cron jobs depends on many factors, so you MUST verify the full execution path!
+1. copy the line of 'periodic_poll', changing the time to one shot a few minutes ahead, save, verify you see expected output in journal and possibly in email. Remember to delete it.
+2. verify you get the nightly email of 'end_of_day_ops'
+3. open journalctl and see the script log output
 
 ## Verify email sending
-Sending email tends to get stale.
+Run the shell scripts from the command line; expect to get email with usage report.
+
+
+Sending email tends to get stale.<br>
 Check by running `python main.py --test_email` (after activating the venv)
 
 # TEARDOWN

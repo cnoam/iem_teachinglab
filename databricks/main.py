@@ -17,7 +17,8 @@ logger.addHandler(ch)
 
 def group_name_int(id_ :int):
     """Use canonical naming convention to reduce stupid errors"""
-    return f"group_{id_}"
+    assert 0 < id_ < 100  # blo fuze if naming breaks
+    return f"group_{id_:02}"
 
 def create_users_from_moodle(dbapi: DataBricksClusterOps, filename: str, verbose: bool) -> int:
     """
@@ -249,7 +250,8 @@ def check_mandatory_env_vars():
 
 
 if __name__ == "__main__":
-
+    print( group_name_int(8))
+    exit(0)
     from resource_manager import stats
     if len(sys.argv) == 1:
         print_usage()

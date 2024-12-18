@@ -52,9 +52,11 @@ def check_running_clusters(client, uptime_db:dict):
         if 'driver' in c.keys():
             cluster_uptime.update_cumulative_uptime(c, uptime_db)
 
-def cluster_id_to_cluster_name(clusters, id:int)->str:
-    cluster = list(filter(lambda t: t['cluster_id'] == id, clusters))[0]
-    return cluster['cluster_name']
+def cluster_id_to_cluster_name(clusters, id_:int)->str:
+    clustersmatching = list(filter(lambda t: t['cluster_id'] == id_, clusters))
+    if len(clustersmatching) == 0:
+        return None
+    return clustersmatching[0]['cluster_name']
 
 
 def main():
@@ -99,6 +101,10 @@ def main():
         hours = total_time.seconds // 3600
         minutes = (total_time.seconds - hours * 3600) // 60
         cluster_name = cluster_id_to_cluster_name(clusters, cid)
+        if not cluster_name:
+            # this happened once, so I want to collect some info
+            logger.error(f'Cluster ID not found {cid}. Skipping.')
+            continue
         if (total_time > terminate_cluster_threshold) and not v.force_terminated:
             v.force_terminated = True
             logger.info(f"cluster {cluster_name} will be terminated NOW. It is up for {total_time}")
@@ -128,10 +134,15 @@ def main():
 
     logger.info('Exiting successfully')
 
+def text_to_pre_html(text: str) -> str:
+    # Use a <pre> tag to preserve whitespace and newlines
+    return f"<pre>{text}</pre>"
 
 if __name__ == "__main__":
+    import traceback
     try:
         main()
     except Exception as ex:
         print("Poll clusters crashed! email was sent")
-        send_emails("Poll clusters crashed!", body= str(ex), recipients=[os.getenv('ADMIN_EMAIL')], logger=None)
+        trace = traceback.format_exc()
+        send_emails("Poll clusters crashed!", body= text_to_pre_html(f"{str(ex)}\n\n{trace}"), recipients=[os.getenv('ADMIN_EMAIL')], logger=None)

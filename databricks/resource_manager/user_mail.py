@@ -27,7 +27,7 @@ def send_emails_google(subject:str, body: str, recipients: list[str]):
         smtp_server.sendmail(sender, recipients, msg.as_string())
 
 
-def send_emails_azure(subject:str, body: str, recipients: list[str], logger: logging.Logger|None):
+def send_emails_azure(subject:str, body_html: str, recipients: list[str], logger: logging.Logger|None):
     """Send email using Azure service.
     This service must be configured prior to calling. After configuration, an API key is supplied.
     This key must be saved in AZURE_EMAIL_ACCESS_KEY env var
@@ -53,8 +53,7 @@ def send_emails_azure(subject:str, body: str, recipients: list[str], logger: log
         },
         "content": {
             "subject": subject,
-            "plainText": body,
-            "html": body
+            "html": body_html
         }
     }
 

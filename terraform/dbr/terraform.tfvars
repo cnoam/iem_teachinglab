@@ -1,4 +1,3 @@
-databricks_host ="adb-2308486504415649.9.azuredatabricks.net"
 max_workers = 4
 
 # Using env vars:

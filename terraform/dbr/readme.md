@@ -67,6 +67,11 @@ You may want to add/remove user, or change the auto-termination, max_workers etc
 Simply update the relevant data file (the CSV or the terraform.tfvars) and `terraform apply` again.
 
 
+# Installing libraries
+
+First, see https://technionmail-my.sharepoint.com/:w:/r/personal/cnoam_technion_ac_il/_layouts/15/Doc2.aspx?action=edit&sourcedoc=%7Bdff4d25f-d6a5-4b3a-8372-13e6b19c814c%7D&wdOrigin=TEAMS-WEB.undefined_ns.rwc&wdExp=TEAMS-TREATMENT&wdhostclicktime=1734868535555&web=1
+
+Examine the code in `install_libs.tf`
 <br><br>
 
 # History timeline

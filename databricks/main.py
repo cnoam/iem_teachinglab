@@ -250,8 +250,6 @@ def check_mandatory_env_vars():
 
 
 if __name__ == "__main__":
-    print( group_name_int(8))
-    exit(0)
     from resource_manager import stats
     if len(sys.argv) == 1:
         print_usage()

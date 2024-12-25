@@ -7,6 +7,21 @@ terraform {
   }
 }
 
+# FUTURE: use profiles
+# # This will choose the needed profile from the terraform.tfvars file
+# provider "databricks" {
+#   # The host value is taken from the ~/.databrickscfg file
+#   # it must not be present here too
+#   # host = var.databricks_host
+#   profile = "lab94290-integration-test" #var.databricks_profile
+# }
+
+provider "databricks" {
+  # The host value is taken from the ~/.databrickscfg file
+  # it must not be present here too
+  host = var.databricks_host
+  profile = "lab94290-integration-test"
+}
 
 # Read the CSV file using data source
 data "local_file" "user_names" {
@@ -31,4 +46,18 @@ locals {
       }if trimspace(member) != ""  # Filter out empty member names
     ]
   ])
+}
+
+# Add a null resource that depends on the cluster/group creation
+# This will allow me to use `terraform apply --target null_resource.force_creation"
+# without the "install_libs" which depends (implicitly) on the cluster IDs
+#
+# To find which resource need to be in the list, I created dependency graph
+# by `tf graph > graph.dot && dot -Tpng graph.dot -o graph.png`
+resource "null_resource" "force_creation" {
+  depends_on = [
+    databricks_permissions.cluster_permissions,
+    databricks_group_member.student_assignments,
+    databricks_group_member.all_students_group_assignment
+  ]
 }

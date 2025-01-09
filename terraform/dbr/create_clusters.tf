@@ -17,11 +17,11 @@ resource "databricks_cluster" "clusters" {
 
   cluster_name = each.key
 
-  spark_version = "${var.spark_version}"
+  spark_version = var.spark_version
 
   autoscale {
-    min_workers = "${var.min_workers}"
-    max_workers = "${var.max_workers}"
+    min_workers = var.min_workers
+    max_workers = var.max_workers
   }
 
   spark_conf = {
@@ -36,8 +36,8 @@ resource "databricks_cluster" "clusters" {
 
   node_type_id        = "Standard_DS3_v2"
   driver_node_type_id = "Standard_DS3_v2"
-  ssh_public_keys = []
-  custom_tags = { "origin" = "terraform" }
+  ssh_public_keys     = []
+  custom_tags         = { "origin" = "terraform" }
 
   cluster_log_conf {
     dbfs {
@@ -49,7 +49,7 @@ resource "databricks_cluster" "clusters" {
     "PYSPARK_PYTHON" = "/databricks/python3/bin/python3"
   }
 
-  autotermination_minutes = "${var.autotermination_minutes}"
+  autotermination_minutes = var.autotermination_minutes
   enable_elastic_disk     = true
   data_security_mode      = "NONE"
   runtime_engine          = "STANDARD"

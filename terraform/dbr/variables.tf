@@ -27,7 +27,7 @@ variable "spark_version" {
   description = "Spark version"
   type        = string
   # see https://learn.microsoft.com/en-us/azure/databricks/release-notes/runtime/
-  default     = "15.4.x-cpu-ml-scala2.12"
+  default = "15.4.x-cpu-ml-scala2.12"
 }
 
 variable "min_workers" {

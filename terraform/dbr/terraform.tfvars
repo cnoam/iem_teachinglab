@@ -1,5 +1,5 @@
-max_workers = 4
-spark_version="15.4.x-cpu-ml-scala2.12"
+max_workers   = 4
+spark_version = "15.4.x-cpu-ml-scala2.12"
 
 
 # Using env vars:
@@ -12,7 +12,7 @@ spark_version="15.4.x-cpu-ml-scala2.12"
 # Specify which profile to use.
 # This can also be done using env variable:
 # export TF_VAR_databricks_profile=lab94290
-databricks_profile="testing-DBR"
+databricks_profile = "testing-DBR"
 
 # profiles are defined in ~/.databrickscfg
 

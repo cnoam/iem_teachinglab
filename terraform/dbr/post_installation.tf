@@ -3,7 +3,7 @@
 
 resource "null_resource" "terminate_clusters" {
   depends_on = [databricks_library.maven_library, databricks_library.python_glue_library]
-  for_each = databricks_cluster.clusters
+  for_each   = databricks_cluster.clusters
 
   # Add a local-exec provisioner to terminate the cluster immediately after creation
   provisioner "local-exec" {

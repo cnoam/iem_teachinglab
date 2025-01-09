@@ -2,7 +2,7 @@
 # Create groups
 #
 resource "databricks_group" "student_groups" {
-  for_each = toset(local.group_names)
+  for_each     = toset(local.group_names)
   display_name = each.key
 }
 

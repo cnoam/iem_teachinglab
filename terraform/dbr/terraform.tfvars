@@ -1,4 +1,5 @@
 max_workers = 4
+spark_version="15.4.x-cpu-ml-scala2.12"
 
 
 # Using env vars:
@@ -7,12 +8,11 @@ max_workers = 4
 # for example
 #  export TF_VAR_databricks_token=$DATABRICKS_TOKEN
 
-# FUTURE:
+
 # Specify which profile to use.
 # This can also be done using env variable:
-# export TF_VAR_databricks_profile=workspace1
-# databricks_profile = "lab94290-integration-test"
-# other profiles (defined in ~/.databrickscfg )
-# profile = "lab94290"
-# profile = "lab96224"
-# profile = "lab96224-integration-test"
+# export TF_VAR_databricks_profile=lab94290
+databricks_profile="testing-DBR"
+
+# profiles are defined in ~/.databrickscfg
+

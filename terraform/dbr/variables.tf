@@ -1,8 +1,8 @@
 # variables.tf
 
-# If using the  ~/.databrickscfg file, do NOT define the vars here
-# since TF will require it defined explicitly
-#
+# BUG: I have to specify the HOST in both ~/.databrickscfg  and env var.
+# This is just misunderstanding to be fixed.
+
 # Databricks host URL
 variable "databricks_host" {
   description = "The URL of the Databricks workspace."
@@ -26,7 +26,8 @@ variable "user_names_file" {
 variable "spark_version" {
   description = "Spark version"
   type        = string
-  default     = "14.3.x-scala2.12"
+  # see https://learn.microsoft.com/en-us/azure/databricks/release-notes/runtime/
+  default     = "15.4.x-cpu-ml-scala2.12"
 }
 
 variable "min_workers" {
@@ -46,12 +47,13 @@ variable "autotermination_minutes" {
   type        = number
   default     = 20
 }
-# FUTURE: use profiles.
-# variable "databricks_profile" {
-#   description = "The Databricks CLI profile to use."
-#   type        = string
-#   default     = "lab94290-integration-test" # Replace with a sensible default if needed
-# }
+
+
+variable "databricks_profile" {
+  description = "The Databricks CLI profile to use."
+  type        = string
+  default     = "default"
+}
 
 
 #

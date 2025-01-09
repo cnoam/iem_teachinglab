@@ -20,7 +20,7 @@ provider "databricks" {
   # The host value is taken from the ~/.databrickscfg file
   # it must not be present here too
   host = var.databricks_host
-  profile = "lab94290-integration-test"
+  profile = var.databricks_profile  # The value used here MUST match one of the profile in ~/.databrickscfg
 }
 
 # Read the CSV file using data source
@@ -48,16 +48,20 @@ locals {
   ])
 }
 
-# Add a null resource that depends on the cluster/group creation
-# This will allow me to use `terraform apply --target null_resource.force_creation"
-# without the "install_libs" which depends (implicitly) on the cluster IDs
-#
-# To find which resource need to be in the list, I created dependency graph
-# by `tf graph > graph.dot && dot -Tpng graph.dot -o graph.png`
-resource "null_resource" "force_creation" {
-  depends_on = [
-    databricks_permissions.cluster_permissions,
-    databricks_group_member.student_assignments,
-    databricks_group_member.all_students_group_assignment
-  ]
-}
+# Currently not needed, but kept here for educational purpose.
+# The old coded needed it because I used "--target" . Now I don't, and all dependecies are
+# correctly placed.
+
+# # Add a null resource that depends on the cluster/group creation
+# # This will allow me to use `terraform apply --target null_resource.force_creation"
+# # without the "install_libs" which depends (implicitly) on the cluster IDs
+# #
+# # To find which resource need to be in the list, I created dependency graph
+# # by `tf graph > graph.dot && dot -Tpng graph.dot -o graph.png`
+# resource "null_resource" "force_creation" {
+#   depends_on = [
+#     databricks_permissions.cluster_permissions,
+#     databricks_group_member.student_assignments,
+#     databricks_group_member.all_students_group_assignment
+#   ]
+# }

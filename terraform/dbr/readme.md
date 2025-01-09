@@ -33,18 +33,24 @@ In practice, the group list is dynamic, so we need to be able to update the setu
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
+# Installation
+Tested on ubuntu 24.04 Desktop
+## Install terraform
+from ubuntu repos
+
+## Install databricks cli
+ Use curl:  https://learn.microsoft.com/en-us/azure/databricks/dev-tools/cli/install#curl-install 
 # Usage
 
 1. Download a CSV file from Moodle with 1 or more users (must be email address) in each row. This is an export of the "Students create groups"<br>
-Transform this file using `python convert_moodle_to_tf_format.py path/to/the/csv/file` .
+Transform this file using `cd dbr && python ../convert_moodle_to_tf_format.py path/to/the/csv/file` .
 
 The output is named  "users.csv" <br>
-Place the `users.csv` file in the `terraform/dbr` folder
 
 2. Create a Databricks workspace (I use Azure portal).
 1. generate a Databricks personal token
   - enter the workspace, user settings,  developer tools, manage access tokens, generate new token with short life span (e.g. 2 days).
-  - store it as  `TF_VAR_databricks_token=dapia****` in a **safe** place for env variables. Make sure it persists after the current shell is terminated :)
+  - store it as  `TF_VAR_databricks_token=dapia****` in a **safe** place for env variables. Make sure it persists after the current shell is terminated.
 
 1. login to the correct DBR profile:
   `databricks auth login --host adb-3738544368441327.7.azuredatabricks.net`
@@ -91,6 +97,7 @@ TF_VAR_databricks_host
 
 
 > NOTE: I strongly recommend increasing the default parallelism (10 resources) - e.g. `terraform apply -parallelism=50`
+> `export TF_CLI_ARGS_apply="-parallelism=50"`
 
 
 
@@ -111,7 +118,8 @@ Examine the code in `install_libs.tf`
 # Using the same code to create different environments
 Imagine you want to run the same plan to generate workspaces for two courses. Each of them has different users/clusters and possibly cluster configurations. This is what PROFILES are.
 
-## Profiles
+## DBR Profiles
+A Databricks profile is a set of configuration details—such as credentials, workspace URL, and other settings—used by the Databricks CLI or client libraries to securely connect to and interact with a specific Databricks workspace.
 
 You create profiles in `~/.databrickscfg` :
 ```
@@ -128,13 +136,21 @@ host="adb-3663658524550853.13.azuredatabricks.net"
 token=dapi6***
 ```
 
-### Choosing which profile to run
-And then run `tf apply --profile=lab94290-integration-test` at least in theory. *I could not make it work*, so moved to Workspace method, and left the profile for future work.
 
-## Workspace
-Create a different workspace for production and for testing.
+## TF Workspace
+Create a different TF workspace for production and for testing.
 
-Check that the workspace credentials are working: <br>
+> WARNING:
+`TF Workspace` is a different concept from `DBR workspace`
+
+**Databricks workspace** is the environment where you access Databricks services, run workloads, manage data, and collaborate on notebooks, models, and experiments.
+
+In **Terraform, a workspace** is an isolated state environment. By creating multiple workspaces, you can reuse the same configuration for different environments (e.g., staging, production) while keeping their state data (tracked infrastructure) separate.
+
+> The DBR command below uses credentials from .databrickscfg . **It is not related to the TF workspace** <br>
+> so you can have TF workspace pointing to the testing env, while DBR profile points to the production.
+> 
+Check that the DBR workspace credentials are working: <br>
 `databricks workspace list --profile lab94290-integration-test /Users`
 
 You should see something like 
@@ -144,7 +160,14 @@ ID                Type       Language  Path
 2733568086785891  DIRECTORY            /Users/cnoam@technion.ac.il
 ```
 
-Create a new workspace: `tf workspace new test` # tf is alias for terraform
+- Create a new TF workspace: `tf workspace new test` *# tf is alias for terraform*
+- List existing workspaces (as far as I know, they are local to this computer)<br>
+`tf workspace list`<br>
+- Select workspace: `tf workspace select NAME`
+
+Now that we know what is TF workspace and DBR profile,
+<br>
+**choose the profile in `terraform.tfvars`**
 
 
 # Testing !
@@ -153,7 +176,7 @@ In order to test, use a different environment. Do NOT work on the production.
 Each env has its own state, so they must be separated. 
 
 This can be done using TF workspace, or directories (or more complex methods).
-We are currently using Workspace.
+We are currently using TF Workspace.
 
 [The reason NOT to use directories is it causes code duplication, at least according to my current understanding]
 
@@ -167,10 +190,34 @@ Sometimes it is helpful to see the dependency graph: `tf graph > graph.dot && do
 You will get something like
 ![resource dpendencies](./full_dependency.png)
 
-## Setting and choosing  a workspace
- WORK IN PROGRESS
 
- try `tf workspace --help`
+
+# Troubleshooting
+
+`tf plan` asks for `var.databricks_host` <br>
+--> Make sure the env variables are defined
+e.g. `source ../create_vars.sh`
+
+`tf plan` succeeds, and `tf apply` fails due to auth <br>
+--> Make sure the dbr profile is updated in tfvars
+
+
+## Mismatch between the state known by TF and the actual state in the cloud
+The first method is to import the actual resources info into the TF state. There are a few methods to do it:
+- import a single resource using `tf import`
+- using third party tool `terraformer`
+- using `az_tf_export (??)` which exports Azure resources to TF format
+
+I did not try any of them
+
+Another way, is to delete the resources (e.g. cluster, user, group, permission) from the DBR, and then let TF deploy again.
+To delete users and groups, I used my python script. Be very careful.
+
+## Deleting resources temporarily - for debugging
+For resources known to TF: <br>
+`terraform destroy -target=<resource_type.resource_name>`
+
+
 
 ---
 # History timeline
@@ -218,4 +265,21 @@ I commented the MVN (leaving only py), and still not finished.
 Opened the portal, manually turned on the clusters and then ran the plan --> this time it completed ok.
 
 ==> after cluster creation, do not terminate them. Delay termination after installing libs
+
+
+
+2025-01-05
+on newly formatted machine, I am trying to 'tf apply' and get all sorts of errors.
+
+profile: only when disabling provider "databricks" {} and using the [DEFAULT] section in .da*cfg it agreed to continue.
+
+2025-01-07
+After solving the "credintials of prod used for test so permission denied", I ran tf apply on the test,
+where already there are users and clusters created. 
+But now I am in 'testing-DBR' TF workspace, so all the state from before is unknown, and it attempts to create users and groups and fails because they are exists.
+The clusters are created, since their name is not unique
+
+I changed `tf workspae select default`, and now `tf apply` correctly identify the current resource.
+==> Must be very careful in which workspace I use!!!!
+
 

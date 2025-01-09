@@ -113,21 +113,22 @@ def delete_all_users(groups_api: DataBricksGroups, exception_list: list[str]):
         print("Cancelled.")
         return
     users = groups_api.list_users()
-    users_to_delete = filter(lambda u: u['emails'][0]['value'] not in exception_list, users['Resources'])
+    users_to_delete = list( filter(lambda u: u['emails'][0]['value'] not in exception_list, users['Resources']))
     id_to_delete = [u['id'] for u in users_to_delete]
     num_deleted = groups_api.delete_users(id_to_delete)
     print(f"deleted {num_deleted} users")
 
 
 def delete_all_groups(groups_api: DataBricksGroups):
-    ok = input("About to permanently delete ALL GROUPS matching \"^group_[\d]{2}\". If this is ok, type 'yes': ")
+    ok = input(r"About to permanently delete ALL GROUPS matching \"^group_\d{2}\". If this is ok, type 'yes': ")
     if ok != 'yes':
         print("Cancelled.")
         return
     group_names = groups_api.list_groups()
-    p=re.compile("^group_[\d]{2}")
+    p=re.compile(r"^group_\d{2}")
 
     names_to_delete = [s for s in group_names if p.match(s)]
+    names_to_delete.append('all_student_groups')
 
     num_deleted = 0
     for g in names_to_delete:
@@ -263,9 +264,12 @@ if __name__ == "__main__":
     token = os.getenv('DATABRICKS_TOKEN')
     policy_id = os.getenv('POLICY_ID','')
 
+    # decision! the host always start with the scheme
+    if not host.startswith('http'):
+        host = 'https://' + host
 
-    groups_api = DataBricksGroups(host='https://' + host, token=token)
-    cluster_api = DataBricksClusterOps(host_='https://' + host, token_=token)
+    groups_api = DataBricksGroups(host= host, token=token)
+    cluster_api = DataBricksClusterOps(host_= host, token_=token)
 
     print(f"using host={host}, token = {token[0:8]}***")
     
@@ -317,7 +321,7 @@ if __name__ == "__main__":
     if args.delete_all_groups:
         # delete all groups in this workspace
         # (it will not delete the users)
-        g = DataBricksGroups(host = "https://"+host,token=token)
+        g = DataBricksGroups(host=host,token=token)
         delete_all_groups(groups_api=g)
         print("To delete the workspace folders of the deleted users, use DatabricksClusterOps.py script")
 

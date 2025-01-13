@@ -35,11 +35,17 @@ In practice, the group list is dynamic, so we need to be able to update the setu
 
 # Installation
 Tested on ubuntu 24.04 Desktop
-## Install terraform
-from ubuntu repos
+1. Install terraform from ubuntu repos
 
-## Install databricks cli
- Use curl:  https://learn.microsoft.com/en-us/azure/databricks/dev-tools/cli/install#curl-install 
+1. Install databricks cli <br>
+ Use curl:  https://learn.microsoft.com/en-us/azure/databricks/dev-tools/cli/install#curl-install
+1. Install Azure cli (az cli). It is needed for authorization access to Azure Storage account where the TF state is kept.<br>
+ see https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt   <br>
+    I had to use the manual method of adding Microsoft PPA. 
+1. run `az login` , and choose the correct subscription. I  placed the key in a container in storage account in subscription "DDS - TeachingLab"
+1. run `tf init`
+
+
 # Usage
 
 1. Download a CSV file from Moodle with 1 or more users (must be email address) in each row. This is an export of the "Students create groups"<br>

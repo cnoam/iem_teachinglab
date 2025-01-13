@@ -5,16 +5,15 @@ terraform {
       source = "databricks/databricks"
     }
   }
-}
 
-# FUTURE: use profiles
-# # This will choose the needed profile from the terraform.tfvars file
-# provider "databricks" {
-#   # The host value is taken from the ~/.databrickscfg file
-#   # it must not be present here too
-#   # host = var.databricks_host
-#   profile = "lab94290-integration-test" #var.databricks_profile
-# }
+  backend "azurerm" {
+    resource_group_name  = "ddsteachinglab-infrastructure-group"
+    storage_account_name = "ddsteachinglabdatastg"
+    container_name       = "terraform-states"
+    key                  = "terraform.tfstate"
+    subscription_id      = "5baf6ff6-d2b3-4df8-a9ca-3261f6424c01"
+  }
+}
 
 provider "databricks" {
   # The host value is taken from the ~/.databrickscfg file

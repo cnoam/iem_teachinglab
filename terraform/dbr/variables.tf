@@ -56,13 +56,21 @@ variable "databricks_profile" {
 }
 
 
-#
-# variable "maven_packages" {
-#   type    = list(string)
-#   default = ["com.johnsnowlabs.nlp:spark-nlp_2.12:4.4.2"]
-# }
-#
-# variable "python_packages" {
-#   type    = list(string)
-#   default = ["com.johnsnowlabs.nlp:spark-nlp_2.12:4.4.2"]
-# }
+
+variable "maven_packages" {
+  type = map(object({
+    coordinates = string
+    repo        = string
+  }))
+  default = {
+    "spark_nlp" = {
+      coordinates = "com.johnsnowlabs.nlp:spark-nlp_2.12:5.5.2"
+      repo        = "https://maven.johnsnowlabs.com"
+    }
+  }
+}
+
+variable "python_packages" {
+  type    = list(string)
+  default = [ ]
+}

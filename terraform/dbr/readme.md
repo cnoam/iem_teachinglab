@@ -219,6 +219,15 @@ I did not try any of them
 Another way, is to delete the resources (e.g. cluster, user, group, permission) from the DBR, and then let TF deploy again.
 To delete users and groups, I used my python script. Be very careful.
 
+
+## "Error: failed to find the installed library"
+This may happen if TF waits (pending) for the cluster to start, and times out before the cluster becomes ready.
+
+Another possible reason, is that some libraries (specifically spark-nlp) requires cluster restart, and this confuses TF. 
+A possible  bypass is to wait a few minutes for the cluster to be up, and then apply again.
+If not working, try the 'tf state rm ' to bring the state file into order.
+
+
 ## Deleting resources temporarily - for debugging
 For resources known to TF: <br>
 `terraform destroy -target=<resource_type.resource_name>`

@@ -16,3 +16,4 @@ databricks_profile = "testing-DBR"
 
 # profiles are defined in ~/.databrickscfg
 
+python_packages = ["spark-nlp" ,"nltk"]

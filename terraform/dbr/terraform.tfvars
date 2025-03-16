@@ -12,7 +12,7 @@ spark_version = "15.4.x-cpu-ml-scala2.12"
 # Specify which profile to use.
 # This can also be done using env variable:
 # export TF_VAR_databricks_profile=lab94290
-databricks_profile = "testing-DBR"
+databricks_profile = "lab96224"
 
 # profiles are defined in ~/.databrickscfg
 

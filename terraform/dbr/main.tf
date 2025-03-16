@@ -6,6 +6,8 @@ terraform {
     }
   }
 
+  # This resource describe WHERE we keep the state file.
+  # It does not change when deploying to other subscriptipions.
   backend "azurerm" {
     resource_group_name  = "ddsteachinglab-infrastructure-group"
     storage_account_name = "ddsteachinglabdatastg"
@@ -13,6 +15,12 @@ terraform {
     key                  = "terraform.tfstate"
     subscription_id      = "5baf6ff6-d2b3-4df8-a9ca-3261f6424c01"
   }
+}
+
+# This is the subscription where operations will be executed.
+provider "azurerm" {
+  subscription_id = "dfabd25-794a-4610-a071-2dc334da70b7" # second subscription
+  features {}
 }
 
 provider "databricks" {

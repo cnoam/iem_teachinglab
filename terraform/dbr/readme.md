@@ -173,7 +173,21 @@ ID                Type       Language  Path
 
 Now that we know what is TF workspace and DBR profile,
 <br>
-**choose the profile in `terraform.tfvars`**
+
+## Summary: selecting which DBR workspace will be provisioned
+1. in main.tf , update the AZURE subscription ID
+  ```
+  # This is the subscription where operations will be executed.
+  provider "azurerm" {
+    subscription_id = "dfabd25-794a-4610-a071-2dc334da70b7" # second subscription
+    features {}
+  }
+  ```
+2. in `terraform.tfvars` choose a profile whose name appears in `.databrickscfg`,   e.g.
+`databricks_profile = "lab96224"`
+
+*Voila!*
+
 
 
 # Testing !

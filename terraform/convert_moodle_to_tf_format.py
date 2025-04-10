@@ -38,7 +38,7 @@ def convert_csv(input_file, output_file):
       users = [] # i.e. group members
       for i in range(max_users_in_group):
         col_name = f'Member {i+1} Email'
-        member_email = row[col_name]
+        member_email = row.get(col_name) # might not exist
         if member_email is None:
           users.append(f'')
         else: users.append(row[col_name])

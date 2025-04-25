@@ -8,14 +8,12 @@ resource "databricks_group" "student_groups" {
 
 #
 # Create users
+# Users are keyed ONLY by their e-mail. This separation cleans the code
+# and allows more flexible memberships
 #
 resource "databricks_user" "workspace_user" {
-  for_each = {
-    for member in local.group_members_flattened :
-    "${member.group_name}_${member.member_name}" => member
-  }
-  user_name        = each.value.member_name
+  for_each         = toset([for m in local.group_members_flattened : m.member_name])
+  user_name        = each.key
   workspace_access = false
   active           = true
 }
-

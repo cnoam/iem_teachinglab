@@ -14,13 +14,13 @@ resource "databricks_group" "all_student_groups" {
 #
 resource "databricks_group_member" "student_assignments" {
   for_each = {
-    for m in local.group_members_flattened : "${m.group_name}__${m.member_name}" => m
+    for m in local.group_members_flattened : "${m.group_name}_${m.member_name}" => m
   }
 
   group_id = databricks_group.student_groups[each.value.group_name].id
 
   # Assign each member to the group using their ID
-  member_id = databricks_user.workspace_user["${each.value.group_name}_${each.value.member_name}"].id
+  member_id = databricks_user.workspace_user["${each.value.member_name}"].id
 }
 
 

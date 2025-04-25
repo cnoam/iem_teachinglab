@@ -56,10 +56,11 @@ The output is named  "users.csv" <br>
 2. Create a Databricks workspace (I use Azure portal).
 1. generate a Databricks personal token
   - enter the workspace, user settings,  developer tools, manage access tokens, generate new token with short life span (e.g. 2 days).
-  - store it as  `TF_VAR_databricks_token=dapia****` in a **safe** place for env variables. Make sure it persists after the current shell is terminated.
-
+  - store it as  `TF_VAR_databricks_token=dapia****` in a **safe** place for env variables. Make sure it persists after the current shell is terminated. I simply saved it in `create_vars.sh`
+4. save the URL starting with "adb" in the same file, as  `TF_VAR_databricks_host`.
+1. run  `source ../create_vars.sh`
 1. login to the correct DBR profile:
-  `databricks auth login --host adb-3738544368441327.7.azuredatabricks.net`
+  `databricks auth login --host $TF_VAR_databricks_host` .
   This will open the browser and let you login.
   The "adb***" is copied from the URL shown in the browser when entering the workspace.
 
@@ -84,7 +85,7 @@ host      = adb-3738544368441327.7.azuredatabricks.net
 auth_type = databricks-cli
 ```
 
-**Additionally**, you must export these env vars (case sensitive!)
+**Additionally**, you must export these env vars (case sensitive!) . This is done by running the `create_vars.sh` above.
 ```
 TF_VAR_databricks_token
 TF_VAR_databricks_host
@@ -95,10 +96,10 @@ TF_VAR_databricks_host
 > Specifying it automatically did not work for me, so I use semi-manual
 > dependency.
 
-
+> NOTE: the following instructions might be not needed. Try to run `tf apply --parallelim=50` and maybe you are lucky.
 1. run `terraform plan --target=null_resource.force_creation`. check that the plan is reasonable.
 1. `terraform apply --target=null_resource.force_creation`. After it finished, check that the resources in the Databricks portal are as expected: users created, they are in the correct group, the group has correct permissions in the correct cluster. All cluster should be turned ON. <br>
- *It will take a few minutes*
+ *It will take a few minutes* : Creating a cluster takes about 5 minutes. (This is why parallel is so important)
 2. Now that the clusters are created and running, apply the second half -- installing libs and shutting down the clusters:<br> `terraform apply`
 
 
@@ -120,6 +121,8 @@ First, see https://technionmail-my.sharepoint.com/:w:/r/personal/cnoam_technion_
 Examine the code in `install_libs.tf`
 > TIP: See the comment on parallelism
 <br><br>
+
+> NOTE: installing/removing libraries requires the cluster is UP. If it is currently terminated, the operation may time out before the cluster has enough time become UP. 
 
 # Using the same code to create different environments
 Imagine you want to run the same plan to generate workspaces for two courses. Each of them has different users/clusters and possibly cluster configurations. This is what PROFILES are.
@@ -144,7 +147,7 @@ token=dapi6***
 
 
 ## TF Workspace
-Create a different TF workspace for production and for testing.
+You can create a different TF workspace for production and for testing.
 
 > WARNING:
 `TF Workspace` is a different concept from `DBR workspace`
@@ -189,6 +192,15 @@ Now that we know what is TF workspace and DBR profile,
 *Voila!*
 
 
+e.g.
+``` yaml
+# Specify which profile to use.
+# This can also be done using env variable:
+# export TF_VAR_databricks_profile=lab94290
+databricks_profile = "lab96224"
+```
+
+And finally: `tf apply`
 
 # Testing !
 
@@ -208,19 +220,44 @@ It also works for VERBOSE
 Sometimes it is helpful to see the dependency graph: `tf graph > graph.dot && dot -Tpng graph.dot -o graph.png`
 
 You will get something like
-![resource dpendencies](./full_dependency.png)
+![resource dependencies](./full_dependency.png)
 
+# Using local state file for development
+The state file is stored remotely, in an Azure storage. This ensures the state is correct even if multiple users are manipulating it, or the dev computer is dead.
+
+However, locking the state is slow, so during development, you can bring the state locally, and when finished, push it back to remote:
+
+`terraform state pull > dev.tfstate`
+
+In main.tf, inside `terraform {}`, comment the remote backend and enable
+```
+ backend "local" {
+    path = "dev.tfstate"   # re-use the file you just pulled
+  }
+```
+then, `terraform init -reconfigure  #tells TF to read the new backend config`
+
+Work as usual (tf plan/apply)
+When ready, push the finished state back to the remote backend:
+1. update the backend{} to use the remote in main.tf
+2. `terraform init -reconfigure -migrate-state`
 
 
 # Troubleshooting
 
-`tf plan` asks for `var.databricks_host` <br>
+**`tf plan` asks for `var.databricks_host` <br>**
 --> Make sure the env variables are defined
-e.g. `source ../create_vars.sh`
+e.g. verify the correct contents of  `../create_vars.sh` and source it.
 
-`tf plan` succeeds, and `tf apply` fails due to auth <br>
+**`tf plan` succeeds, and `tf apply` fails due to auth <br>**
 --> Make sure the dbr profile is updated in tfvars
 
+--> It is possible that although you ran "databricks auth login ..." successfully and a new token is stored on your machine, that the provider does not see it due to old version or bugs.
+
+-----> run `tf init` that will freshen the environment
+
+**error: Can't get lock file <br>**
+If the `tf apply` fails due to network problem (this is not the only cause) the lock file might still exist, so the next run will fail.  When it happened to me, I used `terraform force-unlock -force` . See https://jhooq.com/terraform-conidtional-check-failed/
 
 ## Mismatch between the state known by TF and the actual state in the cloud
 The first method is to import the actual resources info into the TF state. There are a few methods to do it:

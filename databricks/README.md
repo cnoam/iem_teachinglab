@@ -113,8 +113,15 @@ Check by running `python main.py --test_email` (after activating the venv)
 At the end of the semester, you can delete the whole DBR workspace, or delete the clusters only, the users only, or users and their workspace folders.
 
 To delete the workspace,  (after made sure all content is moved to a safe place), go to the Azure portal, choose Databricks workspace, and click the trashcan icon.  It will take a few minutes to delete, and remove the storage account as well (with name such as "dbstorageqz6q3h5ysfvqy")
-
-**In the quota-checker machine , edit the crontab and comment out the tasks **
+> WARNING: The DBR workspace costs $700 a month just being there! (checked 2025-04-25)
+> 
+## Recommended Plan
+1. Backup all user's DBR workspace by using the GUI (https://learn.microsoft.com/he-il/azure/databricks/notebooks/notebook-export-import#export-all-notebooks-in-a-folder) OR<br>
+1.1  Set correct HOST/TOKEN in the .env file<br>
+1.2  Set the backup folder name in "scripts/export_dbr_workspaces.py" .  e.g. "databricks_94290_2024w_backup" <br>
+1.3  Run the script, make sure the folder is created and filled with python files
+1.  Delete the DBR workspace
+1.  In the quota-checker machine , edit the crontab and comment out the tasks **
 Or just turn it OFF !
 
 

@@ -1,8 +1,9 @@
 # script created by GPT to export all Databricks User's workspace files.
-# Files larger than 1 MB are not exported.
+# Files larger than 10 MB are not exported.
 #  Noam 2025-01-07
 #
 #
+import base64
 import os
 import requests
 import dotenv
@@ -21,8 +22,8 @@ logger = logging.getLogger(__name__)
 DATABRICKS_URL = os.getenv("DATABRICKS_HOST")
 TOKEN = os.getenv("DATABRICKS_TOKEN")
 ROOT_DIR = "/Users"
-BACKUP_DIR = "./databricks_backup"
-MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024  # 1 MB
+BACKUP_DIR = "./databricks_94290_backup_2024w"
+MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
 
 if not TOKEN:
     raise ValueError("Environment variable DATABRICKS_TOKEN is not set")
@@ -51,7 +52,7 @@ def list_workspace_objects(path):
         return response.json().get("objects", [])
     except requests.exceptions.RequestException as e:
         logger.error(f"Error listing workspace objects at {path}: {e}")
-        return []
+        raise # we must pass this error up
 
 def get_file_status(file_path):
     """Get the status of a file in Workspace, including its size."""
@@ -71,11 +72,25 @@ def export_notebook(notebook_path, local_path):
     """Export a notebook from Databricks to the local filesystem."""
     url = f"{DATABRICKS_URL}/api/2.0/workspace/export"
     try:
+        # format can be SOURCE / JUPYTER / HTML / ...
         response = requests.get(url, headers=headers, params={"path": notebook_path, "format": "SOURCE"})
         response.raise_for_status()
+
+        payload = response.json()
+        raw_bytes = base64.b64decode(payload["content"])
+
         os.makedirs(os.path.dirname(local_path), exist_ok=True)
-        with open(local_path, "wb") as f:
-            f.write(response.content)
+
+        #    if you want text (e.g. .py), decode to UTF-8:
+        if local_path.lower().endswith((".py", ".scala", ".sql")):
+            text = raw_bytes.decode("utf-8")
+            with open(local_path, "w", encoding="utf-8") as f:
+                f.write(text)
+        else:
+            # for binary formats (e.g. .dbc), write raw
+            with open(local_path, "wb") as f:
+                f.write(raw_bytes)
+
         logger.info(f"Exported: {notebook_path} -> {local_path}")
     except requests.exceptions.RequestException as e:
         logger.error(f"Error exporting notebook {notebook_path}: {e}")

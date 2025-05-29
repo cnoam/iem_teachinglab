@@ -1,3 +1,4 @@
 cluster_uptimes
 .env
 .idea/
+venv/

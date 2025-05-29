@@ -15,6 +15,11 @@ terraform {
     key                  = "terraform.tfstate"
     subscription_id      = "5baf6ff6-d2b3-4df8-a9ca-3261f6424c01"
   }
+
+# If using local state, put the above clause in comment, and uncomment the one below. See the Readme.md
+#  backend "local" {
+#    path = "dev.tfstate"   # re-use the file you just pulled
+#  }
 }
 
 # This is the subscription where operations will be executed.

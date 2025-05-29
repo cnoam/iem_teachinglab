@@ -104,6 +104,7 @@ TF_VAR_databricks_host
 
 
 > NOTE: I strongly recommend increasing the default parallelism (10 resources) - e.g. `terraform apply -parallelism=50`
+
 > `export TF_CLI_ARGS_apply="-parallelism=50"`
 
 
@@ -258,6 +259,9 @@ e.g. verify the correct contents of  `../create_vars.sh` and source it.
 
 **error: Can't get lock file <br>**
 If the `tf apply` fails due to network problem (this is not the only cause) the lock file might still exist, so the next run will fail.  When it happened to me, I used `terraform force-unlock -force` . See https://jhooq.com/terraform-conidtional-check-failed/
+
+When looking in the backend (Azure storageAccount Blob), the lock is seen as status "leased" on the tfvars file.
+
 
 ## Mismatch between the state known by TF and the actual state in the cloud
 The first method is to import the actual resources info into the TF state. There are a few methods to do it:

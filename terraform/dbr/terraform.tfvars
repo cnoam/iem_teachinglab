@@ -8,12 +8,4 @@ spark_version = "15.4.x-cpu-ml-scala2.12"
 # for example
 #  export TF_VAR_databricks_token=$DATABRICKS_TOKEN
 
-
-# Specify which profile to use.
-# This can also be done using env variable:
-# export TF_VAR_databricks_profile=lab94290
-databricks_profile = "lab96224"
-
-# profiles are defined in ~/.databrickscfg
-
 python_packages = ["spark-nlp" ,"nltk"]

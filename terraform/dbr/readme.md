@@ -76,8 +76,7 @@ It looks like:
 host      = adb-3738544368441327.7.azuredatabricks.net
 auth_type = databricks-cli
 ```
-
-Since DBR supports multiple profiles (== multiple workspaces?), we need to relay this info into terraform. Update the `databricks_profile` field in file `terrraform.tfvars`.
+2025-09-03: Currently do NOT use DBR profile. The workspace is identified by the env var `TF_VAR_databricks_host`
 
 
 **Additionally**, you must export these env vars (case sensitive!) . This is done by running the `create_vars.sh` above.
@@ -124,6 +123,9 @@ Examine the code in `install_libs.tf`
 Imagine you want to run the same plan to generate workspaces for two courses. Each of them has different users/clusters and possibly cluster configurations. This is what PROFILES are.
 
 ## DBR Profiles
+
+  **NOTE:** Currently we don't use profile -- the info is fully contained in the env var, to keep a single source of truth.
+
 A Databricks profile is a set of configuration details—such as credentials, workspace URL, and other settings—used by the Databricks CLI or client libraries to securely connect to and interact with a specific Databricks workspace.
 
 You create profiles in `~/.databrickscfg` :
@@ -170,10 +172,15 @@ ID                Type       Language  Path
 `tf workspace list`<br>
 - Select workspace: `tf workspace select NAME`
 
-Now that we know what is TF workspace and DBR profile,
-<br>
+Now that we know what is TF workspace and DBR profile, 
+we can forget about it, since in the current code I kept is simple: 
+- single profile is chosen by the env var (token)
+- not using TF workspace
 
-## Summary: selecting which DBR workspace will be provisioned
+You may want to compare with older versions of this doc in the repo!
+
+
+
 1. in main.tf , update the AZURE subscription ID
   ```
   # This is the subscription where operations will be executed.
@@ -182,19 +189,8 @@ Now that we know what is TF workspace and DBR profile,
     features {}
   }
   ```
-2. in `terraform.tfvars` choose a profile whose name appears in `.databrickscfg`,   e.g.
-`databricks_profile = "lab96224"`
-
-*Voila!*
 
 
-e.g.
-``` yaml
-# Specify which profile to use.
-# This can also be done using env variable:
-# export TF_VAR_databricks_profile=lab94290
-databricks_profile = "lab96224"
-```
 
 And finally: `tf apply`
 
@@ -246,15 +242,22 @@ When ready, push the finished state back to the remote backend:
 e.g. verify the correct contents of  `../create_vars.sh` and source it.
 
 **`tf plan` succeeds, and `tf apply` fails due to auth <br>**
---> Make sure the dbr profile is updated in tfvars
-
 --> It is possible that although you ran "databricks auth login ..." successfully and a new token is stored on your machine, that the provider does not see it due to old version or bugs.
 
 -----> run `tf init` that will freshen the environment
 
 **error: Can't get lock file <br>**
-If the `tf apply` fails due to network problem (this is not the only cause) the lock file might still exist, so the next run will fail.  When it happened to me, I used `terraform force-unlock -force` . See https://jhooq.com/terraform-conidtional-check-failed/
+If the `tf apply` fails due to network problem (this is not the only cause) the lock file might still exist, so the next run will fail.  When it happened to me, I used `terraform force-unlock -force LOCK-ID` . See https://jhooq.com/terraform-conidtional-check-failed/
 
+The LOCK-ID is taken from:
+```
+Error: Error acquiring the state lock
+│ 
+│ Error message: state blob is already locked
+│ Lock Info:
+│   ID:        bcc157d7-fbca-e2ac-e1f2-b402a084ccf5
+│   Path:      terraform-states/terraform.tfstate
+```
 When looking in the backend (Azure storageAccount Blob), the lock is seen as status "leased" on the tfvars file.
 
 

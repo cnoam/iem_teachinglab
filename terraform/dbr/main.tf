@@ -24,15 +24,15 @@ terraform {
 
 # This is the subscription where operations will be executed.
 provider "azurerm" {
-  subscription_id = "dfabd25-794a-4610-a071-2dc334da70b7" # second subscription
+  # The subscription_id is read directly from the azure auth.
+  # so you need to first "az login"
+  # subscription_id = "dfabd25-794a-4610-a071-2dc334da70b7" # second subscription
   features {}
 }
 
 provider "databricks" {
-  # The host value is taken from the ~/.databrickscfg file
-  # it must not be present here too
-  host    = var.databricks_host
-  profile = var.databricks_profile # The value used here MUST match one of the profile in ~/.databrickscfg
+  host    = "https://${var.databricks_host}"
+  token   = var.databricks_token # workspace PA Token
 }
 
 # Read the CSV file using data source

@@ -39,7 +39,7 @@ if __name__ == "__main__":
     if host is None or token is None:
         raise RuntimeError('must set the env vars!')
 
-    # the line is commented out to avoid accidental deletion
-    #delete_user_folders(token, host, ['cnoam@technion.ac.il', 'ilanit.sobol@campus.technion.ac.il',
-    #                                  'efrat.maimon@technion.ac.il',
-    #                                  'test@technion.ac.il'])
+    delete_folders = False
+    if delete_folders:
+        delete_user_folders(token, host, ['cnoam@technion.ac.il','efrat.maimon@technion.ac.il',
+                                      'test@technion.ac.il'])

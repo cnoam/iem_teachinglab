@@ -80,10 +80,6 @@ def create_users_from_moodle(dbapi: DataBricksClusterOps, filename: str, verbose
     return len(groups)
 
 
-def test_user_creation_from_moodle(client):
-    create_users_from_moodle(client, '/home/cnoam/Desktop/94290w2022.csv')
-
-
 def create_clusters(how_many: int, verbose: bool = False):
     global dry_run
     if dry_run:
@@ -151,7 +147,7 @@ def create_clusters_and_users(moodle_filename: str):
           "Choose 'all_student_groups'. Choose 'Entitlements'. Select 'Workspace access' checkbox")
 
 
-def install_libs_for_NLP(c :DataBricksClusterOps):
+def install_libs_for_NLP(c :DataBricksClusterOps): # noqa: VUL
     """Install the libraries needed for the NLP task to all the clusters"""
     clusters = c.get_clusters()
     #clusters_ids = [c['cluster_id'] for c in clusters]

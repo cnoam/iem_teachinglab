@@ -10,7 +10,7 @@ class MoodleFileParser:
         pass
 
     @classmethod
-    def parse_moodle_csv(cls, filename: str):
+    def parse_moodle_csv(filename: str):
         """
         read a CSV file containing Group assignment in Moodle.
         Currently limited to 3 members in each group.

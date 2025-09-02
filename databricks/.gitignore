@@ -2,3 +2,4 @@ cluster_uptimes
 .env
 .idea/
 venv/
+student_backups/

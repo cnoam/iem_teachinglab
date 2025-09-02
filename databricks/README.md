@@ -218,3 +218,10 @@ Followed the instructions "Quickstart: How to send an email using Azure Communic
 
 Created "Communications Service" and "Email Communications Service", connected them to each other, and ran the sample curl code. It worked (sending from my PC in Technion).
 To use it, need to have API key.
+
+
+# Code cleaning
+I ran dead code elimination:
+`pip install vulture` and in the databricks dir, run `vulture . --exclude "*/tests/*,*/venv/*,*/docs/*"`
+
+To silence a warning, add `# noqa: vul` at the first line (even if multiline) of function def

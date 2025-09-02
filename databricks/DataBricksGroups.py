@@ -91,7 +91,7 @@ class DataBricksGroups:
         """
         return self.add_or_delete_users(users, delete_user=True)
 
-    def get_user_details(self, id_):
+    def get_user_details(self, id_):  # noqa: vul
         """given user ID (as a string containing integer), return the user details"""
         # https://docs.databricks.com/api/latest/scim/index.html#operation/getUser
         headers = {"Authorization": f"Bearer {self.token}"}

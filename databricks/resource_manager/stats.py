@@ -25,7 +25,7 @@ def print_user_allocation_clusters(groups_api: DataBricksGroups, cluster_api: Da
             except KeyError as ex:
                 logger.warning(f"Skipping permissions of user without a group in cluster {c['cluster_name']}")
 
-        matcher = re.compile("^g[\d]{1,2}")
+        matcher = re.compile(r"^g[\d]{1,2}")
         user_groups = list(filter(lambda x: matcher.match(x['group_name']), perms))
         if user_groups:
             user_names = groups_api.get_group_members(user_groups[0]['group_name'])
@@ -62,8 +62,8 @@ def print_user_allocation_clusters(groups_api: DataBricksGroups, cluster_api: Da
         print(f"{line[0]},\t{line[1]:4}, {line[2]},\t {' : '.join(line[3])}")
 
 
-def print_user_allocation_clusters_sync(groups_api: DataBricksGroups,
-                                        cluster_api: DataBricksClusterOps, logger: logging.Logger):
+def print_user_allocation_clusters_sync(groups_api: DataBricksGroups,  # noqa: VUL
+                                        cluster_api: DataBricksClusterOps, logger: logging.Logger): 
     "sync version . Each API call is about 4.5 seconds. 4.5 * len(clusters) == a long time"
     res = {}
     clusters = cluster_api.get_clusters()
@@ -89,7 +89,7 @@ def print_user_allocation_clusters_sync(groups_api: DataBricksGroups,
             except KeyError as ex:
                 logger.warning(f"Skipping permissions of user without a group in cluster {c['cluster_name']}")
 
-        matcher = re.compile("^g[\d]{1,2}")
+        matcher = re.compile(r"^g[\d]{1,2}")
         user_groups = list(filter(lambda x: matcher.match(x['group_name']), perms))
         if user_groups:
             user_names = groups_api.get_group_members(user_groups[0]['group_name'])

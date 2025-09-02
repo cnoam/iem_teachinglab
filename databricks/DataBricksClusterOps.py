@@ -4,8 +4,8 @@ from enum import Enum
 import requests
 try:
     from databricks_cli.clusters.api import ClusterApi
-    from databricks_cli.dbfs.api import DbfsApi
-    from databricks_cli.dbfs.dbfs_path import DbfsPath
+    #from databricks_cli.dbfs.api import DbfsApi
+    #from databricks_cli.dbfs.dbfs_path import DbfsPath
     from databricks_cli.sdk.api_client import ApiClient
 except ModuleNotFoundError:
     print("Did you remember to 'source venv/bin/activate'?\n\n")
@@ -69,16 +69,6 @@ class DataBricksClusterOps:
         for cluster in self.get_clusters():
             print(f"{cluster['cluster_name']}, {cluster['cluster_id']}")
 
-    def download_file_dbfs(self, dbfs_source_file_path):
-        """
-        NOT TESTED
-        Download a file
-        :param dbfs_source_file_path: 'dbfs:/tmp/users/someone@example.com//hello-world.txt'
-        """
-        dbfs_path = DbfsPath(dbfs_source_file_path)
-        local_file_download_path = '.' + dbfs_source_file_path[dbfs_source_file_path.rfind('/')]
-        # Download the workspace file locally.
-        DbfsApi(self.api_client).get_file(dbfs_path, local_file_download_path, overwrite=True)
 
     def create_cluster_from_spec(self, json_spec: dict):
         """

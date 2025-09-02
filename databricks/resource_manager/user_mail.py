@@ -9,24 +9,6 @@ import time
 
 dry_run = False
 
-def send_emails_google(subject:str, body: str, recipients: list[str]):
-    import smtplib
-    from email.mime.text import MIMEText
-    sender = "dds.lab.technion@gmail.com"
-    # When using gmail, generate an application password.
-    # see https://support.google.com/accounts/answer/185833?hl=en
-    password = os.getenv("SMTP_PASSWORD")
-    assert(password and len(password) > 6)
-    msg = MIMEText(body)
-    msg['Subject'] = subject
-    msg['From'] = sender
-    msg['To'] = ', '.join(recipients)
-    msg['CC'] = os.getenv('ADMIN_EMAIL')
-    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
-        smtp_server.login(sender, password)
-        smtp_server.sendmail(sender, recipients, msg.as_string())
-
-
 def send_emails_azure(subject:str, body_html: str, recipients: list[str], logger: logging.Logger|None):
     """Send email using Azure service.
     This service must be configured prior to calling. After configuration, an API key is supplied.

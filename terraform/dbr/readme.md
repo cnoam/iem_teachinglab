@@ -64,9 +64,9 @@ The output is named  "users.csv" <br>
   This will open the browser and let you login.
   The "adb***" is copied from the URL shown in the browser when entering the workspace.
 
-  Calling this command writes a file `~/.databrickscfg`
+  Calling this command writes a file `~/.databrickscfg`. If the file exists, the new entry is appended.
 
-Originally it looked like:
+It looks like:
 
 ```
 ; The profile defined in the DEFAULT section is to be used as a fallback when no profile is explicitly specified.
@@ -77,13 +77,8 @@ host      = adb-3738544368441327.7.azuredatabricks.net
 auth_type = databricks-cli
 ```
 
-And to make the `terraform apply` work, I edited it to:
-```
-; The profile defined in the DEFAULT section is to be used as a fallback when no profile is explicitly specified.
-[DEFAULT]
-host      = adb-3738544368441327.7.azuredatabricks.net
-auth_type = databricks-cli
-```
+Since DBR supports multiple profiles (== multiple workspaces?), we need to relay this info into terraform. Update the `databricks_profile` field in file `terrraform.tfvars`.
+
 
 **Additionally**, you must export these env vars (case sensitive!) . This is done by running the `create_vars.sh` above.
 ```
@@ -269,7 +264,8 @@ The first method is to import the actual resources info into the TF state. There
 - using third party tool `terraformer`
 - using `az_tf_export (??)` which exports Azure resources to TF format
 
-I did not try any of them
+I did not try any of the above
+(2025-09-01), using `tf apply --refresh-only` worked nice!
 
 Another way, is to delete the resources (e.g. cluster, user, group, permission) from the DBR, and then let TF deploy again.
 To delete users and groups, I used my python script. Be very careful.
@@ -349,7 +345,7 @@ where already there are users and clusters created.
 But now I am in 'testing-DBR' TF workspace, so all the state from before is unknown, and it attempts to create users and groups and fails because they are exists.
 The clusters are created, since their name is not unique
 
-I changed `tf workspae select default`, and now `tf apply` correctly identify the current resource.
+I changed `tf workspace select default`, and now `tf apply` correctly identify the current resource.
 ==> Must be very careful in which workspace I use!!!!
 
 

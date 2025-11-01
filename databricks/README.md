@@ -99,7 +99,7 @@ add these lines:
 */15 * * * * /home/azureuser/periodic_poll.sh 2>&1 | systemd-cat -t dbr_scripts
 
 # run every midnight - a little, to avoid clashing with the other job
-55 23 * * * /home/azureuser/iem_teachinglab/end_of_day_ops.sh 2>&1 | systemd-cat -t dbr_scripts
+55 23 * * * /home/azureuser/end_of_day_ops.sh 2>&1 | systemd-cat -t dbr_scripts
 ```
 In `/home/azureuser`, create the files:
 ```
@@ -109,15 +109,17 @@ cd /home/azureuser/iem_teachinglab/databricks
 source venv/bin/activate
 timeout 30 python poll_clusters.py
 deactivate
-logger Periodic Poll finished
+logger -t dbr_scripts Periodic Poll finished
 
 ~$ cat end_of_day_ops.sh 
 #!/bin/bash -eu
+logger -t dbr_scripts EndOfDay starting
 cd /home/azureuser/iem_teachinglab/databricks
 source venv/bin/activate
 python end_of_day_operations.py
 rm -f cluster_uptimes
 deactivate
+logger -t dbr_scripts EndOfDay finished
 ```
 and `$ chmod +x ~/*.sh`
 

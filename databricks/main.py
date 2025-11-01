@@ -111,6 +111,11 @@ def delete_all_users(groups_api: DataBricksGroups, exception_list: list[str]):
     users = groups_api.list_users()
     users_to_delete = list( filter(lambda u: u['emails'][0]['value'] not in exception_list, users['Resources']))
     id_to_delete = [u['id'] for u in users_to_delete]
+
+
+    # TODO 2025-10-22: asking the api to delete 73 users caused error 426 Too many requests.
+    # the workaround is to send smaller batches.
+    print(f"about to delete {len(id_to_delete)} users")
     num_deleted = groups_api.delete_users(id_to_delete)
     print(f"deleted {num_deleted} users")
 

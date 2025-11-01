@@ -48,14 +48,11 @@ variable "autotermination_minutes" {
   default     = 20
 }
 
-
 variable "databricks_profile" {
   description = "The Databricks CLI profile to use."
   type        = string
   default     = "default"
 }
-
-
 
 variable "maven_packages" {
   type = map(object({
@@ -72,5 +69,5 @@ variable "maven_packages" {
 
 variable "python_packages" {
   type    = list(string)
-  default = [ ]
+  default = []
 }

@@ -2,18 +2,10 @@
 # Create Clusters
 #
 resource "databricks_cluster" "clusters" {
-  #  count = length(local.groups)
-  #  cluster_name = "cluster_${count.index + 1}"
-
-  #  for_each = toset(local.group_names) # Iterate over group names
-  #  cluster_name = replace(each.key, "group", "cluster")
-
-
   for_each = {
-    for group_name in local.group_names :
+    for group_name in var.group_names :
     replace(group_name, "group", "cluster") => group_name
   }
-
 
   cluster_name = each.key
 
@@ -34,25 +26,24 @@ resource "databricks_cluster" "clusters" {
     spot_bid_max_price = -1
   }
 
-  node_type_id        = "Standard_DS3_v2"
-  driver_node_type_id = "Standard_DS3_v2"
+  node_type_id        = var.node_type_id
+  driver_node_type_id = var.driver_node_type_id
   ssh_public_keys     = []
-  custom_tags         = { "origin" = "terraform" }
+  custom_tags         = var.custom_tags
 
   cluster_log_conf {
     dbfs {
-      destination = "dbfs:/cluster-logs"
+      destination = var.cluster_log_destination
     }
   }
 
   spark_env_vars = {
-    "PYSPARK_PYTHON" = "/databricks/python3/bin/python3"
+    "PYSPARK_PYTHON" = var.pyspark_python
   }
 
   autotermination_minutes = var.autotermination_minutes
-  enable_elastic_disk     = true
-  data_security_mode      = "NONE"
-  runtime_engine          = "STANDARD"
-  is_pinned               = true
-
+  enable_elastic_disk     = var.enable_elastic_disk
+  data_security_mode      = var.data_security_mode
+  runtime_engine          = var.runtime_engine
+  is_pinned               = var.is_pinned
 }

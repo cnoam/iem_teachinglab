@@ -1,4 +1,3 @@
-
 terraform {
   required_providers {
     databricks = {
@@ -49,7 +48,6 @@ locals {
   # Generate group names like "group_01", "group_02", etc.
   group_names = [for i in range(length(local.groups)) : format("group_%02d", i + 1)]
 
-
   group_members_flattened = flatten([
     for idx, group in local.groups : [
       for member in group : {
@@ -58,22 +56,68 @@ locals {
       } if trimspace(member) != "" # Filter out empty member names
     ]
   ])
+  
+  # Extract unique user emails
+  user_emails = [for m in local.group_members_flattened : m.member_name]
 }
 
-# Currently not needed, but kept here for educational purpose.
-# The old coded needed it because I used "--target" . Now I don't, and all dependecies are
-# correctly placed.
+# Module for creating users
+module "users" {
+  source = "./modules/users"
 
-# # Add a null resource that depends on the cluster/group creation
-# # This will allow me to use `terraform apply --target null_resource.force_creation"
-# # without the "install_libs" which depends (implicitly) on the cluster IDs
-# #
-# # To find which resource need to be in the list, I created dependency graph
-# # by `tf graph > graph.dot && dot -Tpng graph.dot -o graph.png`
-# resource "null_resource" "force_creation" {
-#   depends_on = [
-#     databricks_permissions.cluster_permissions,
-#     databricks_group_member.student_assignments,
-#     databricks_group_member.all_students_group_assignment
-#   ]
-# }
+  users            = local.user_emails
+  workspace_access = false
+  active           = true
+}
+
+# Module for creating groups
+module "groups" {
+  source = "./modules/groups"
+
+  group_names              = local.group_names
+  users                    = module.users.users
+  group_members            = local.group_members_flattened
+  all_student_groups_name  = "all_student_groups"
+  databricks_sql_access    = true
+  workspace_access         = true
+}
+
+# Module for creating clusters
+module "clusters" {
+  source = "./modules/clusters"
+
+  group_names              = local.group_names
+  spark_version            = var.spark_version
+  min_workers              = var.min_workers
+  max_workers              = var.max_workers
+  autotermination_minutes  = var.autotermination_minutes
+}
+
+# Module for setting permissions
+module "permissions" {
+  source = "./modules/permissions"
+
+  student_groups   = module.groups.student_groups
+  clusters         = module.clusters.clusters
+  permission_level = "CAN_RESTART"
+}
+
+# Module for installing libraries
+module "libraries" {
+  source = "./modules/libraries"
+
+  clusters        = module.clusters.clusters
+  maven_packages  = var.maven_packages
+  python_packages = var.python_packages
+}
+
+# Module for post-installation tasks (terminating clusters)
+module "post_installation" {
+  source = "./modules/post-installation"
+
+  clusters         = module.clusters.clusters
+  databricks_host  = var.databricks_host
+  databricks_token = var.databricks_token
+
+  depends_on = [module.libraries]
+}

@@ -1,12 +1,14 @@
 # Minimalist test suite of the DataBricksGroups class
 # Noam 2024-06-26
 
+#  2025-11-19 : WARNING - this test suite actually modifies the DBR workspace!
 import unittest, os
 from .DataBricksGroups import DataBricksGroups
 from dotenv import load_dotenv
 
 load_dotenv()
 
+raise Exception("DO not run this test suite in production! it modifies the DBR workspace!")
 
 def http_ok( code:int) -> bool:
     return code >=200 and code < 400

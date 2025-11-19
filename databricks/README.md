@@ -65,7 +65,7 @@ In order to save money, I defined the following policy:
 
   Each cluster can be up (cumulative time) to T minutes every day. <br>
   At midnight the count is reset.<br>
-  When a cluster reaches (or exceeds) the quota, it is terminated and cannot be turned on until the next cyle (next day)
+  When a cluster reaches (or exceeds) the quota, it is terminated and cannot be turned on until the next cycle (next day)
 
 
 # Running The policy checking
@@ -98,8 +98,8 @@ add these lines:
 # Check every 15 minutes: 23:00, 23:15, 23:30, 23:45, 00:00 ... 
 */15 * * * * /home/azureuser/periodic_poll.sh 2>&1 | systemd-cat -t dbr_scripts
 
-# run every midnight - a little, to avoid clashing with the other job
-55 23 * * * /home/azureuser/end_of_day_ops.sh 2>&1 | systemd-cat -t dbr_scripts
+# run every midnight + a little, to avoid clashing with the other job, and to make sure the cluster uptimes are up to date
+0 7 * * * /home/azureuser/end_of_day_ops.sh 2>&1 | systemd-cat -t dbr_scripts
 ```
 In `/home/azureuser`, create the files:
 ```

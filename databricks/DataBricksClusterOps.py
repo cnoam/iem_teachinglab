@@ -184,6 +184,10 @@ class DataBricksClusterOps:
         response.raise_for_status()
 
     def set_cluster_permission(self, cluster_id: str, group_name: str, permission: ClusterPermission) -> None:
+        global dry_run
+        if dry_run:
+            print(f"FAKE:  set_cluster_permission {cluster_id} {group_name} {permission}")
+            return
         if permission == self.ClusterPermission.ATTACH:
             s = "CAN_ATTACH_TO"
         elif permission == self.ClusterPermission.RESTART:

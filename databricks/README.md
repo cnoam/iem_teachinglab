@@ -105,19 +105,20 @@ In `/home/azureuser`, create the files:
 ```
 ~$ cat periodic_poll.sh 
 #!/bin/bash -eu
-cd /home/azureuser/iem_teachinglab/databricks
-source venv/bin/activate
-timeout 30 python poll_clusters.py
+logger -t dbr_scripts Periodic Poll starting
+cd /home/azureuser/iem_teachinglab
+source databricks/venv/bin/activate
+timeout 30 python -m databricks.poll_clusters
 deactivate
 logger -t dbr_scripts Periodic Poll finished
+
 
 ~$ cat end_of_day_ops.sh 
 #!/bin/bash -eu
 logger -t dbr_scripts EndOfDay starting
-cd /home/azureuser/iem_teachinglab/databricks
-source venv/bin/activate
-python end_of_day_operations.py
-rm -f cluster_uptimes
+cd /home/azureuser/iem_teachinglab
+source databricks/venv/bin/activate
+python -m databricks.end_of_day_operations
 deactivate
 logger -t dbr_scripts EndOfDay finished
 ```

@@ -104,32 +104,70 @@ def update_cumulative_uptime(cluster: dict):
     save_cluster_data(id, current_data)
 
 
-def create_usage_report_daily() -> str:
+from datetime import date, timedelta
+
+
+def format_timedelta_to_hhmm(td: timedelta) -> str:
+    """Converts a timedelta object to a string in HH:MM format."""
+    total_seconds = int(td.total_seconds())
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    # Use f-string formatting to ensure two digits for both hours and minutes
+    return f"{hours:02}:{minutes:02}"
+
+
+def create_usage_report_daily(when: date) -> str:
     """
-    Create an html page with the usage report of the cluster for the current day.
-    This function is NOW READ-ONLY and queries the *historical* daily usage.
+    Create an html page with the usage report of the cluster for the current day,
+    using a table format and rounding time to hh:mm.
     """
-    today = date.today()
-    report_lines = [f"<h1>Daily Cluster Usage Report - {today}</h1>", "<ul>"]
+    # Initialize report lines with title and table structure
+    report_lines = [f"<h1>Daily Cluster Usage Report - {when}</h1>"]
     total_daily_recorded_uptime = timedelta()
 
-
     # Query all records for today from the historical cumulative table
+    # NOTE: Assuming daily_records is a list/iterator of ClusterCumulativeUptime objects
     daily_records = ClusterCumulativeUptime.select().where(
-        ClusterCumulativeUptime.date == today
+        ClusterCumulativeUptime.date == when
     )
+
+    if not daily_records.exists():
+        # If no records exist, provide a summary without an empty table
+        report_lines.append(f"<p>Note: No final usage record has been written for {when} yet.</p>")
+        report_lines.append(f"<h2>Total Daily Recorded Uptime: 00:00</h2>")
+        return "\n".join(report_lines)
+
+    # Start the table structure
+    report_lines.append("""
+        <table border="1" style="border-collapse: collapse; width: 50%;">
+            <tr>
+                <th style="text-align: left;">Cluster ID</th>
+                <th style="text-align: right;">Daily Usage (HH:MM)</th>
+            </tr>
+    """)
 
     for record in daily_records:
         # Convert DB seconds back to timedelta
         daily_td = timedelta(seconds=record.daily_use_seconds)
         total_daily_recorded_uptime += daily_td
-        report_lines.append(f"<li>Cluster {record.cluster.id}: {daily_td}</li>") # Access FK ID via record.cluster.id
 
-    report_lines.append(f"</ul><h2>Total Daily Recorded Uptime: {total_daily_recorded_uptime}</h2>")
+        # Format the daily usage to HH:MM
+        formatted_time = format_timedelta_to_hhmm(daily_td)
 
-    # If no records exist for today, this provides a more useful summary:
-    if not daily_records.exists():
-        report_lines.append("<p>Note: No final usage record has been written for today yet.</p>")
+        # Append the table row (<tr>)
+        report_lines.append(f"""
+            <tr>
+                <td style="text-align: left;">{record.cluster.id}</td>
+                <td style="text-align: right;">{formatted_time}</td>
+            </tr>
+        """)
+
+    # Close the table
+    report_lines.append("</table>")
+
+    # Format the total uptime
+    total_formatted_time = format_timedelta_to_hhmm(total_daily_recorded_uptime)
+    report_lines.append(f"<h2>Total Daily Recorded Uptime: {total_formatted_time}</h2>")
 
     return "\n".join(report_lines)
 

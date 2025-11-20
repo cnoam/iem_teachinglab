@@ -12,17 +12,17 @@ The database file itself (cluster_uptimes.db) persists across runs.
 import json
 import logging, os
 import datetime
-from DataBricksGroups import DataBricksGroups
-from DataBricksClusterOps import DataBricksClusterOps
-from main import group_name_int, check_mandatory_env_vars
+from .DataBricksGroups import DataBricksGroups
+from .DataBricksClusterOps import DataBricksClusterOps
+from .main import group_name_int, check_mandatory_env_vars
 
-from resource_manager.cluster_uptime import (
+from .resource_manager.cluster_uptime import (
     update_cumulative_uptime,
     get_or_create_cluster_data,
     save_cluster_data
 )
-from databricks.database.db_operations import ClusterUptime
-from resource_manager.user_mail import send_emails
+from .database.db_operations import ClusterUptime
+from .resource_manager.user_mail import send_emails
 
 
 # {'members': [{'user_name': 'mdana@campus.technion.ac.il'}, {'user_name': 'liat.tsipory@campus.technion.ac.il'}]}

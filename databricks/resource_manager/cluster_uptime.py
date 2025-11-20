@@ -3,6 +3,13 @@ from datetime import datetime, timedelta, date
 from dataclasses import dataclass
 from typing import Optional
 
+# --- Peewee Models and DB Imports ---
+# NOTE: Ensure these imports correctly point to your Peewee setup file (e.g., db_operations)
+from ..database.db_operations import (
+    ClusterUptime,
+    ClusterCumulativeUptime
+)
+
 # data structure that holds the Python state for a cluster.
 @dataclass
 class ClusterData:
@@ -12,13 +19,6 @@ class ClusterData:
     warning_sent: bool = False
     force_terminated: bool = False
     cluster_name: str = ''
-
-# --- Peewee Models and DB Imports ---
-# NOTE: Ensure these imports correctly point to your Peewee setup file (e.g., db_operations)
-from databricks.database.db_operations import (
-    ClusterUptime,
-    ClusterCumulativeUptime
-)
 
 logging.basicConfig(level=logging.INFO)
 

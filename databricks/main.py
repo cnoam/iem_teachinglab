@@ -6,7 +6,7 @@ import json
 import logging
 import os, sys, re, pprint
 
-from DataBricksClusterOps import DataBricksClusterOps, DataBricksGroups
+from .DataBricksClusterOps import DataBricksClusterOps, DataBricksGroups
 
 dry_run = False
 

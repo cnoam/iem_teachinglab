@@ -13,7 +13,7 @@ except ModuleNotFoundError:
 
 
 
-from DataBricksGroups import DataBricksGroups
+from .DataBricksGroups import DataBricksGroups
 
 dry_run = False
 

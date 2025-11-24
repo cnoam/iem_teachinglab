@@ -30,7 +30,9 @@ def get_emails_address(cluster_name: str, g: DataBricksGroups) -> list:
     """ The cluster name MUST be 'cluster_NNN'
     """
     import re
-    assert re.match(r"cluster_\d{1,3}$", cluster_name)
+    if not re.match(r"cluster_\d{1,3}$", cluster_name):
+        logging.error(f"Invalid cluster name {cluster_name}")
+        return []
 
     addr = []
     for m in g.get_group_members(group_name_int(int(cluster_name[8:]))):
@@ -185,6 +187,7 @@ if __name__ == "__main__":
             main()
     except Exception as ex:
         print("Poll clusters crashed! email was sent")
+        logging.error(f"Poll clusters crashed! sending email: {ex}")
         trace = traceback.format_exc()
         send_emails("Poll clusters crashed!", body=text_to_pre_html(f"{str(ex)}\n\n{trace}"),
                     recipients=[os.getenv('ADMIN_EMAIL')], logger=None)

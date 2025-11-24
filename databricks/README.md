@@ -99,7 +99,7 @@ add these lines:
 */15 * * * * /home/azureuser/periodic_poll.sh 2>&1 | systemd-cat -t dbr_scripts
 
 # run every midnight + a little, to avoid clashing with the other job, and to make sure the cluster uptimes are up to date
-0 7 * * * /home/azureuser/end_of_day_ops.sh 2>&1 | systemd-cat -t dbr_scripts
+7 0 * * * /home/azureuser/end_of_day_ops.sh 2>&1 | systemd-cat -t dbr_scripts
 ```
 In `/home/azureuser`, create the files:
 ```

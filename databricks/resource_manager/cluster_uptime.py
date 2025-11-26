@@ -5,9 +5,11 @@ from typing import Optional
 
 # --- Peewee Models and DB Imports ---
 # NOTE: Ensure these imports correctly point to your Peewee setup file (e.g., db_operations)
+# gemini 2025-11-25 13:30
 from ..database.db_operations import (
     ClusterUptime,
-    ClusterCumulativeUptime
+    ClusterCumulativeUptime,
+    ClusterInfo
 )
 
 # data structure that holds the Python state for a cluster.
@@ -33,6 +35,7 @@ def get_or_create_cluster_data(cluster_id: str) -> ClusterData:
     try:
         # Try to retrieve the existing record
         record = ClusterUptime.get(ClusterUptime.id == cluster_id)
+        cluster_info = ClusterInfo.get(ClusterInfo.cluster_id == cluster_id)
 
         # Convert DB fields (seconds/bool) back to Python types (timedelta/bool)
         start_ts = record.start_timestamp
@@ -44,10 +47,10 @@ def get_or_create_cluster_data(cluster_id: str) -> ClusterData:
             cumulative=timedelta(seconds=record.cumulative_seconds),
             warning_sent=record.warning_sent,
             force_terminated=record.force_terminated,
-            #cluster_name = record.cluster_name
+            cluster_name=cluster_info.cluster_name
         )
 
-    except ClusterUptime.DoesNotExist:
+    except (ClusterUptime.DoesNotExist, ClusterInfo.DoesNotExist):
         # If record does not exist, create a clean object
         return ClusterData()
 
@@ -127,9 +130,10 @@ def create_usage_report_daily(when: date) -> str:
 
     # Query all records for today from the historical cumulative table
     # NOTE: Assuming daily_records is a list/iterator of ClusterCumulativeUptime objects
-    daily_records = ClusterCumulativeUptime.select().where(
-        ClusterCumulativeUptime.date == when
-    )
+    daily_records = (ClusterCumulativeUptime
+                     .select(ClusterCumulativeUptime, ClusterInfo)
+                     .join(ClusterInfo, on=(ClusterCumulativeUptime.cluster == ClusterInfo.cluster_id))
+                     .where(ClusterCumulativeUptime.date == when))
 
     if not daily_records.exists():
         # If no records exist, provide a summary without an empty table
@@ -141,7 +145,7 @@ def create_usage_report_daily(when: date) -> str:
     report_lines.append("""
         <table border="1" style="border-collapse: collapse; width: 50%;">
             <tr>
-                <th style="text-align: left;">Cluster ID</th>
+                <th style="text-align: left;">Cluster Name</th>
                 <th style="text-align: right;">Daily Usage (HH:MM)</th>
             </tr>
     """)
@@ -157,7 +161,7 @@ def create_usage_report_daily(when: date) -> str:
         # Append the table row (<tr>)
         report_lines.append(f"""
             <tr>
-                <td style="text-align: left;">{record.cluster.id}</td>
+                <td style="text-align: left;">{record.cluster.cluster_name}</td>
                 <td style="text-align: right;">{formatted_time}</td>
             </tr>
         """)
@@ -172,6 +176,7 @@ def create_usage_report_daily(when: date) -> str:
     return "\n".join(report_lines)
 
 
+# gemini 2025-11-25 13:30
 def create_usage_report_cumulative(db_instance) -> str:
     """
     Create an html page with the usage report of the cluster over all the measurement period.
@@ -182,11 +187,16 @@ def create_usage_report_cumulative(db_instance) -> str:
 
     with db_instance.connection_context():
         # Get all cluster records ordered by total uptime (cumulative + current live uptime)
-        for cluster in ClusterUptime.select().order_by(ClusterUptime.cumulative_seconds.desc()):
+        query = (ClusterUptime
+                 .select(ClusterUptime, ClusterInfo)
+                 .join(ClusterInfo, on=(ClusterUptime.id == ClusterInfo.cluster_id))
+                 .order_by(ClusterUptime.cumulative_seconds.desc()))
+
+        for record in query:
             # Calculate the full current uptime: accumulated + currently running
-            cumulative_td = timedelta(seconds=cluster.cumulative_seconds + cluster.uptime_seconds)
+            cumulative_td = timedelta(seconds=record.cumulative_seconds + record.uptime_seconds)
             total_cumulative_uptime += cumulative_td
-            report_lines.append(f"<li>Cluster {cluster.id}: {cumulative_td}</li>")
+            report_lines.append(f"<li>Cluster {record.cluster_info.cluster_name}: {cumulative_td}</li>")
 
     report_lines.append(f"</ul><h2>Total Uptime Measured: {total_cumulative_uptime}</h2>")
     return "\n".join(report_lines)

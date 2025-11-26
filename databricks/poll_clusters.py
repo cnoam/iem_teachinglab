@@ -21,8 +21,20 @@ from .resource_manager.cluster_uptime import (
     get_or_create_cluster_data,
     save_cluster_data
 )
-from .database.db_operations import ClusterUptime
+# gemini 2025-11-25 13:30
+from .database.db_operations import ClusterUptime, ClusterInfo
 from .resource_manager.user_mail import send_emails
+
+
+def update_cluster_info(clusters: list[dict]):
+    """
+    Populates the ClusterInfo table with cluster IDs and names.
+    """
+    for c in clusters:
+        ClusterInfo.get_or_create(
+            cluster_id=c['cluster_id'],
+            defaults={'cluster_name': c['cluster_name']}
+        )
 
 
 # {'members': [{'user_name': 'mdana@campus.technion.ac.il'}, {'user_name': 'liat.tsipory@campus.technion.ac.il'}]}
@@ -52,11 +64,17 @@ def check_update_running_clusters(client, clusters : list[dict]):
             update_cumulative_uptime(c)
 
 
-def cluster_id_to_cluster_name(clusters: list[dict], id_: str) -> str | None:
-    clustersmatching = list(filter(lambda t: t['cluster_id'] == id_, clusters))
-    if len(clustersmatching) == 0:
+# gemini 2025-11-25 13:30
+def cluster_id_to_cluster_name(id_: str) -> str | None:
+    """
+    Retrieves the cluster name from the ClusterInfo table.
+    """
+    try:
+        cluster_info = ClusterInfo.get(ClusterInfo.cluster_id == id_)
+        return cluster_info.cluster_name
+    except ClusterInfo.DoesNotExist:
         return None
-    return clustersmatching[0]['cluster_name']
+
 
 def dump_cluster_uptime_db():
 
@@ -91,6 +109,7 @@ def main():
 
 
     clusters = client.get_clusters()
+    update_cluster_info(clusters)
     json.dump(clusters, open('clusters.json', 'w'), indent=2)
     check_update_running_clusters(client, clusters)
 
@@ -116,7 +135,7 @@ def main():
         hours = total_time.total_seconds() // 3600  # MODIFIED: Use .total_seconds() for timedelta
         minutes = (total_time.total_seconds() - hours * 3600) // 60  # MODIFIED: Use .total_seconds()
 
-        cluster_name = cluster_id_to_cluster_name(clusters, record.id)
+        cluster_name = cluster_id_to_cluster_name(record.id)
         cid = record.id
 
         if not cluster_name:

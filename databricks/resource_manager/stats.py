@@ -2,7 +2,8 @@ import logging
 import re
 import concurrent.futures
 import time
-from DataBricksClusterOps import DataBricksClusterOps, DataBricksGroups
+from ..DataBricksClusterOps import DataBricksClusterOps
+from ..DataBricksGroups import DataBricksGroups
 
 
 def print_user_allocation_clusters(groups_api: DataBricksGroups, cluster_api: DataBricksClusterOps, logger: logging.Logger):

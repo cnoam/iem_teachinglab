@@ -58,6 +58,16 @@ class ClusterCumulativeUptime(BaseModel):
         )
 
 
+# gemini 2025-11-25 13:30
+class ClusterInfo(BaseModel):
+    """
+    Maps cluster IDs to cluster names.
+    This table is populated once from the API client.
+    """
+    cluster_id = CharField(primary_key=True)
+    cluster_name = CharField(unique=True)
+
+
 # NEW: Function to handle production setup (called in poll_clusters.py)
 def initialize_production_db():
     #print(f"DEBUG: Database file is located at: {os.path.abspath(DATABASE_FILE_NAME)}")
@@ -66,6 +76,7 @@ def initialize_production_db():
     # Bind models to the production instance
     ClusterUptime.bind(db_instance)
     ClusterCumulativeUptime.bind(db_instance)
+    ClusterInfo.bind(db_instance)
     return db_instance
 
 
@@ -75,4 +86,4 @@ def create_tables(db_instance: SqliteDatabase):
     """Connects to the DB and creates the tables from the models."""
 
     # Only create tables if they do not already exist
-    db_instance.create_tables([ClusterUptime, ClusterCumulativeUptime])
+    db_instance.create_tables([ClusterUptime, ClusterCumulativeUptime, ClusterInfo])

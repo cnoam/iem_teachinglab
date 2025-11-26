@@ -6,7 +6,14 @@ import json
 import logging
 import os, sys, re, pprint
 
-from .DataBricksClusterOps import DataBricksClusterOps, DataBricksGroups
+try:
+    from .DataBricksClusterOps import DataBricksClusterOps
+    from .DataBricksGroups import DataBricksGroups
+except ImportError:
+    # gemini 2025-11-26 13:30
+    print("Error: This script should be run as a module.")
+    print("Please use: python -m databricks.main [arguments]")
+    sys.exit(1)
 
 dry_run = False
 
@@ -30,7 +37,7 @@ def create_users_from_moodle(dbapi: DataBricksClusterOps, filename: str, verbose
     :return: number of groups created in the workspace
     :raise HTTPstatus if any of the requests failed
     """
-    from MoodleFileParser import MoodleFileParser
+    from .MoodleFileParser import MoodleFileParser
 
     if dry_run:
         return 0
@@ -252,7 +259,7 @@ def check_mandatory_env_vars():
 
 
 if __name__ == "__main__":
-    from resource_manager import stats
+    from .resource_manager import stats
     if len(sys.argv) == 1:
         print_usage()
         exit(0)
@@ -331,7 +338,7 @@ if __name__ == "__main__":
         cluster_api.permanent_delete_all_clusters(verbose=True)
 
     if args.test_email:
-        from resource_manager.user_mail import send_emails
+        from .resource_manager.user_mail import send_emails
         send_emails("test message","body of message", ['dds.lab@technion.ac.il'], logger)
 
     if args.cluster_usage:

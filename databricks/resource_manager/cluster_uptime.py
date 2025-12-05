@@ -93,7 +93,7 @@ def update_cumulative_uptime(cluster: dict):
     current_uptime = datetime.now() - driver_start_time
 
     # 3. Check for cluster restart
-    if current_data.start_time is None or current_data.start_time != driver_start_time:
+    if current_data.start_time is None or abs(current_data.start_time.timestamp() - driver_start_time.timestamp()) > 1:
         # Cluster is newly turned on or restarted since last check
         logging.info(f"Cluster {id} is turned on again or started anew.")
 
@@ -161,7 +161,7 @@ def create_usage_report_daily(when: date) -> str:
         # Append the table row (<tr>)
         report_lines.append(f"""
             <tr>
-                <td style="text-align: left;">{record.cluster.cluster_name}</td>
+                <td style="text-align: left;">{record.clusterinfo.cluster_name}</td>
                 <td style="text-align: right;">{formatted_time}</td>
             </tr>
         """)

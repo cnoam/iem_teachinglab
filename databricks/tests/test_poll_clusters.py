@@ -181,7 +181,7 @@ def test_cluster_monitoring_scenario(mock_dt, #update_cumulative_uptime,
     # Check Warning Email (Cluster 2)
     # The 'subject' is passed as keyword args, so we must use kwargs rather than args.
     warning_call = mock_send_emails.call_args_list[0]
-    assert 'Your Cluster  \'cluster_2\' is working for a long time' in warning_call.kwargs['subject']
+    assert 'is working for a long time' in warning_call.kwargs['subject']
 
     # Cluster 2: Should have warning_sent=True
     c2 = ClusterUptime.get(ClusterUptime.id == '2')

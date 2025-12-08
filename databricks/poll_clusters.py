@@ -150,7 +150,7 @@ def main():
 
             logger.info(f"cluster {cluster_name} will be terminated NOW. It is up for {total_time}")
 
-            send_emails(f"Your Cluster '{cluster_name}' will be stopped now.",
+            send_emails(f"'{cluster_name}' will be stopped now.",
                         body=f"Your cluster is used for too long during the last day.({int(hours)}h{int(minutes)}m , quota is {termination_watermark_minutes} minutes) and will be terminated soon. \n\n",
                         recipients=get_emails_address(cluster_name, dbr_groups), logger=logger)
             client.delete_cluster(cluster_name)  # this will turn the cluster OFF, but not erase it.
@@ -166,7 +166,7 @@ def main():
             save_cluster_data(cid, v)
 
             logger.info(f"cluster {cluster_name} time quota is almost used! It is up for {total_time}")
-            send_emails(subject=f"Your Cluster  '{cluster_name}' is working for a long time",
+            send_emails(subject=f"'{cluster_name}' is working for a long time",
                         body=f"""Your cluster is used for {int(hours)}h{int(minutes)}m during the last day.\n\
 Please check if you still need it!\n \
 This message is sent at most once a day\n\

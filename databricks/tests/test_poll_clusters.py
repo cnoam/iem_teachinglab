@@ -8,11 +8,11 @@ import pytest
 from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
 from peewee import SqliteDatabase
-from poll_clusters import main, check_update_running_clusters, get_emails_address
+from databricks.poll_clusters import main, check_update_running_clusters, get_emails_address
 
 # Import models and ORM helpers
-from databricks.database.db_operations import ClusterUptime, ClusterCumulativeUptime
-from resource_manager.cluster_uptime import get_or_create_cluster_data, save_cluster_data
+from databricks.database.db_operations import ClusterUptime, ClusterCumulativeUptime, ClusterInfo
+from databricks.resource_manager.cluster_uptime import get_or_create_cluster_data, save_cluster_data
 
 
 # --- Fixture for In-Memory DB Setup ---
@@ -29,21 +29,23 @@ def setup_teardown_db():
     # 1. BIND to the TEST_DB
     ClusterUptime.bind(TEST_DB)
     ClusterCumulativeUptime.bind(TEST_DB)
+    ClusterInfo.bind(TEST_DB)
 
     with TEST_DB.connection_context():
         # 2. CONNECT & CREATE
         # TEST_DB.connect() Already done in the context manager above
-        TEST_DB.create_tables([ClusterUptime, ClusterCumulativeUptime])
+        TEST_DB.create_tables([ClusterUptime, ClusterCumulativeUptime, ClusterInfo])
         yield
 
         # 3. TEARDOWN (Unbind and close)
-        TEST_DB.drop_tables([ClusterUptime, ClusterCumulativeUptime])
+        TEST_DB.drop_tables([ClusterUptime, ClusterCumulativeUptime, ClusterInfo])
     #TEST_DB.close()
 
     # 4. CRITICAL: Unbind models to clear the global class state completely
     # This restores the models to a fully unbound state.
     ClusterUptime.bind( None)
     ClusterCumulativeUptime.bind( None)
+    ClusterInfo.bind(None)
 
 
 # --- Test Utility Data ---
@@ -71,15 +73,15 @@ def get_mock_databricks_clusters(cluster_data):
 # --- The Complex Scenario Test ---
 
 
-@patch('poll_clusters.send_emails')
-@patch('poll_clusters.os')
-@patch('poll_clusters.DataBricksGroups')
-@patch('poll_clusters.DataBricksClusterOps')
+@patch('databricks.poll_clusters.send_emails')
+@patch('databricks.poll_clusters.os')
+@patch('databricks.poll_clusters.DataBricksGroups')
+@patch('databricks.poll_clusters.DataBricksClusterOps')
 #@patch('poll_clusters.update_cumulative_uptime')
 
 # Mock datetime for time travel
 # but keep the time_delta unchanged
-@patch('poll_clusters.datetime')
+@patch('databricks.poll_clusters.datetime')
 def test_cluster_monitoring_scenario(mock_dt, #update_cumulative_uptime,
                                      MockClusterOps, MockGroups, mock_os,
                                      mock_send_emails):

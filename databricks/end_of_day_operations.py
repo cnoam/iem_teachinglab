@@ -27,7 +27,7 @@ def log_daily_uptime():
     # 1. LOGGING STEP: Read live data and write historical data
     clusters = list(ClusterUptime.select())
     for cluster in clusters:
-        daily_use_sec = cluster.uptime_seconds
+        daily_use_sec = cluster.uptime_seconds + cluster.cumulative_seconds
 
         if daily_use_sec > 0:
             # Insert/Update the historical table
@@ -39,7 +39,7 @@ def log_daily_uptime():
 
     # 2. RESET STEP: Update the live table only
     # Use a single Peewee UPDATE query for efficiency and clarity.
-    ClusterUptime.update( uptime_seconds=0).execute()
+    ClusterUptime.update( uptime_seconds=0, cumulative_seconds=0).execute()
 
     logging.info(f"Daily logging and reset for {yesterday} complete.")
 

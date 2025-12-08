@@ -78,6 +78,18 @@ def save_cluster_data(cluster_id: str, data: ClusterData):
 def update_cumulative_uptime(cluster: dict):
     """
     Update the total uptime of resource in our DB.
+
+       If a resource was turned off and then on, we need to continue the counting.
+
+    for DBR cluster, each time it is turned on, driver.start_time is set , so if the cluster is on, I can see for how long.
+
+    e.g.
+    for each cluster_id, keep total uptime.
+
+    on       -------       ------* <-- need to update this inteval
+    off -----       -------
+    poll ^  ^  ^  ^  ^  ^  ^  ^  ^
+
     """
     assert 'driver' in cluster.keys()  # only running cluster is provided
     driver = cluster['driver']

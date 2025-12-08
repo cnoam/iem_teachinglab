@@ -136,13 +136,8 @@ def test_log_daily_uptime_functionality():
     )
     assert log_B.daily_use_seconds == 600
 
-    # 4. VERIFICATION - RESET: Check the live table
-    live_A = ClusterUptime.get(ClusterUptime.id == 'cluster-A')
-    live_B = ClusterUptime.get(ClusterUptime.id == 'cluster-B')
-
-    # The 'uptime_seconds' (current run cycle) must be reset to 0
-    assert live_A.uptime_seconds == 0
-    assert live_B.uptime_seconds == 0
-
-    # The 'cumulative_seconds' (historical total) must be reset as well
-    assert live_A.cumulative_seconds == 0
+    # 4. VERIFICATION - RESET: Check that the live table has been cleared.
+    with pytest.raises(DoesNotExist):
+        ClusterUptime.get(ClusterUptime.id == 'cluster-A')
+    with pytest.raises(DoesNotExist):
+        ClusterUptime.get(ClusterUptime.id == 'cluster-B')

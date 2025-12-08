@@ -37,9 +37,8 @@ def log_daily_uptime():
                 daily_use_seconds=daily_use_sec
             ).execute()
 
-    # 2. RESET STEP: Update the live table only
-    # Use a single Peewee UPDATE query for efficiency and clarity.
-    ClusterUptime.update( uptime_seconds=0, cumulative_seconds=0).execute()
+    # 2. RESET STEP: Truncate the live table for a fresh start.
+    ClusterUptime.delete().execute()
 
     logging.info(f"Daily logging and reset for {yesterday} complete.")
 

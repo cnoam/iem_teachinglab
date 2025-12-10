@@ -1,0 +1,3146 @@
+[
+  {
+    "cluster_id": "1101-104910-bg8d2fid",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "driver": {
+      "private_ip": "10.139.64.8",
+      "public_dns": "",
+      "node_id": "dead7b09bfba478ebc400e070fd8cd81",
+      "instance_id": "08d7a3d77d0f48ff9e86cd92cabb2338",
+      "start_timestamp": 1765378646377,
+      "node_type_id": "Standard_DS3_v2",
+      "node_attributes": {
+        "is_spot": false
+      },
+      "host_private_ip": "10.139.0.60",
+      "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+    },
+    "executors": [
+      {
+        "private_ip": "10.139.64.60",
+        "public_dns": "",
+        "node_id": "b7053c66995c4c50ad2f0ebb8863417d",
+        "instance_id": "27f5918aded9455cb8944fdf2fb0d2da",
+        "start_timestamp": 1765378646411,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.8",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      }
+    ],
+    "spark_context_id": 3755619647200301334,
+    "driver_healthy": true,
+    "jdbc_port": 10000,
+    "cluster_name": "cluster_01",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "RUNNING",
+    "state_message": "",
+    "start_time": 1761994150267,
+    "last_state_loss_time": 1765378806895,
+    "last_activity_time": 1765378739967,
+    "last_restarted_time": 1765378806970,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "cluster_memory_mb": 28672,
+    "cluster_cores": 8.0,
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_01",
+      "ClusterId": "1101-104910-bg8d2fid",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765381190326
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065734-oyax7uo0",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "driver": {
+      "private_ip": "10.139.64.13",
+      "public_dns": "",
+      "node_id": "399bbeab496b4789a3f5478027e83c3e",
+      "instance_id": "ad6385245089481597ebaba51175f3d8",
+      "start_timestamp": 1765371771795,
+      "node_type_id": "Standard_DS3_v2",
+      "node_attributes": {
+        "is_spot": false
+      },
+      "host_private_ip": "10.139.0.12",
+      "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+    },
+    "executors": [
+      {
+        "private_ip": "10.139.64.19",
+        "public_dns": "",
+        "node_id": "7378d04b98e24af0958ec162f61e8a3a",
+        "instance_id": "186bbd2ca6864fb2affa56f3bc81deff",
+        "start_timestamp": 1765380222089,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.24",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.26",
+        "public_dns": "",
+        "node_id": "b18a8f1ab3b1483c93ec43843e50a700",
+        "instance_id": "5ac7b6c70e07458db7c9e3e2edecd70b",
+        "start_timestamp": 1765381228509,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.26",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.62",
+        "public_dns": "",
+        "node_id": "374fca1ea47e4e428f71a089f7e5f2b2",
+        "instance_id": "f2cc8884efd94ad19df094f2a35b15a5",
+        "start_timestamp": 1765381228556,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.62",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.6",
+        "node_id": "022e72b4f47044fbb320c17148d9f0d2",
+        "instance_id": "e40f94dc1b104125ad4b3fa01ec6aa87",
+        "start_timestamp": 1765380222048,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.6",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      }
+    ],
+    "spark_context_id": 2617479407041714311,
+    "driver_healthy": true,
+    "jdbc_port": 10000,
+    "cluster_name": "cluster_03",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "RUNNING",
+    "state_message": "",
+    "start_time": 1762412254833,
+    "last_state_loss_time": 1765371864861,
+    "last_activity_time": 1765371808783,
+    "last_restarted_time": 1765371864941,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 4
+    },
+    "cluster_memory_mb": 71680,
+    "cluster_cores": 20.0,
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_03",
+      "ClusterId": "1106-065734-oyax7uo0",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765381023416
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065735-hsezbgn4",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "driver": {
+      "private_ip": "10.139.64.28",
+      "public_dns": "",
+      "node_id": "de72a98de4594d2ba53fc6b23c19bff1",
+      "instance_id": "9654e96c2e9347ac9fe459527d837c24",
+      "start_timestamp": 1765376933368,
+      "node_type_id": "Standard_DS3_v2",
+      "node_attributes": {
+        "is_spot": false
+      },
+      "host_private_ip": "10.139.0.29",
+      "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+    },
+    "executors": [
+      {
+        "private_ip": "10.139.64.52",
+        "public_dns": "",
+        "node_id": "97adb1a51be743feb15ef4a4f0959974",
+        "instance_id": "2478a572aab842c0b90f51776fa6c484",
+        "start_timestamp": 1765381278667,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.53",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.35",
+        "public_dns": "",
+        "node_id": "d27679e8a7d74fbf9a81cf6d6b91f923",
+        "instance_id": "ecae27a9b2bf4dc696257c76f366995f",
+        "start_timestamp": 1765379591971,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.33",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.25",
+        "public_dns": "",
+        "node_id": "14189f3e12d540199f676533e5253dd8",
+        "instance_id": "f6ad76a0ed274cda9c2743970b00c50f",
+        "start_timestamp": 1765377987610,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.25",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.30",
+        "public_dns": "",
+        "node_id": "6821a793ab8545419895ae857104fe56",
+        "instance_id": "20baa73e82c748db97512c4cde3adf3b",
+        "start_timestamp": 1765381278638,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.31",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      }
+    ],
+    "spark_context_id": 5492181003128326805,
+    "driver_healthy": true,
+    "jdbc_port": 10000,
+    "cluster_name": "cluster_06",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "RUNNING",
+    "state_message": "",
+    "start_time": 1762412255227,
+    "last_state_loss_time": 1765377023159,
+    "last_activity_time": 1765376966291,
+    "last_restarted_time": 1765377023230,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 4
+    },
+    "cluster_memory_mb": 71680,
+    "cluster_cores": 20.0,
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_06",
+      "ClusterId": "1106-065735-hsezbgn4",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765381200484
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065735-zy7qwilg",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "driver": {
+      "private_ip": "10.139.64.45",
+      "public_dns": "",
+      "node_id": "8bc5578df1b4436e9636217395d5666b",
+      "instance_id": "222592fc1368414e991cc0a3a522101a",
+      "start_timestamp": 1765370784507,
+      "node_type_id": "Standard_DS3_v2",
+      "node_attributes": {
+        "is_spot": false
+      },
+      "host_private_ip": "10.139.0.41",
+      "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+    },
+    "executors": [
+      {
+        "private_ip": "10.139.64.47",
+        "node_id": "5cad40e3b52549be8e381506c236dfd5",
+        "instance_id": "2c99f64a347e40119c71ea1b31f3353d",
+        "start_timestamp": 1765376740505,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.38",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.40",
+        "public_dns": "",
+        "node_id": "4e00262755e34a7a9defcddb6edaf3ce",
+        "instance_id": "dc45dbcedced4cf5b6012602122a1118",
+        "start_timestamp": 1765370784536,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.45",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.33",
+        "node_id": "7bc1ca65b8684351a621472086db9953",
+        "instance_id": "46760e59f2c244339cfaa432d5f8e218",
+        "start_timestamp": 1765376740423,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.34",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.42",
+        "public_dns": "",
+        "node_id": "370a0542f8b54232819fcfd933f296bc",
+        "instance_id": "728387d2e9e4406fad78c84561ebed93",
+        "start_timestamp": 1765374150385,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.42",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      }
+    ],
+    "spark_context_id": 9093955673781288576,
+    "driver_healthy": true,
+    "jdbc_port": 10000,
+    "cluster_name": "cluster_11",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "RUNNING",
+    "state_message": "",
+    "start_time": 1762412255601,
+    "last_state_loss_time": 1765370921569,
+    "last_activity_time": 1765370860507,
+    "last_restarted_time": 1765370921641,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 4
+    },
+    "cluster_memory_mb": 71680,
+    "cluster_cores": 20.0,
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_11",
+      "ClusterId": "1106-065735-zy7qwilg",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765381185132
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065735-s4xfvzeo",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "driver": {
+      "private_ip": "10.139.64.54",
+      "node_id": "f5a7081ec1d644a5ac0f0b36617ca4b1",
+      "instance_id": "834b7bb5ac764fe3840db07797d21682",
+      "start_timestamp": 1765373934315,
+      "node_type_id": "Standard_DS3_v2",
+      "node_attributes": {
+        "is_spot": false
+      },
+      "host_private_ip": "10.139.0.54",
+      "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+    },
+    "executors": [
+      {
+        "private_ip": "10.139.64.50",
+        "node_id": "a491bd1f7eb245b9b2473f37abf7aaee",
+        "instance_id": "e2f0b090595b41a69c17310d32cb72f9",
+        "start_timestamp": 1765381257860,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.5",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.36",
+        "public_dns": "",
+        "node_id": "e7b9ee263a684302aad4b51c7f8c9c24",
+        "instance_id": "6252e5be0d6a4b08a11ca08bdf10c7c3",
+        "start_timestamp": 1765377844172,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.35",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.20",
+        "node_id": "bc3dba322f7b408dace537234e8c1d39",
+        "instance_id": "d69b4918f27541c68df815bb27980920",
+        "start_timestamp": 1765377844208,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.20",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.29",
+        "public_dns": "",
+        "node_id": "b3505094effc47288ebdb1f124790332",
+        "instance_id": "9c0613b15fc8480eb7539c0adb73041a",
+        "start_timestamp": 1765381257806,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.28",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      }
+    ],
+    "spark_context_id": 3085471140824961371,
+    "driver_healthy": true,
+    "jdbc_port": 10000,
+    "cluster_name": "cluster_12",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "RUNNING",
+    "state_message": "",
+    "start_time": 1762412255423,
+    "last_state_loss_time": 1765374046198,
+    "last_activity_time": 1765373973050,
+    "last_restarted_time": 1765374046271,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 4
+    },
+    "cluster_memory_mb": 71680,
+    "cluster_cores": 20.0,
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_12",
+      "ClusterId": "1106-065735-s4xfvzeo",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765381250725
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065735-5p2vt728",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "driver": {
+      "private_ip": "10.139.64.57",
+      "public_dns": "",
+      "node_id": "271ec03ff2f442c8863fc66b21a15d21",
+      "instance_id": "1e50138368184527b4b85afe545889e7",
+      "start_timestamp": 1765376340861,
+      "node_type_id": "Standard_DS3_v2",
+      "node_attributes": {
+        "is_spot": false
+      },
+      "host_private_ip": "10.139.0.56",
+      "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+    },
+    "executors": [
+      {
+        "private_ip": "10.139.64.18",
+        "public_dns": "",
+        "node_id": "6b9b10bba9764443913e29bbae5f63df",
+        "instance_id": "49b9a218cd0d43d5b3cf57800a6405eb",
+        "start_timestamp": 1765378418834,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.17",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      }
+    ],
+    "spark_context_id": 6898688408846206829,
+    "driver_healthy": true,
+    "jdbc_port": 10000,
+    "cluster_name": "cluster_15",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "RUNNING",
+    "state_message": "",
+    "start_time": 1762412255618,
+    "last_state_loss_time": 1765376488458,
+    "last_activity_time": 1765376431198,
+    "last_restarted_time": 1765376488531,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "cluster_memory_mb": 28672,
+    "cluster_cores": 8.0,
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_15",
+      "ClusterId": "1106-065735-5p2vt728",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765381232927
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065735-xw2t5jpc",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "driver": {
+      "private_ip": "10.139.64.7",
+      "public_dns": "",
+      "node_id": "c61b24126c7245f89a56a9ecc46c5da4",
+      "instance_id": "92df1d74c4904818bfc79b101d3da725",
+      "start_timestamp": 1765378508694,
+      "node_type_id": "Standard_DS3_v2",
+      "node_attributes": {
+        "is_spot": false
+      },
+      "host_private_ip": "10.139.0.7",
+      "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+    },
+    "executors": [
+      {
+        "private_ip": "10.139.64.4",
+        "public_dns": "",
+        "node_id": "1aa8c4952c1849f5abda62aa6d3b70ce",
+        "instance_id": "98e41552bb9e451295949523ea0a55bd",
+        "start_timestamp": 1765379424436,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.39",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.12",
+        "node_id": "ee30ce21635045eda34c4531b1846ab8",
+        "instance_id": "d56da4595e2b491d80972e696ab45efc",
+        "start_timestamp": 1765381334672,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.11",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.24",
+        "public_dns": "",
+        "node_id": "f93a9d15df28403b8271eeda1c02ddb8",
+        "instance_id": "fa73fc74d134403eb740b010e8ea17e0",
+        "start_timestamp": 1765380193227,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.19",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.17",
+        "public_dns": "",
+        "node_id": "f712ba4c4a8941f8b0b1f4face1970d7",
+        "instance_id": "5f5319a009dc40439f60a2356e28822e",
+        "start_timestamp": 1765381334637,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.18",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      }
+    ],
+    "spark_context_id": 3097888310365393114,
+    "driver_healthy": true,
+    "jdbc_port": 10000,
+    "cluster_name": "cluster_16",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "RUNNING",
+    "state_message": "",
+    "start_time": 1762412255726,
+    "last_state_loss_time": 1765378671644,
+    "last_activity_time": 1765378609826,
+    "last_restarted_time": 1765378671723,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 4
+    },
+    "cluster_memory_mb": 71680,
+    "cluster_cores": 20.0,
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_16",
+      "ClusterId": "1106-065735-xw2t5jpc",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765381111932
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065734-zym3zsw0",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "driver": {
+      "private_ip": "10.139.64.41",
+      "node_id": "eb785497a98f4d9f919889af73d35cef",
+      "instance_id": "c64aff6653b6443ba977eb6169580713",
+      "start_timestamp": 1765375872775,
+      "node_type_id": "Standard_DS3_v2",
+      "node_attributes": {
+        "is_spot": false
+      },
+      "host_private_ip": "10.139.0.40",
+      "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+    },
+    "executors": [
+      {
+        "private_ip": "10.139.64.15",
+        "public_dns": "",
+        "node_id": "231ff5a86d4c497c8d6352bfe74fa9c4",
+        "instance_id": "98ea5792929a4f8f99d51ec6ae7a16e0",
+        "start_timestamp": 1765376194471,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.15",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      }
+    ],
+    "spark_context_id": 2890472564899951778,
+    "driver_healthy": true,
+    "jdbc_port": 10000,
+    "cluster_name": "cluster_17",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "RUNNING",
+    "state_message": "",
+    "start_time": 1762412254843,
+    "last_state_loss_time": 1765375948492,
+    "last_activity_time": 1765376195781,
+    "last_restarted_time": 1765375948583,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "cluster_memory_mb": 28672,
+    "cluster_cores": 8.0,
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_17",
+      "ClusterId": "1106-065734-zym3zsw0",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765381387219,
+      "last_exception": "DatabricksServiceException: RESOURCE_DOES_NOT_EXIST: No such stream with handle: 3457021154571559."
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065735-574ajsao",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "driver": {
+      "private_ip": "10.139.64.44",
+      "public_dns": "",
+      "node_id": "f01dda49a48d4608945699a9bebfa257",
+      "instance_id": "f92b5e042c914502b9fa1508bb2aed23",
+      "start_timestamp": 1765375342044,
+      "node_type_id": "Standard_DS3_v2",
+      "node_attributes": {
+        "is_spot": false
+      },
+      "host_private_ip": "10.139.0.43",
+      "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+    },
+    "executors": [
+      {
+        "private_ip": "10.139.64.64",
+        "public_dns": "",
+        "node_id": "ffc805f38aea4aba9f24f596cb7a589a",
+        "instance_id": "d6b29a79eff946a69e71d7ef484395d2",
+        "start_timestamp": 1765380548221,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.64",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.5",
+        "public_dns": "",
+        "node_id": "2993665e15784c93853e4aa804a4120b",
+        "instance_id": "075c42e061dd43328abd469c344290d0",
+        "start_timestamp": 1765380475275,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.49",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.34",
+        "public_dns": "",
+        "node_id": "f2738e76b39e4a0a894b45425654c71e",
+        "instance_id": "767766d6789e419f9f323549de1e4c15",
+        "start_timestamp": 1765380475246,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.51",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.16",
+        "node_id": "1bd8195b607e4c0da064f1eeab43b636",
+        "instance_id": "5619e3592d614c9686a5e19a112ce996",
+        "start_timestamp": 1765376648690,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.13",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      }
+    ],
+    "spark_context_id": 8713937729665496083,
+    "driver_healthy": true,
+    "jdbc_port": 10000,
+    "cluster_name": "cluster_19",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "RUNNING",
+    "state_message": "",
+    "start_time": 1762412255499,
+    "last_state_loss_time": 1765375438167,
+    "last_activity_time": 1765375376244,
+    "last_restarted_time": 1765375438257,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 4
+    },
+    "cluster_memory_mb": 71680,
+    "cluster_cores": 20.0,
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_19",
+      "ClusterId": "1106-065735-574ajsao",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765380906071
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065735-op4hu680",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "driver": {
+      "private_ip": "10.139.64.46",
+      "public_dns": "",
+      "node_id": "69087ade04554aa8894f3ce8cbbbd957",
+      "instance_id": "a880b1886d92448a8133ff6aec1f5a6d",
+      "start_timestamp": 1765371692223,
+      "node_type_id": "Standard_DS3_v2",
+      "node_attributes": {
+        "is_spot": false
+      },
+      "host_private_ip": "10.139.0.46",
+      "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+    },
+    "executors": [
+      {
+        "private_ip": "10.139.64.53",
+        "public_dns": "",
+        "node_id": "72ca221417674e59be18527cf03b1423",
+        "instance_id": "f1b8831d1cc44e98adbf9e871dbf653f",
+        "start_timestamp": 1765379924603,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.50",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.56",
+        "node_id": "3bfc0ffd0c624938a6da9c21062441a8",
+        "instance_id": "42e4c52c886c4cd7ac362094805b7ee9",
+        "start_timestamp": 1765378626050,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.57",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.27",
+        "node_id": "2181a65fad684b48b7188ca30cf247ce",
+        "instance_id": "eecda849191d410ab3d37cca0030c340",
+        "start_timestamp": 1765379924640,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.27",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.43",
+        "public_dns": "",
+        "node_id": "6535325dcbdb4d9fbc844e6d879f1acf",
+        "instance_id": "a8f68e774293494ebcfb068dd660c55c",
+        "start_timestamp": 1765376158574,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.44",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      }
+    ],
+    "spark_context_id": 8710999919475875193,
+    "driver_healthy": true,
+    "jdbc_port": 10000,
+    "cluster_name": "cluster_20",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "RUNNING",
+    "state_message": "",
+    "start_time": 1762412255423,
+    "last_state_loss_time": 1765371782270,
+    "last_activity_time": 1765371724517,
+    "last_restarted_time": 1765371782351,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 4
+    },
+    "cluster_memory_mb": 71680,
+    "cluster_cores": 20.0,
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_20",
+      "ClusterId": "1106-065735-op4hu680",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765380912715
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065734-no2wdwxs",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "driver": {
+      "private_ip": "10.139.64.9",
+      "public_dns": "",
+      "node_id": "06326ed4ac284754844d9ead26b1a942",
+      "instance_id": "cd12f33961d24633a289e01b565a57e9",
+      "start_timestamp": 1765378679269,
+      "node_type_id": "Standard_DS3_v2",
+      "node_attributes": {
+        "is_spot": false
+      },
+      "host_private_ip": "10.139.0.9",
+      "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+    },
+    "executors": [
+      {
+        "private_ip": "10.139.64.63",
+        "public_dns": "",
+        "node_id": "decff705b28f48f0abfd8730d1869eab",
+        "instance_id": "3e91eb48abc845d9a14b7d3926124695",
+        "start_timestamp": 1765379462258,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.63",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      }
+    ],
+    "spark_context_id": 7557338207976862753,
+    "driver_healthy": true,
+    "jdbc_port": 10000,
+    "cluster_name": "cluster_25",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "RUNNING",
+    "state_message": "",
+    "start_time": 1762412254867,
+    "last_state_loss_time": 1765378840977,
+    "last_activity_time": 1765378782271,
+    "last_restarted_time": 1765378841047,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "cluster_memory_mb": 28672,
+    "cluster_cores": 8.0,
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_25",
+      "ClusterId": "1106-065734-no2wdwxs",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765381224549
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1109-141619-rqxfj20w",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "driver": {
+      "private_ip": "10.139.64.55",
+      "public_dns": "",
+      "node_id": "203493d304c54f21958ef41fced1f252",
+      "instance_id": "7b6a3174e2bb49a8831dc49dac8e1554",
+      "start_timestamp": 1765381091363,
+      "node_type_id": "Standard_DS3_v2",
+      "node_attributes": {
+        "is_spot": false
+      },
+      "host_private_ip": "10.139.0.55",
+      "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+    },
+    "executors": [
+      {
+        "private_ip": "10.139.64.48",
+        "public_dns": "",
+        "node_id": "282765e4cf5142c690fd0053e1f84cb4",
+        "instance_id": "8feb6c2652544e728aab9c5e55ff3309",
+        "start_timestamp": 1765381091401,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.48",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      }
+    ],
+    "spark_context_id": 9199038466380751541,
+    "driver_healthy": true,
+    "jdbc_port": 10000,
+    "cluster_name": "cluster_30",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "RUNNING",
+    "state_message": "",
+    "start_time": 1762697779667,
+    "last_state_loss_time": 1765381180994,
+    "last_activity_time": 1765381124642,
+    "last_restarted_time": 1765381181049,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "cluster_memory_mb": 28672,
+    "cluster_cores": 8.0,
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_30",
+      "ClusterId": "1109-141619-rqxfj20w",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765381449329
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065734-ke5you0w",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "driver": {
+      "private_ip": "10.139.64.39",
+      "public_dns": "",
+      "node_id": "1a718f8574024c45b90e6d90c6173173",
+      "instance_id": "655e815ff9eb4ccda9af9c00b8d08485",
+      "start_timestamp": 1765378925597,
+      "node_type_id": "Standard_DS3_v2",
+      "node_attributes": {
+        "is_spot": false
+      },
+      "host_private_ip": "10.139.0.4",
+      "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+    },
+    "executors": [
+      {
+        "private_ip": "10.139.64.51",
+        "node_id": "c779986a43354e99a3eb015f2a626c6d",
+        "instance_id": "896a748aac7c4870b4fc2be7d9efb2d9",
+        "start_timestamp": 1765379768923,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.52",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      },
+      {
+        "private_ip": "10.139.64.38",
+        "public_dns": "",
+        "node_id": "2935b4d1526648dcbcd62fb5106bb3ac",
+        "instance_id": "e3a20e46ea9240619e865a6176afc895",
+        "start_timestamp": 1765381038591,
+        "node_type_id": "Standard_DS3_v2",
+        "node_attributes": {
+          "is_spot": false
+        },
+        "host_private_ip": "10.139.0.36",
+        "ngrok_endpoint_base_domain": "green.mux.ngrok-dataplane.wildcard"
+      }
+    ],
+    "spark_context_id": 9051912402862289817,
+    "driver_healthy": true,
+    "jdbc_port": 10000,
+    "cluster_name": "cluster_10",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "RESIZING",
+    "state_message": "Starting Spark",
+    "start_time": 1762412254847,
+    "last_state_loss_time": 1765379006060,
+    "last_activity_time": 1765378950715,
+    "last_restarted_time": 1765379006133,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 4
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_10",
+      "ClusterId": "1106-065734-ke5you0w",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765381384436
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065734-g377sem8",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 959671178927702999,
+    "driver_healthy": true,
+    "cluster_name": "cluster_07",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "PENDING",
+    "state_message": "Finding instances for new nodes, acquiring more instances if necessary",
+    "start_time": 1762412254833,
+    "last_state_loss_time": 1765367892836,
+    "last_activity_time": 1765367847736,
+    "last_restarted_time": 1765381487309,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_07",
+      "ClusterId": "1106-065734-g377sem8",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765379331907
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065734-n4uk8r28",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 2687227509198322948,
+    "driver_healthy": true,
+    "cluster_name": "cluster_02",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.28",
+    "state": "TERMINATED",
+    "state_message": "Inactive cluster terminated (inactive for 20 minutes).",
+    "start_time": 1762412254870,
+    "terminated_time": 1764672990956,
+    "last_state_loss_time": 1764668226836,
+    "last_activity_time": 1764668165358,
+    "last_restarted_time": 1764668226928,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_02",
+      "ClusterId": "1106-065734-n4uk8r28",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1764672537930
+    },
+    "termination_reason": {
+      "code": "INACTIVITY",
+      "type": "SUCCESS",
+      "parameters": {
+        "inactivity_duration_min": "20"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065735-b7oh924g",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 6268557019638523769,
+    "driver_healthy": true,
+    "cluster_name": "cluster_04",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "TERMINATED",
+    "state_message": "Inactive cluster terminated (inactive for 20 minutes).",
+    "start_time": 1762412255121,
+    "terminated_time": 1765299990227,
+    "last_state_loss_time": 1765298378060,
+    "last_activity_time": 1765298323395,
+    "last_restarted_time": 1765298378124,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_04",
+      "ClusterId": "1106-065735-b7oh924g",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765299575016
+    },
+    "termination_reason": {
+      "code": "INACTIVITY",
+      "type": "SUCCESS",
+      "parameters": {
+        "inactivity_duration_min": "20"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065734-at3vwzr4",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 4783334656530249820,
+    "driver_healthy": true,
+    "cluster_name": "cluster_05",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "TERMINATED",
+    "state_message": "Termination requested by elizavetam@campus.technion.ac.il",
+    "start_time": 1762412254847,
+    "terminated_time": 1765290837992,
+    "last_state_loss_time": 1765282454813,
+    "last_activity_time": 1765282399815,
+    "last_restarted_time": 1765282454893,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_05",
+      "ClusterId": "1106-065734-at3vwzr4",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765290338980
+    },
+    "termination_reason": {
+      "code": "USER_REQUEST",
+      "type": "SUCCESS",
+      "parameters": {
+        "username": "elizavetam@campus.technion.ac.il"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065734-8cb94zy8",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 5893276195365623596,
+    "driver_healthy": true,
+    "cluster_name": "cluster_08",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "TERMINATED",
+    "state_message": "Inactive cluster terminated (inactive for 20 minutes).",
+    "start_time": 1762412254847,
+    "terminated_time": 1765379018284,
+    "last_state_loss_time": 1765367535979,
+    "last_activity_time": 1765367467632,
+    "last_restarted_time": 1765367536038,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_08",
+      "ClusterId": "1106-065734-8cb94zy8",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765378378084
+    },
+    "termination_reason": {
+      "code": "INACTIVITY",
+      "type": "SUCCESS",
+      "parameters": {
+        "inactivity_duration_min": "20"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065735-4kvnyqyo",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 7194990556474666851,
+    "driver_healthy": true,
+    "cluster_name": "cluster_09",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "TERMINATED",
+    "state_message": "Inactive cluster terminated (inactive for 20 minutes).",
+    "start_time": 1762412255181,
+    "terminated_time": 1765253970294,
+    "last_state_loss_time": 1765247739815,
+    "last_activity_time": 1765247698632,
+    "last_restarted_time": 1765247739891,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_09",
+      "ClusterId": "1106-065735-4kvnyqyo",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765253649877
+    },
+    "termination_reason": {
+      "code": "INACTIVITY",
+      "type": "SUCCESS",
+      "parameters": {
+        "inactivity_duration_min": "20"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065734-6xl3kfcw",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 6193798988801245276,
+    "driver_healthy": true,
+    "cluster_name": "cluster_13",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "TERMINATED",
+    "state_message": "Inactive cluster terminated (inactive for 20 minutes).",
+    "start_time": 1762412254843,
+    "terminated_time": 1765315590300,
+    "last_state_loss_time": 1765299889330,
+    "last_activity_time": 1765306651981,
+    "last_restarted_time": 1765299889402,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_13",
+      "ClusterId": "1106-065734-6xl3kfcw",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765315013919
+    },
+    "termination_reason": {
+      "code": "INACTIVITY",
+      "type": "SUCCESS",
+      "parameters": {
+        "inactivity_duration_min": "20"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065735-3vps4veo",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 8046772951156078547,
+    "driver_healthy": true,
+    "cluster_name": "cluster_14",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "TERMINATED",
+    "state_message": "Inactive cluster terminated (inactive for 20 minutes).",
+    "start_time": 1762412255281,
+    "terminated_time": 1765380457071,
+    "last_state_loss_time": 1765376017549,
+    "last_activity_time": 1765375960536,
+    "last_restarted_time": 1765376017625,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_14",
+      "ClusterId": "1106-065735-3vps4veo",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765380218484
+    },
+    "termination_reason": {
+      "code": "INACTIVITY",
+      "type": "SUCCESS",
+      "parameters": {
+        "inactivity_duration_min": "20"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065735-tpp0le0w",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 827063483381198866,
+    "driver_healthy": true,
+    "cluster_name": "cluster_18",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "TERMINATED",
+    "state_message": "Inactive cluster terminated (inactive for 20 minutes).",
+    "start_time": 1762412255770,
+    "terminated_time": 1765380037896,
+    "last_state_loss_time": 1765378688713,
+    "last_activity_time": 1765378617184,
+    "last_restarted_time": 1765378688799,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_18",
+      "ClusterId": "1106-065735-tpp0le0w",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765379829620
+    },
+    "termination_reason": {
+      "code": "INACTIVITY",
+      "type": "SUCCESS",
+      "parameters": {
+        "inactivity_duration_min": "20"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065735-e7s9i9z4",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 4349220867923477425,
+    "driver_healthy": true,
+    "cluster_name": "cluster_21",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.28",
+    "state": "TERMINATED",
+    "state_message": "Inactive cluster terminated (inactive for 20 minutes).",
+    "start_time": 1762412255121,
+    "terminated_time": 1765228772064,
+    "last_state_loss_time": 1765207179605,
+    "last_activity_time": 1765207119772,
+    "last_restarted_time": 1765207179676,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_21",
+      "ClusterId": "1106-065735-e7s9i9z4",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765228058293
+    },
+    "termination_reason": {
+      "code": "INACTIVITY",
+      "type": "SUCCESS",
+      "parameters": {
+        "inactivity_duration_min": "20"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065734-6cpq3h8g",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 4049901869187608887,
+    "driver_healthy": true,
+    "cluster_name": "cluster_22",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "TERMINATED",
+    "state_message": "Inactive cluster terminated (inactive for 20 minutes).",
+    "start_time": 1762412254902,
+    "terminated_time": 1765301249400,
+    "last_state_loss_time": 1765288482624,
+    "last_activity_time": 1765288430408,
+    "last_restarted_time": 1765288482690,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_22",
+      "ClusterId": "1106-065734-6cpq3h8g",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765300831487
+    },
+    "termination_reason": {
+      "code": "INACTIVITY",
+      "type": "SUCCESS",
+      "parameters": {
+        "inactivity_duration_min": "20"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065735-keczk88w",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 2297605452924449120,
+    "driver_healthy": true,
+    "cluster_name": "cluster_23",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "TERMINATED",
+    "state_message": "Inactive cluster terminated (inactive for 20 minutes).",
+    "start_time": 1762412256016,
+    "terminated_time": 1765378897650,
+    "last_state_loss_time": 1765376021477,
+    "last_activity_time": 1765376135245,
+    "last_restarted_time": 1765376021540,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_23",
+      "ClusterId": "1106-065735-keczk88w",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765378447066
+    },
+    "termination_reason": {
+      "code": "INACTIVITY",
+      "type": "SUCCESS",
+      "parameters": {
+        "inactivity_duration_min": "20"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065734-f9u4e8sg",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 3086736709929065915,
+    "driver_healthy": true,
+    "cluster_name": "cluster_24",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "TERMINATED",
+    "state_message": "Termination requested by raquelgol@campus.technion.ac.il",
+    "start_time": 1762412254833,
+    "terminated_time": 1765297706315,
+    "last_state_loss_time": 1765296273947,
+    "last_activity_time": 1765296195204,
+    "last_restarted_time": 1765296274026,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_24",
+      "ClusterId": "1106-065734-f9u4e8sg",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765297416909
+    },
+    "termination_reason": {
+      "code": "USER_REQUEST",
+      "type": "SUCCESS",
+      "parameters": {
+        "username": "raquelgol@campus.technion.ac.il"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065734-2ug9uiv4",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 6386489942121245558,
+    "driver_healthy": true,
+    "cluster_name": "cluster_26",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.28",
+    "state": "TERMINATED",
+    "state_message": "Termination requested by noam.shemesh@campus.technion.ac.il",
+    "start_time": 1762412254843,
+    "terminated_time": 1765217649296,
+    "last_state_loss_time": 1765217372232,
+    "last_activity_time": 1765217401975,
+    "last_restarted_time": 1765217372320,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_26",
+      "ClusterId": "1106-065734-2ug9uiv4",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765199172164
+    },
+    "termination_reason": {
+      "code": "USER_REQUEST",
+      "type": "SUCCESS",
+      "parameters": {
+        "username": "noam.shemesh@campus.technion.ac.il"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1106-065734-u1cw4t1c",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 350429150290107812,
+    "driver_healthy": true,
+    "cluster_name": "cluster_27",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "TERMINATED",
+    "state_message": "Inactive cluster terminated (inactive for 20 minutes).",
+    "start_time": 1762412254959,
+    "terminated_time": 1765310432067,
+    "last_state_loss_time": 1765305157920,
+    "last_activity_time": 1765306711880,
+    "last_restarted_time": 1765305158009,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_27",
+      "ClusterId": "1106-065734-u1cw4t1c",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765310012712
+    },
+    "termination_reason": {
+      "code": "INACTIVITY",
+      "type": "SUCCESS",
+      "parameters": {
+        "inactivity_duration_min": "20"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1109-141619-iaa6dpfl",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 3769173940346802055,
+    "driver_healthy": true,
+    "cluster_name": "cluster_28",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "TERMINATED",
+    "state_message": "Inactive cluster terminated (inactive for 20 minutes).",
+    "start_time": 1762697779688,
+    "terminated_time": 1765304011205,
+    "last_state_loss_time": 1765297818139,
+    "last_activity_time": 1765297749907,
+    "last_restarted_time": 1765297818205,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_28",
+      "ClusterId": "1109-141619-iaa6dpfl",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765303298059
+    },
+    "termination_reason": {
+      "code": "INACTIVITY",
+      "type": "SUCCESS",
+      "parameters": {
+        "inactivity_duration_min": "20"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1109-141619-3r692mm8",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 2884697272303598363,
+    "driver_healthy": true,
+    "cluster_name": "cluster_29",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "TERMINATED",
+    "state_message": "Inactive cluster terminated (inactive for 20 minutes).",
+    "start_time": 1762697779661,
+    "terminated_time": 1765289669563,
+    "last_state_loss_time": 1765284978325,
+    "last_activity_time": 1765284931964,
+    "last_restarted_time": 1765284978398,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_29",
+      "ClusterId": "1109-141619-3r692mm8",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765289214607
+    },
+    "termination_reason": {
+      "code": "INACTIVITY",
+      "type": "SUCCESS",
+      "parameters": {
+        "inactivity_duration_min": "20"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1109-141619-9zngc1s0",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 7039550593748697865,
+    "driver_healthy": true,
+    "cluster_name": "cluster_31",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "TERMINATED",
+    "state_message": "Inactive cluster terminated (inactive for 20 minutes).",
+    "start_time": 1762697779674,
+    "terminated_time": 1765375357861,
+    "last_state_loss_time": 1765370683134,
+    "last_activity_time": 1765370856175,
+    "last_restarted_time": 1765370683223,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_31",
+      "ClusterId": "1109-141619-9zngc1s0",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765374979230
+    },
+    "termination_reason": {
+      "code": "INACTIVITY",
+      "type": "SUCCESS",
+      "parameters": {
+        "inactivity_duration_min": "20"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1109-141619-szb59ce8",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 3059596956947837495,
+    "driver_healthy": true,
+    "cluster_name": "cluster_32",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "TERMINATED",
+    "state_message": "Inactive cluster terminated (inactive for 20 minutes).",
+    "start_time": 1762697779661,
+    "terminated_time": 1765373138215,
+    "last_state_loss_time": 1765364948651,
+    "last_activity_time": 1765365235417,
+    "last_restarted_time": 1765364948710,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_32",
+      "ClusterId": "1109-141619-szb59ce8",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765372787434
+    },
+    "termination_reason": {
+      "code": "INACTIVITY",
+      "type": "SUCCESS",
+      "parameters": {
+        "inactivity_duration_min": "20"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1112-133606-itsii0ao",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 4067363074102832403,
+    "driver_healthy": true,
+    "cluster_name": "cluster_33",
+    "spark_version": "15.4.x-cpu-ml-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_DS3_v2",
+    "driver_node_type_id": "Standard_DS3_v2",
+    "custom_tags": {
+      "origin": "terraform"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs"
+      }
+    },
+    "spark_env_vars": {
+      "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    },
+    "autotermination_minutes": 20,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "API",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_DS3_v2"
+    },
+    "data_security_mode": "NONE",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "15.4.x-cpu-ml-scala2.12",
+    "release_version": "15.4.29",
+    "state": "TERMINATED",
+    "state_message": "Inactive cluster terminated (inactive for 20 minutes).",
+    "start_time": 1762954566837,
+    "terminated_time": 1765315770223,
+    "last_state_loss_time": 1765297732326,
+    "last_activity_time": 1765306712700,
+    "last_restarted_time": 1765297732412,
+    "autoscale": {
+      "min_workers": 1,
+      "max_workers": 4,
+      "target_workers": 1
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "cluster_33",
+      "ClusterId": "1112-133606-itsii0ao",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1765315379885
+    },
+    "termination_reason": {
+      "code": "INACTIVITY",
+      "type": "SUCCESS",
+      "parameters": {
+        "inactivity_duration_min": "20"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1030-101830-pr6bw6zx",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 7497122021868524797,
+    "driver_healthy": true,
+    "cluster_name": "Idan tests",
+    "spark_version": "14.3.x-scala2.12",
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_D16ds_v5",
+    "driver_node_type_id": "Standard_D16ds_v5",
+    "autotermination_minutes": 30,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "UI",
+    "policy_id": "000B8345536F302F",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_D16ds_v5"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_D16ds_v5"
+    },
+    "data_security_mode": "USER_ISOLATION",
+    "runtime_engine": "PHOTON",
+    "effective_spark_version": "14.3.x-photon-scala2.12",
+    "kind": "CLASSIC_PREVIEW",
+    "use_ml_runtime": false,
+    "is_single_node": false,
+    "release_version": "14.3.40",
+    "state": "TERMINATED",
+    "state_message": "Termination requested by idanhorowitz@campus.technion.ac.il",
+    "start_time": 1761819510473,
+    "terminated_time": 1765182667587,
+    "last_state_loss_time": 1765182247244,
+    "last_activity_time": 1765182266678,
+    "last_restarted_time": 1765182247352,
+    "autoscale": {
+      "min_workers": 3,
+      "max_workers": 20,
+      "target_workers": 3
+    },
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "Idan tests",
+      "ClusterId": "1030-101830-pr6bw6zx",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "termination_reason": {
+      "code": "USER_REQUEST",
+      "type": "SUCCESS",
+      "parameters": {
+        "username": "idanhorowitz@campus.technion.ac.il"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1102-084814-gxoyr2d6",
+    "creator_user_name": "idanhorowitz@campus.technion.ac.il",
+    "spark_context_id": 2568227564288300182,
+    "driver_healthy": true,
+    "cluster_name": "idanhorowitz@campus.technion.ac.il's Personal Compute Cluster",
+    "spark_version": "17.3.x-scala2.13",
+    "spark_conf": {
+      "spark.databricks.cluster.profile": "singleNode",
+      "spark.master": "local[*, 4]"
+    },
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_D4ds_v5",
+    "driver_node_type_id": "Standard_D4ds_v5",
+    "custom_tags": {
+      "ResourceClass": "SingleNode"
+    },
+    "autotermination_minutes": 60,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "UI",
+    "single_user_name": "cnoam@technion.ac.il",
+    "policy_id": "0012AD6593285464",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_D4ds_v5"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_D4ds_v5"
+    },
+    "data_security_mode": "SINGLE_USER",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "17.3.x-cpu-ml-scala2.13",
+    "kind": "CLASSIC_PREVIEW",
+    "use_ml_runtime": true,
+    "is_single_node": true,
+    "assigned_principal": "user:cnoam@technion.ac.il",
+    "release_version": "17.3.1",
+    "state": "TERMINATED",
+    "state_message": "Inactive cluster terminated (inactive for 60 minutes).",
+    "start_time": 1762073294678,
+    "terminated_time": 1763889975156,
+    "last_state_loss_time": 1763886418276,
+    "last_activity_time": 1763886360341,
+    "last_restarted_time": 1763886418317,
+    "num_workers": 0,
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "idanhorowitz@campus.technion.ac.il",
+      "ClusterName": "idanhorowitz@campus.technion.ac.il's Personal Compute Cluster",
+      "ClusterId": "1102-084814-gxoyr2d6",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "termination_reason": {
+      "code": "INACTIVITY",
+      "type": "SUCCESS",
+      "parameters": {
+        "inactivity_duration_min": "60"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  },
+  {
+    "cluster_id": "1030-100820-iilvxpox",
+    "creator_user_name": "cnoam@technion.ac.il",
+    "spark_context_id": 8774673950904729990,
+    "driver_healthy": true,
+    "cluster_name": "Noam Cohen's Cluster",
+    "spark_version": "14.3.x-scala2.12",
+    "spark_conf": {
+      "spark.databricks.cluster.profile": "singleNode",
+      "spark.master": "local[*, 4]"
+    },
+    "azure_attributes": {
+      "first_on_demand": 1,
+      "availability": "ON_DEMAND_AZURE",
+      "spot_bid_max_price": -1.0
+    },
+    "node_type_id": "Standard_D4ds_v5",
+    "driver_node_type_id": "Standard_D4ds_v5",
+    "custom_tags": {
+      "ResourceClass": "SingleNode"
+    },
+    "cluster_log_conf": {
+      "dbfs": {
+        "destination": "dbfs:/cluster-logs-noam"
+      }
+    },
+    "autotermination_minutes": 120,
+    "enable_elastic_disk": true,
+    "disk_spec": {},
+    "cluster_source": "UI",
+    "single_user_name": "cnoam@technion.ac.il",
+    "policy_id": "0012AD6593285464",
+    "enable_local_disk_encryption": false,
+    "instance_source": {
+      "node_type_id": "Standard_D4ds_v5"
+    },
+    "driver_instance_source": {
+      "node_type_id": "Standard_D4ds_v5"
+    },
+    "data_security_mode": "SINGLE_USER",
+    "runtime_engine": "STANDARD",
+    "effective_spark_version": "14.3.x-cpu-ml-scala2.12",
+    "kind": "CLASSIC_PREVIEW",
+    "use_ml_runtime": true,
+    "is_single_node": true,
+    "assigned_principal": "user:cnoam@technion.ac.il",
+    "release_version": "14.3.40",
+    "state": "TERMINATED",
+    "state_message": "Termination requested by cnoam@technion.ac.il",
+    "start_time": 1761818900834,
+    "terminated_time": 1763838897052,
+    "last_state_loss_time": 1763837577398,
+    "last_activity_time": 1763837543043,
+    "last_restarted_time": 1763837577447,
+    "num_workers": 0,
+    "default_tags": {
+      "Vendor": "Databricks",
+      "Creator": "cnoam@technion.ac.il",
+      "ClusterName": "Noam Cohen's Cluster",
+      "ClusterId": "1030-100820-iilvxpox",
+      "CreatedBy": "Noam Cohen (Create resource)"
+    },
+    "cluster_log_status": {
+      "last_attempted": 1763838768767
+    },
+    "termination_reason": {
+      "code": "USER_REQUEST",
+      "type": "SUCCESS",
+      "parameters": {
+        "username": "cnoam@technion.ac.il"
+      }
+    },
+    "pinned_by_user_name": "6662685270297676",
+    "init_scripts_safe_mode": false
+  }
+]

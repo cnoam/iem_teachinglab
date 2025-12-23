@@ -7,7 +7,7 @@ terraform {
   }
 
   # This resource describe WHERE we keep the state file.
-  # It does not change when deploying to other subscriptipions.
+  # It does not change when deploying to other subscriptions.
   backend "azurerm" {
     resource_group_name  = "ddsteachinglab-infrastructure-group"
     storage_account_name = "ddsteachinglabdatastg"
@@ -62,7 +62,7 @@ locals {
 }
 
 # Currently not needed, but kept here for educational purpose.
-# The old coded needed it because I used "--target" . Now I don't, and all dependecies are
+# The old coded needed it because I used "--target" . Now I don't, and all dependencies are
 # correctly placed.
 
 # # Add a null resource that depends on the cluster/group creation

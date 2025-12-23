@@ -20,15 +20,21 @@ In practice, the group list is dynamic, so we need to be able to update the setu
 **Table of Contents**
 
 - [Using Terraform to deploy DataBricks clusters for students](#using-terraform-to-deploy-databricks-clusters-for-students)
+- [Installation](#installation)
 - [Usage](#usage)
   - [Modifying properties in existing deployment](#modifying-properties-in-existing-deployment)
 - [Installing libraries](#installing-libraries)
 - [Using the same code to create different environments](#using-the-same-code-to-create-different-environments)
-  - [Profiles](#profiles)
-  - [Workspace](#workspace)
+  - [DBR Profiles](#dbr-profiles)
+  - [TF Workspace](#tf-workspace)
 - [Testing !](#testing-)
   - [Debugging](#debugging)
-  - [Setting and choosing  a workspace](#setting-and-choosing--a-workspace)
+    - [Checking the dependency graph](#checking-the-dependency-graph)
+- [Using local state file for development](#using-local-state-file-for-development)
+- [Troubleshooting](#troubleshooting)
+  - [Mismatch between the state known by TF and the actual state in the cloud](#mismatch-between-the-state-known-by-tf-and-the-actual-state-in-the-cloud)
+  - ["Error: failed to find the installed library"](#error-failed-to-find-the-installed-library)
+  - [Deleting resources temporarily - for debugging](#deleting-resources-temporarily---for-debugging)
 - [History timeline](#history-timeline)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -54,36 +60,35 @@ Transform this file using `cd dbr && python ../convert_moodle_to_tf_format.py pa
 The output is named  "users.csv" <br>
 
 2. Create a Databricks workspace (I use Azure portal).
-1. generate a Databricks personal token
-  - enter the workspace, user settings,  developer tools, manage access tokens, generate new token with short life span (e.g. 2 days).
-  - store it as  `TF_VAR_databricks_token=dapia****` in a **safe** place for env variables. Make sure it persists after the current shell is terminated. I simply saved it in `create_vars.sh`
-4. save the URL starting with "adb" in the same file, as  `TF_VAR_databricks_host`.
-1. run  `source ../create_vars.sh`
-1. login to the correct DBR profile:
-  `databricks auth login --host $TF_VAR_databricks_host` .
-  This will open the browser and let you login.
-  The "adb***" is copied from the URL shown in the browser when entering the workspace.
+1. generate a Databricks personal token or the CLI's hidden token (next item)
+  - enter the workspace, user settings,  developer tools, manage access tokens, generate new token.
+ 
 
-  Calling this command writes a file `~/.databrickscfg`. If the file exists, the new entry is appended.
+3. Configure Databricks Profiles:
+   - Use the Databricks CLI: `databricks auth login --host <workspace-url>`.
+   - Example `~/.databrickscfg`:
+     ```ini
+     [lab-dev]
+     host = [https://adb-xxx.azuredatabricks.net](https://adb-xxx.azuredatabricks.net)
+     auth_type = databricks-cli
+     
+     [lab-prod]
+     host = [https://adb-yyy.azuredatabricks.net](https://adb-yyy.azuredatabricks.net)
+     auth_type = databricks-cli
+     ```
 
-It looks like:
+4. Map TF Workspaces to Profiles:
+   - In `terraform.tfvars`, map TF workspace names to profile names:
+     ```hcl
+     workspace_profiles = {
+       dev  = "lab-dev"
+       prod = "lab-prod"
+     }
+     ```
 
-```
-; The profile defined in the DEFAULT section is to be used as a fallback when no profile is explicitly specified.
-[DEFAULT]
+5. Safety Check:
+   - The `safety.tf` file prevents execution if the TF workspace is not mapped.
 
-[adb-3738544368441327 ]
-host      = adb-3738544368441327.7.azuredatabricks.net
-auth_type = databricks-cli
-```
-2025-09-03: Currently do NOT use DBR profile. The workspace is identified by the env var `TF_VAR_databricks_host`
-
-
-**Additionally**, you must export these env vars (case sensitive!) . This is done by running the `create_vars.sh` above.
-```
-TF_VAR_databricks_token
-TF_VAR_databricks_host
-````
 >NOTE: <br>
 > Some actions (resources?) can be done ONLY after finishing the deployment
 > of clusters. Specifically, to install libraries, the cluster need to be ready.
@@ -92,9 +97,9 @@ TF_VAR_databricks_host
 
 > NOTE: the following instructions might be not needed. Try to run `tf apply --parallelim=50` and maybe you are lucky.
 1. run `terraform plan --target=null_resource.force_creation`. check that the plan is reasonable.
-1. `terraform apply --target=null_resource.force_creation`. After it finished, check that the resources in the Databricks portal are as expected: users created, they are in the correct group, the group has correct permissions in the correct cluster. All cluster should be turned ON. <br>
+2. `terraform apply --target=null_resource.force_creation`. After it finished, check that the resources in the Databricks portal are as expected: users created, they are in the correct group, the group has correct permissions in the correct cluster. All cluster should be turned ON. <br>
  *It will take a few minutes* : Creating a cluster takes about 5 minutes. (This is why parallel is so important)
-2. Now that the clusters are created and running, apply the second half -- installing libs and shutting down the clusters:<br> `terraform apply`
+1. Now that the clusters are created and running, apply the second half -- installing libs and shutting down the clusters:<br> `terraform apply`
 
 
 > NOTE: I strongly recommend increasing the default parallelism (10 resources) - e.g. `terraform apply -parallelism=50`
@@ -124,23 +129,14 @@ Imagine you want to run the same plan to generate workspaces for two courses. Ea
 
 ## DBR Profiles
 
-  **NOTE:** Currently we don't use profile -- the info is fully contained in the env var, to keep a single source of truth.
-
 A Databricks profile is a set of configuration details—such as credentials, workspace URL, and other settings—used by the Databricks CLI or client libraries to securely connect to and interact with a specific Databricks workspace.
 
-You create profiles in `~/.databrickscfg` :
-```
-[default]
-host="adb-3663658524550853.13.azuredatabricks.net"
-token=dapi***
+Profiles are now the primary way to authenticate. The `provider` block in `main.tf` uses a `lookup` to find the correct profile based on your active TF workspace.
 
-[lab94290]
-host      ="adb-3738544368441327.7.azuredatabricks.net"
-token=dapi***
-
-[lab94290-integration-test]
-host="adb-3663658524550853.13.azuredatabricks.net"
-token=dapi6***
+```hcl
+provider "databricks" {
+  profile = lookup(var.workspace_profiles, terraform.workspace, null)
+}
 ```
 
 
@@ -172,12 +168,10 @@ ID                Type       Language  Path
 `tf workspace list`<br>
 - Select workspace: `tf workspace select NAME`
 
-Now that we know what is TF workspace and DBR profile, 
-we can forget about it, since in the current code I kept is simple: 
-- single profile is chosen by the env var (token)
-- not using TF workspace
+The current architecture enforces a strict 1-to-1 binding between a Terraform workspace and a Databricks profile.
 
-You may want to compare with older versions of this doc in the repo!
+1. Select workspace: `tf workspace select dev`
+2. Terraform automatically pulls the host and auth details from the `[lab-dev]` profile in your config.
 
 
 
@@ -237,9 +231,9 @@ When ready, push the finished state back to the remote backend:
 
 # Troubleshooting
 
-**`tf plan` asks for `var.databricks_host` <br>**
---> Make sure the env variables are defined
-e.g. verify the correct contents of  `../create_vars.sh` and source it.
+**`tf plan` fails with "CRITICAL ERROR: Workspace Mismatch" <br>**
+--> You are in a Terraform workspace (like `default` or a new lab ID) that isn't mapped in your `workspace_profiles` variable.
+--> Add the workspace to your `.tfvars` map or switch to a valid one: `tf workspace select dev`.
 
 **`tf plan` succeeds, and `tf apply` fails due to auth <br>**
 --> It is possible that although you ran "databricks auth login ..." successfully and a new token is stored on your machine, that the provider does not see it due to old version or bugs.
@@ -351,4 +345,5 @@ The clusters are created, since their name is not unique
 I changed `tf workspace select default`, and now `tf apply` correctly identify the current resource.
 ==> Must be very careful in which workspace I use!!!!
 
+2025-12-23 moved to using TF workspace, with 1:1 binding to DBR profile. Stop using env Vars for this.
 

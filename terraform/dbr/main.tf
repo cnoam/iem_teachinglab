@@ -31,8 +31,9 @@ provider "azurerm" {
 }
 
 provider "databricks" {
-  host    = "https://${var.databricks_host}"
-  token   = var.databricks_token # workspace PA Token
+  # Terraform looks up the host and token inside the ~/.databrickscfg 
+  # based on the profile name selected here.
+  profile = var.workspace_profiles[terraform.workspace]
 }
 
 # Read the CSV file using data source

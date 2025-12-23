@@ -1,21 +1,5 @@
 # variables.tf
 
-# BUG: I have to specify the HOST in both ~/.databrickscfg  and env var.
-# This is just misunderstanding to be fixed.
-
-# Databricks host URL
-variable "databricks_host" {
-  description = "The URL of the Databricks workspace."
-  type        = string
-}
-
-# Databricks API token
-variable "databricks_token" {
-  description = "The API token for Databricks authentication."
-  type        = string
-  sensitive   = true
-}
-
 # Usernames CSV file
 variable "user_names_file" {
   description = "Path to the CSV file containing usernames."
@@ -73,4 +57,10 @@ variable "maven_packages" {
 variable "python_packages" {
   type    = list(string)
   default = [ ]
+}
+
+variable "workspace_profiles" {
+  type = map(string)
+  description = "Maps TF workspace names to ~/.databrickscfg profile names"
+  # Example: { "dev" = "dbr-dev", "prod" = "dbr-prod" }
 }

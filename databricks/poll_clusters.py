@@ -98,10 +98,10 @@ def main():
         ch.setFormatter(formatter)
         logger.addHandler(ch)
 
-    logger.info('Checking clusters...')
+
     host = os.getenv('DATABRICKS_HOST')
     token = os.getenv('DATABRICKS_TOKEN')
-
+    logger.info('Checking clusters at {}'.format(host))
     termination_watermark_minutes = float(os.getenv('DATABRICKS_MAX_UPTIME', 3 * 60 + 30))
     warning_watermark_minutes = float(os.getenv('DATABRICKS_WARN_UPTIME', 3 * 60))
     client = DataBricksClusterOps(host_='https://' + host, token_=token)
@@ -156,9 +156,12 @@ def main():
             client.delete_cluster(cluster_name)  # this will turn the cluster OFF, but not erase it.
 
             # prevent users from restarting the cluster
-            cname_id = int(cluster_name[8:])
-            client.set_cluster_permission(cid, group_name=group_name_int(cname_id),
+            try:
+                cname_id = int(cluster_name[8:])
+                client.set_cluster_permission(cid, group_name=group_name_int(cname_id),
                                           permission=client.ClusterPermission.ATTACH)
+            except KeyError as e:
+                logger.error(f"cluster {cluster_name} has no group name. Cannot set permission. {e}")
 
         # --- WARNING CHECK ---
         elif (total_time > send_alert_threshold) and not v.warning_sent:

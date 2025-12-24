@@ -63,6 +63,9 @@ class ClusterInfo(BaseModel):
     """
     Maps cluster IDs to cluster names.
     This table is populated once from the API client.
+
+    Note: In Databricks, cluster names are NOT unique.
+    I decided to keep it unique here to avoid confusion, since we rely on cluster names in other places.
     """
     cluster_id = CharField(primary_key=True)
     cluster_name = CharField(unique=True)

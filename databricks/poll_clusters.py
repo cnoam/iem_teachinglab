@@ -12,6 +12,7 @@ The database file itself (cluster_uptimes.db) persists across runs.
 import json
 import logging, os
 import datetime
+from peewee import IntegrityError
 from .DataBricksGroups import DataBricksGroups
 from .DataBricksClusterOps import DataBricksClusterOps
 from .main import group_name_int, check_mandatory_env_vars
@@ -30,11 +31,19 @@ def update_cluster_info(clusters: list[dict]):
     """
     Populates the ClusterInfo table with cluster IDs and names.
     """
-    for c in clusters:
-        ClusterInfo.get_or_create(
-            cluster_id=c['cluster_id'],
-            defaults={'cluster_name': c['cluster_name']}
-        )
+    try:
+        for c in clusters:
+            ClusterInfo.get_or_create(
+                cluster_id=c['cluster_id'],
+                defaults={'cluster_name': c['cluster_name']}
+            )
+    except ClusterInfo.DoesNotExist:
+        logging.error("ClusterInfo table is not initialized properly. Cannot update cluster info.")
+        raise
+    except IntegrityError as e:
+        logging.error(f"Error updating cluster info: {e}. clusterID = {c['cluster_id']}. Cluster name ={c['cluster_name']}")
+        raise
+
 
 
 # {'members': [{'user_name': 'mdana@campus.technion.ac.il'}, {'user_name': 'liat.tsipory@campus.technion.ac.il'}]}

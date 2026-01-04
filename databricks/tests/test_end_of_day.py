@@ -43,7 +43,7 @@ def test_send_usage_report_correctness(mock_send_emails):
     # 1. SETUP: Create DB Data
     # We need a parent cluster record to satisfy the ForeignKey constraint
     cluster_id = "cluster_test_report"
-    ClusterUptime.create(id=cluster_id)
+    ClusterUptime.create(cluster_id=cluster_id)
     ClusterInfo.create(cluster_id=cluster_id, cluster_name="cluster_test_report_name")
     # We create 'yesterday's' data.
     # NOTE: Since the reporting function queries for `date.today()`,
@@ -103,13 +103,13 @@ def test_log_daily_uptime_functionality():
 
     # Cluster A: Has run 1 hour previously, and 30 minutes in the current cycle
     ClusterUptime.create(
-        id='cluster-A',
+        cluster_id='cluster-A',
         cumulative_seconds=3600,
         uptime_seconds=1800  # 30 minutes of current cycle
     )
     # Cluster B: Only 10 minutes in the current cycle
     ClusterUptime.create(
-        id='cluster-B',
+        cluster_id='cluster-B',
         cumulative_seconds=0,
         uptime_seconds=600  # 10 minutes of current cycle
     )
@@ -119,7 +119,8 @@ def test_log_daily_uptime_functionality():
         ClusterCumulativeUptime.get(ClusterCumulativeUptime.date == yesterday)
 
     # 2. ACTION: Run the end-of-day logging job
-    log_daily_uptime()
+    mock_logger = MagicMock()
+    log_daily_uptime(TEST_DB, mock_logger)
 
     # 3. VERIFICATION - LOGGING: Check the historical table
     # Cluster A should have logged 3600 + 1800 = 5400 seconds for yesterday
@@ -138,6 +139,6 @@ def test_log_daily_uptime_functionality():
 
     # 4. VERIFICATION - RESET: Check that the live table has been cleared.
     with pytest.raises(DoesNotExist):
-        ClusterUptime.get(ClusterUptime.id == 'cluster-A')
+        ClusterUptime.get(ClusterUptime.cluster_id == 'cluster-A')
     with pytest.raises(DoesNotExist):
-        ClusterUptime.get(ClusterUptime.id == 'cluster-B')
+        ClusterUptime.get(ClusterUptime.cluster_id == 'cluster-B')

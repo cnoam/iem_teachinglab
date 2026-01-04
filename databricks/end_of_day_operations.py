@@ -19,26 +19,30 @@ def send_usage_report(recipient: str, logger):
                 recipients=[recipient], logger=logger)
 
 
-def log_daily_uptime():
+def log_daily_uptime(prod_db, logger):
     """Performs daily logging and state reset atomically."""
 
     yesterday = date.today() - timedelta(days=1)
 
-    # 1. LOGGING STEP: Read live data and write historical data
-    clusters = list(ClusterUptime.select())
-    for cluster in clusters:
-        daily_use_sec = cluster.uptime_seconds + cluster.cumulative_seconds
+    with prod_db.atomic():
+        # 1. LOGGING STEP: Read live data and write historical data
+        clusters = list(ClusterUptime.select())
+        if len(clusters) == 0:
+            logger.info("No clusters found in ClusterUptime")
+        for cluster in clusters:
+            daily_use_sec = cluster.uptime_seconds + cluster.cumulative_seconds
 
-        if daily_use_sec > 0:
-            # Insert/Update the historical table
-            ClusterCumulativeUptime.replace(
-                cluster=cluster.id,
-                date=yesterday,
-                daily_use_seconds=daily_use_sec
-            ).execute()
+            if daily_use_sec > 0:
+                # Insert/Update the historical table
+                ClusterCumulativeUptime.replace(
+                    cluster=cluster.cluster_id,
+                    date=yesterday,
+                    daily_use_seconds=daily_use_sec
+                ).execute()
 
-    # 2. RESET STEP: Truncate the live table for a fresh start.
-    ClusterUptime.delete().execute()
+        # 2. RESET STEP: Truncate the live table for a fresh start.
+        num_deleted = ClusterUptime.delete().execute()
+        logger.info(f"Purged {num_deleted} records from live table.")
 
     logging.info(f"Daily logging and reset for {yesterday} complete.")
 
@@ -65,7 +69,7 @@ if __name__ == "__main__":
     with prod_db.connection_context():
         create_tables(prod_db)
         restore_cluster_permissions(host, token,logger)
-        log_daily_uptime() # update the database
+        log_daily_uptime(prod_db, logger) # update the database
         send_usage_report(os.getenv('REPORT_RECIPIENT_EMAIL'), logger)
 
     logger.info('Exiting successfully')

@@ -19,8 +19,7 @@ from .main import group_name_int, check_mandatory_env_vars
 
 from .resource_manager.cluster_uptime import (
     update_cumulative_uptime,
-    get_or_create_cluster_data,
-    save_cluster_data
+    get_or_create_cluster_record
 )
 # gemini 2025-11-25 13:30
 from .database.db_operations import ClusterUptime, ClusterInfo
@@ -137,15 +136,15 @@ def main():
     for record in all_records:
         # 1. Re-hydrate the ClusterData object from the DB record
         # We use the helper function to convert seconds back to timedelta/bool
-        v = get_or_create_cluster_data(record.id)
+        v = get_or_create_cluster_record(record.cluster_id)
 
         # 2. Threshold Check Logic (largely unchanged, but using Peewee object)
-        total_time = v.uptime + v.cumulative
+        total_time = datetime.timedelta(seconds=v.uptime_seconds) + datetime.timedelta(seconds=v.cumulative_seconds)
         hours = total_time.total_seconds() // 3600  # MODIFIED: Use .total_seconds() for timedelta
         minutes = (total_time.total_seconds() - hours * 3600) // 60  # MODIFIED: Use .total_seconds()
 
-        cluster_name = cluster_id_to_cluster_name(record.id)
-        cid = record.id
+        cluster_name = cluster_id_to_cluster_name(record.cluster_id)
+        cid = record.cluster_id
 
         if not cluster_name:
             logger.error(f'Cluster name not found {cid}. This is an error! Skipping.')
@@ -155,7 +154,7 @@ def main():
         if (total_time > terminate_cluster_threshold) and not v.force_terminated:
             # Update the object, then save back to DB
             v.force_terminated = True
-            save_cluster_data(cid, v)
+            v.save()
 
             logger.info(f"cluster {cluster_name} will be terminated NOW. It is up for {total_time}")
 
@@ -175,7 +174,7 @@ def main():
         # --- WARNING CHECK ---
         elif (total_time > send_alert_threshold) and not v.warning_sent:
             v.warning_sent = True
-            save_cluster_data(cid, v)
+            v.save()
 
             logger.info(f"cluster {cluster_name} time quota is almost used! It is up for {total_time}")
             send_emails(subject=f"'{cluster_name}' is working for a long time",

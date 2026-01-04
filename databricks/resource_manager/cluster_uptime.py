@@ -1,126 +1,95 @@
 import logging
 from datetime import datetime, timedelta, date
-from dataclasses import dataclass
-from typing import Optional
-
-# --- Peewee Models and DB Imports ---
-# NOTE: Ensure these imports correctly point to your Peewee setup file (e.g., db_operations)
-# gemini 2025-11-25 13:30
 from ..database.db_operations import (
     ClusterUptime,
     ClusterCumulativeUptime,
-    ClusterInfo
+    ClusterInfo,
+    to_datetime
 )
-
-# data structure that holds the Python state for a cluster.
-@dataclass
-class ClusterData:
-    start_time: Optional[datetime] = None  # Tracks when the cluster was last turned on
-    uptime: timedelta = timedelta()       # Duration since start_time
-    cumulative: timedelta = timedelta()   # Total accumulated uptime
-    warning_sent: bool = False
-    force_terminated: bool = False
-    cluster_name: str = ''
 
 logging.basicConfig(level=logging.INFO)
 
-
-def get_or_create_cluster_data(cluster_id: str) -> ClusterData:
+def get_or_create_cluster_record(cluster_id: str) -> ClusterUptime:
     """
-    Retrieves or initializes a ClusterData object from the DB.
-
-    Returns:
-        ClusterData: The current state of the cluster's uptime data.
+    Directly returns the Peewee record.
+    If it doesn't exist (e.g., after midnight reset), it creates a new one.
     """
-    try:
-        # Try to retrieve the existing record
-        record = ClusterUptime.get(ClusterUptime.id == cluster_id)
-        cluster_info = ClusterInfo.get(ClusterInfo.cluster_id == cluster_id)
-
-        # Convert DB fields (seconds/bool) back to Python types (timedelta/bool)
-        start_ts = record.start_timestamp
-        start_dt = datetime.fromtimestamp(start_ts) if start_ts else None
-
-        return ClusterData(
-            start_time=start_dt,
-            uptime=timedelta(seconds=record.uptime_seconds),
-            cumulative=timedelta(seconds=record.cumulative_seconds),
-            warning_sent=record.warning_sent,
-            force_terminated=record.force_terminated,
-            cluster_name=cluster_info.cluster_name
-        )
-
-    except (ClusterUptime.DoesNotExist, ClusterInfo.DoesNotExist):
-        # If record does not exist, create a clean object
-        return ClusterData()
-
-
-def save_cluster_data(cluster_id: str, data: ClusterData):
-    """
-    Saves the ClusterData object back to the database, handling creation/update.
-    """
-    # Convert Python types (datetime/timedelta) to DB storage types (timestamp/seconds)
-    start_ts = data.start_time.timestamp() if data.start_time else None
-    uptime_sec = data.uptime.total_seconds()
-    cumulative_sec = data.cumulative.total_seconds()
-
-    # Use Peewee's .create or .get_or_create for robust upsert logic
-    ClusterUptime.replace(
-        id=cluster_id,
-        start_timestamp=start_ts,
-        uptime_seconds=uptime_sec,
-        cumulative_seconds=cumulative_sec,
-        warning_sent=data.warning_sent,
-        force_terminated=data.force_terminated
-    ).execute()
-
+    record, created = ClusterUptime.get_or_create(
+        cluster_id=cluster_id,
+        defaults={
+            'uptime_seconds': 0,
+            'cumulative_seconds': 0,
+            'start_time': None,
+            'last_poll_time': None,
+            'warning_sent': False,
+            'force_terminated': False
+        }
+    )
+    return record
 
 def update_cumulative_uptime(cluster: dict):
     """
-    Update the total uptime of resource in our DB.
+    Update the total uptime using a 'Delta-based' approach.
 
-       If a resource was turned off and then on, we need to continue the counting.
+    This avoids the 'Absolute Time' bug where resetting the DB would
+    incorrectly re-import uptime from before the reset.
 
-    for DBR cluster, each time it is turned on, driver.start_time is set , so if the cluster is on, I can see for how long.
+      WHY NOT USE ABSOLUTE TIME (now - driver_start_time)?
+    Using absolute time creates a dependency on the cluster's birth certificate.
+    If this script's database is reset (e.g., at midnight), an absolute
+    calculation would immediately 're-import' all uptime from the previous day
+    because the cluster's start_timestamp hasn't changed.
 
     e.g.
     for each cluster_id, keep total uptime.
 
-    on       -------       ------* <-- need to update this inteval
+    on       -------       ------* <-- need to update this interval
     off -----       -------
     poll ^  ^  ^  ^  ^  ^  ^  ^  ^
-
     """
     assert 'driver' in cluster.keys()  # only running cluster is provided
     driver = cluster['driver']
-    id = cluster['cluster_id']
+    cluster_id = cluster['cluster_id']
+    now = datetime.now()
 
-    # 1. Retrieve current data
-    current_data = get_or_create_cluster_data(id)
+    # 1. Retrieve current data (returns fresh record if DB was truncated)
+    record = get_or_create_cluster_record(cluster_id)
 
-    # 2. Calculate current runtime
-    # Timestamps are typically in milliseconds, convert to seconds for datetime.fromtimestamp
-    driver_start_ts_ms = driver['start_timestamp']
-    driver_start_time = datetime.fromtimestamp(driver_start_ts_ms / 1000)
-    current_uptime = datetime.now() - driver_start_time
+    # 2. Parse driver start time
+    driver_start_time = datetime.fromtimestamp(driver['start_timestamp'] / 1000)
 
-    # 3. Check for cluster restart
-    if current_data.start_time is None or abs(current_data.start_time.timestamp() - driver_start_time.timestamp()) > 1:
-        # Cluster is newly turned on or restarted since last check
-        logging.info(f"Cluster {id} is turned on again or started anew.")
+    # 3. Handle Cluster Restart / New Record
+    # Check if the cluster started more recently than our stored timestamp
+    start_time_dt = to_datetime(record.start_time)
+    is_restart = (start_time_dt is None or
+                  abs((start_time_dt - driver_start_time).total_seconds()) > 1)
 
-        # Accumulate the uptime from the *previous* run into the cumulative total
-        # (This handles the 'off then on' scenario)
-        current_data.cumulative += current_data.uptime
-        current_data.start_time = driver_start_time
+    if is_restart:
+        logging.info(f"Cluster {cluster_id} restart/new record detected.")
+        # Archive previous session's uptime to cumulative
+        record.cumulative_seconds += record.uptime_seconds
+        record.uptime_seconds = 0
+        record.start_time= driver_start_time
+        # Set bookmark to cluster start to catch the very first delta correctly
+        record.last_poll_time = driver_start_time
 
-    # 4. Update the current uptime and save
-    current_data.uptime = current_uptime
-    save_cluster_data(id, current_data)
+    # 4. Calculate Delta (The "Relative" Logic)
+    # If last_poll_timestamp is None (DB reset), we use 'now' as the reference
+    # to avoid pulling in any time from before the reset.
+    last_poll_time_dt = to_datetime(record.last_poll_time)
+    reference_time = last_poll_time_dt or now
 
+    # Calculate duration since last poll, ensuring we don't go before driver start
+    effective_start = max(reference_time, driver_start_time)
+    delta_seconds = (now - effective_start).total_seconds()
 
-from datetime import date, timedelta
+    # # Calculate time passed since the last poll, restricted by driver start
+    # delta_seconds = max(0, now - max(reference_ts, driver_start_time))
 
+    # 5. Update and Save directly to DB via ORM
+    record.uptime_seconds += max(0.0,delta_seconds)
+    record.last_poll_time = now
+    record.save()
 
 def format_timedelta_to_hhmm(td: timedelta) -> str:
     """Converts a timedelta object to a string in HH:MM format."""
@@ -142,10 +111,11 @@ def create_usage_report_daily(when: date) -> str:
 
     # Query all records for today from the historical cumulative table
     # NOTE: Assuming daily_records is a list/iterator of ClusterCumulativeUptime objects
-    daily_records = (ClusterCumulativeUptime
-                     .select(ClusterCumulativeUptime, ClusterInfo)
-                     .join(ClusterInfo, on=(ClusterCumulativeUptime.cluster == ClusterInfo.cluster_id))
-                     .where(ClusterCumulativeUptime.date == when))
+    daily_records = (
+        ClusterCumulativeUptime
+        .select(ClusterCumulativeUptime, ClusterInfo)
+        .join(ClusterInfo, on=(ClusterCumulativeUptime.cluster == ClusterInfo.cluster_id))
+        .where(ClusterCumulativeUptime.date == when))
 
     if not daily_records.exists():
         # If no records exist, provide a summary without an empty table
@@ -199,16 +169,17 @@ def create_usage_report_cumulative(db_instance) -> str:
 
     with db_instance.connection_context():
         # Get all cluster records ordered by total uptime (cumulative + current live uptime)
-        query = (ClusterUptime
-                 .select(ClusterUptime, ClusterInfo)
-                 .join(ClusterInfo, on=(ClusterUptime.id == ClusterInfo.cluster_id))
-                 .order_by(ClusterUptime.cumulative_seconds.desc()))
+        query = (
+            ClusterUptime
+            .select(ClusterUptime, ClusterInfo)
+            .join(ClusterInfo, on=(ClusterUptime.cluster_id == ClusterInfo.cluster_id))
+            .order_by(ClusterUptime.cumulative_seconds.desc()))
 
         for record in query:
             # Calculate the full current uptime: accumulated + currently running
             cumulative_td = timedelta(seconds=record.cumulative_seconds + record.uptime_seconds)
             total_cumulative_uptime += cumulative_td
-            report_lines.append(f"<li>Cluster {record.cluster_info.cluster_name}: {cumulative_td}</li>")
+            report_lines.append(f"<li>Cluster {record.clusterinfo.cluster_name}: {format_timedelta_to_hhmm(cumulative_td)}</li>")
 
-    report_lines.append(f"</ul><h2>Total Uptime Measured: {total_cumulative_uptime}</h2>")
+    report_lines.append(f"</ul><h2>Total Uptime Measured: {format_timedelta_to_hhmm(total_cumulative_uptime)}</h2>")
     return "\n".join(report_lines)

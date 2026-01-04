@@ -54,17 +54,17 @@ def test_cluster_uptime_crud():
     # 1. CREATE
     # Use .create() to insert a new record
     new_cluster = ClusterUptime.create(
-        id=cluster_id,
+        cluster_id=cluster_id,
         uptime_seconds= 10*60 ,
         cumulative_seconds=initial_cumulative,
         warning_sent=False
     )
-    assert new_cluster.id == cluster_id
+    assert new_cluster.cluster_id == cluster_id
     assert new_cluster.cumulative_seconds == initial_cumulative
 
     # 2. READ (Verify creation)
     # Use .get() to retrieve the record
-    read_cluster = ClusterUptime.get(ClusterUptime.id == cluster_id)
+    read_cluster = ClusterUptime.get(ClusterUptime.cluster_id == cluster_id)
     assert read_cluster.cumulative_seconds == initial_cumulative
     assert read_cluster.warning_sent is False
 
@@ -75,7 +75,7 @@ def test_cluster_uptime_crud():
     read_cluster.save()
 
     # 4. READ (Verify update)
-    updated_cluster = ClusterUptime.get(ClusterUptime.id == cluster_id)
+    updated_cluster = ClusterUptime.get(ClusterUptime.cluster_id == cluster_id)
     assert updated_cluster.cumulative_seconds == new_cumulative
     assert updated_cluster.warning_sent is True
 
@@ -90,7 +90,7 @@ def test_cumulative_uptime_creation_and_link():
 
 
     # Ensure a ClusterUptime record exists to satisfy the Foreign Key constraint
-    parent_cluster = ClusterUptime.create(id=cluster_id)
+    parent_cluster = ClusterUptime.create(cluster_id=cluster_id)
 
     # 1. CREATE linked record
     unused_var = ClusterCumulativeUptime.create(
@@ -105,6 +105,6 @@ def test_cumulative_uptime_creation_and_link():
         (ClusterCumulativeUptime.date == today)
     )
 
-    assert read_record.cluster.id == cluster_id
+    assert read_record.cluster.cluster_id == cluster_id
     assert read_record.date == today
     assert read_record.daily_use_seconds == daily_use_s

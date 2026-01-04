@@ -6,13 +6,13 @@
 
 import pytest
 from unittest.mock import patch
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from peewee import SqliteDatabase
 from databricks.poll_clusters import main, check_update_running_clusters, get_emails_address
 
 # Import models and ORM helpers
 from databricks.database.db_operations import ClusterUptime, ClusterCumulativeUptime, ClusterInfo
-from databricks.resource_manager.cluster_uptime import get_or_create_cluster_data, save_cluster_data
+from databricks.resource_manager.cluster_uptime import get_or_create_cluster_record
 
 
 # --- Fixture for In-Memory DB Setup ---
@@ -96,7 +96,7 @@ def test_cluster_monitoring_scenario(mock_dt, #update_cumulative_uptime,
     # --- 1. SETUP MOCKS & ENV ---
 
     # Configure time mocks (Time starts 4 hours ago for simulation)
-    now = datetime.now(timezone.utc)
+    now = datetime.now()
     mock_dt.now.return_value = now
 
     # Configure environment variables (WARNING @ 3h, TERMINATE @ 3.5h)
@@ -119,24 +119,24 @@ def test_cluster_monitoring_scenario(mock_dt, #update_cumulative_uptime,
 
     # Cluster 1 (Off) - Last start time 4 hours ago , was up for 2 hours
     ClusterUptime.create(
-        id='1',
+        cluster_id='1',
         cumulative_seconds= 7200,
         uptime_seconds=0,  # Currently off
-        start_timestamp=(now - timedelta(hours=4)).timestamp()
+        start_time=(now - timedelta(hours=4))
     )
     # Cluster 2 (ON)  for 2 hours before, and now 1h10m  > 3h
     ClusterUptime.create(
-        id='2',
+        cluster_id='2',
         cumulative_seconds= 7200,
         uptime_seconds= 70 * MINUTE.total_seconds(),
-        start_timestamp=(now - 70 * MINUTE).timestamp()
+        start_time=(now - 70 * MINUTE)
     )
     # Cluster 3 (ON), for 3 hours before, and now 1h40m > 3.5h
     ClusterUptime.create(
-        id='3',
+        cluster_id='3',
         cumulative_seconds= 3 * 3600,
         uptime_seconds=100 * MINUTE.total_seconds(),
-        start_timestamp=(now - 100 * MINUTE).timestamp()
+        start_time=(now - 100 * MINUTE)
     )
 
     # --- 3. CLUSTER API MOCK DATA ---
@@ -184,16 +184,16 @@ def test_cluster_monitoring_scenario(mock_dt, #update_cumulative_uptime,
     assert 'is working for a long time' in warning_call.kwargs['subject']
 
     # Cluster 2: Should have warning_sent=True
-    c2 = ClusterUptime.get(ClusterUptime.id == '2')
+    c2 = ClusterUptime.get(ClusterUptime.cluster_id == '2')
     assert c2.warning_sent is True
     assert c2.force_terminated is False
 
     # Cluster 3: Should have force_terminated=True
-    c3 = ClusterUptime.get(ClusterUptime.id == '3')
+    c3 = ClusterUptime.get(ClusterUptime.cluster_id == '3')
     assert c3.warning_sent is False  # because we ran it once only
     assert c3.force_terminated is True
 
     # Cluster 1: Should be untouched
-    c1 = ClusterUptime.get(ClusterUptime.id == '1')
+    c1 = ClusterUptime.get(ClusterUptime.cluster_id == '1')
     assert c1.warning_sent is False
     assert c1.force_terminated is False

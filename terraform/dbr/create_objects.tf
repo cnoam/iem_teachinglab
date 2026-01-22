@@ -2,8 +2,8 @@
 # Create groups
 #
 resource "databricks_group" "student_groups" {
-  for_each     = toset(local.group_names)
-  display_name = each.key
+  for_each     = { for k, v in local.group_configs : v.group_name => v } # Index by "group_01", "group_02"
+  display_name = each.key                                                # This will be "group_01", "group_02"
   # Set to false to prevent members of this group from creating unrestricted clusters
   allow_cluster_create = false
 }
@@ -22,12 +22,12 @@ resource "databricks_user" "workspace_user" {
 
 # -- disable user ability to create personal clusters --
 resource "databricks_cluster_policy" "personal_compute" {
-  name = "Personal Compute"
-  description = "NC use with small-to-medium data or libraries like pandas and scikit-learn. Spark runs in local mode."
+  name             = "Personal Compute"
+  description      = "use with small-to-medium data or libraries like pandas and scikit-learn. Spark runs in local mode."
   policy_family_id = "personal-vm"
   policy_family_definition_overrides = jsonencode(
-    {"node_type_id": {
-      "type": "forbidden" 
+    { "node_type_id" : {
+      "type" : "forbidden"
       }
-    })
+  })
 }

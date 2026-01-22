@@ -1,0 +1,32 @@
+Current state:
+
+There is one Databricks workspace, used by K (e.g. 30) groups of students.
+
+Each group contains 1 up to 4 students.
+
+For each group (group_01, group_02...) there is a cluster (cluster_01 etc.)
+
+Each group has privileges for its sole cluster
+
+The users, groups are workspace entities (not account level)
+The users/groups/clusters provisioning is done by existing terraform code.
+
+-------
+
+The 10000 feet goal: a customer (non technical, and without permissions) uses the system created by the (users == students). 
+The system is a minimal http server whose backend connects to the DBR data and runs jobs and gets data. This data is then presented to the customer.
+Ths http server will run on student's laptop -- it is just for demo.
+
+The new required state:
+A single SQL warehouse shall be used by all students (serverless or Pro) for their SQL queries. students will keep using their clusters as well.
+A single Catalog shall be used by the users. 
+Each group shall have its own schema. members of this group can do anything within this schema (create/delete etc. tables.)
+Each group shall have access only to its own schema. a user may see that there are other schemas, but preferably see only her own.
+Each group can create jobs. such jobs can for example run a notebook, SQL query, python code.
+Each group shall be able to use SQL warehouse to perform queries. 
+Each group shall be able to run the code in test_connection.py against their own entities, and not any other entities.
+
+The final delivery to a group (of students) is a set of {url,SP ID + secret, etc.}
+
+
+

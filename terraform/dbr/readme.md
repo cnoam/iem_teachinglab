@@ -28,6 +28,7 @@ In practice, the group list is dynamic, so we need to be able to update the setu
   - [DBR Profiles](#dbr-profiles)
   - [TF Workspace](#tf-workspace)
 - [Testing !](#testing-)
+- [Preparing dev workspace](#preparing-dev-workspace)
   - [Debugging](#debugging)
     - [Checking the dependency graph](#checking-the-dependency-graph)
 - [Using local state file for development](#using-local-state-file-for-development)
@@ -198,6 +199,15 @@ We are currently using TF Workspace.
 
 [The reason NOT to use directories is it causes code duplication, at least according to my current understanding]
 
+# Preparing dev workspace
+1. in the Azure portal, create a new DBR workspace. It should be in the same region as the storage.
+2. run  `databricks auth login --host adb-<<WS-ID>>.azuredatabricks.net`
+3. run `tf workspace select dev` (or create it first`tf workspace new dev_94290`)
+4. verify `tf plan` fails due to unmatched TF workspace to DBR profile.
+5. Add the DBR profile to the list of TF workspace mapping (in main.tf)
+6. create a minimal `users.csv`
+7. run `tf plan` and check reasonability.
+8. 
 ## Debugging
 Try adding the env var: `TF_LOG=DEBUG terraform apply --target=null_resource.force_creation`
 It also works for VERBOSE
@@ -213,12 +223,13 @@ The state file is stored remotely, in an Azure storage. This ensures the state i
 
 However, locking the state is slow, so during development, you can bring the state locally, and when finished, push it back to remote:
 
-`terraform state pull > dev.tfstate`
+First, create a backup. `terraform state pull > dev.tfstate` 
+
 
 In main.tf, inside `terraform {}`, comment the remote backend and enable
 ```
  backend "local" {
-    path = "dev.tfstate"   # re-use the file you just pulled
+    path = "dev.tfstate"
   }
 ```
 then, `terraform init -reconfigure  #tells TF to read the new backend config`
@@ -226,7 +237,7 @@ then, `terraform init -reconfigure  #tells TF to read the new backend config`
 Work as usual (tf plan/apply)
 When ready, push the finished state back to the remote backend:
 1. update the backend{} to use the remote in main.tf
-2. `terraform init -reconfigure -migrate-state`
+2. `terraform init  -migrate-state`
 
 
 # Troubleshooting

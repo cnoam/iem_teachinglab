@@ -2,20 +2,10 @@
 # Create Clusters
 #
 resource "databricks_cluster" "clusters" {
-  #  count = length(local.groups)
-  #  cluster_name = "cluster_${count.index + 1}"
 
-  #  for_each = toset(local.group_names) # Iterate over group names
-  #  cluster_name = replace(each.key, "group", "cluster")
+  for_each = local.group_configs
 
-
-  for_each = {
-    for group_name in local.group_names :
-    replace(group_name, "group", "cluster") => group_name
-  }
-
-
-  cluster_name = each.key
+  cluster_name = each.value.cluster_name
 
   spark_version = var.spark_version
 

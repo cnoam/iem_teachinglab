@@ -20,9 +20,9 @@ locals {
   python_library_map = flatten([
     for cluster_key, cluster_value in databricks_cluster.clusters : [
       for lib_name in var.python_packages : {
-        key      = "${cluster_key}_${lib_name}"
+        key        = "${cluster_key}_${lib_name}"
         cluster_id = cluster_value.id
-        package = lib_name
+        package    = lib_name
       }
     ]
   ])
@@ -30,7 +30,7 @@ locals {
 
 # Convert the lists into maps with unique keys for each library
 locals {
-  maven_library_resources = { for item in local.maven_library_map : item.key => item }
+  maven_library_resources  = { for item in local.maven_library_map : item.key => item }
   python_library_resources = { for item in local.python_library_map : item.key => item }
 }
 

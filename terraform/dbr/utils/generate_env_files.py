@@ -48,7 +48,6 @@ def generate_env_files():
         print(f" Created: {filename}")
 
     print("\nDone! Individual .env files are in the 'dist/student_envs' folder.")
-    print("Reminder: You must manually generate SP secrets in the Databricks UI and paste them into these files.")
 
 if __name__ == "__main__":
     generate_env_files()

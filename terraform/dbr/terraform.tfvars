@@ -21,6 +21,6 @@ workspace_profiles = {
   lab94290w3 = "lab94290w3"
 }
 
-enable_unified_catalog_isolation = true
+enable_unified_catalog_isolation = false
 
 maven_packages = {}

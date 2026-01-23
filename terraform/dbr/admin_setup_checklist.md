@@ -8,7 +8,7 @@ As a Workspace Admin, follow these steps to manually configure permissions and s
 - ⚠️ Service Principal Secrets (Managed via Key Vault - Manual Entry Required)
 - ✅ Student Group Data Permissions (Automated - Assigned to individual users)
 
----\n
+
 ## 📋 Phase 0: Infrastructure Prep (Key Vault)
 *We use Azure Key Vault to securely store SP secrets, allowing Terraform to read them automatically.*
 
@@ -41,7 +41,7 @@ My code will read from the vault and do all the work.
     ```
 *   **UI:** Go to Key Vault -> **Access control (IAM)** -> **Add role assignment** -> Select **"Key Vault Secrets Officer"** -> Assign access to **User** -> Select yourself.
 
----\n
+
 ## 📋 Phase 1: Authentication (Secret Generation)
 *Perform this ONCE per group to populate the Key Vault.*
 
@@ -66,7 +66,7 @@ My code will read from the vault and do all the work.
         ```
     *   *Result:* The `.env` files in `dist/student_envs/` now contain the **real** secrets automatically!
 
----\n
+
 ## 📋 Phase 2: Verify Group Entitlements (Bypassing UI Hiding)
 *Required for students to use the SQL Warehouse UI.*
 
@@ -75,14 +75,14 @@ My code will read from the vault and do all the work.
 3.  Verify that **Databricks SQL Access** is checked.
     *   *Note:* Terraform enables this on the parent group `all_student_groups`. It should inherit, but it is good to verify.
 
----\n
+
 ## 📋 Phase 3: Verify SQL Warehouse Permissions (Inheritance Check)
 *Terraform granted `CAN_USE` to `all_student_groups` and specific Service Principals.*
 
 1.  Navigate to **SQL Warehouses** -> **"Shared Student Warehouse"** -> **Permissions**.
 2.  Verify `all_student_groups` has **Can Use**.
 
----\n
+
 ## 📋 Phase 4: Post-Terraform Execution
 After the `tf apply` completed successfully, run:
 
@@ -99,7 +99,7 @@ python utils/seed_tables.py
 
 The files in `dist/student_envs/` (one for each group) should then be distributed to the student groups.
 
----\n
+
 ## 📋 Phase 5: Verification
 1.  **Run the Test:**
     ```bash
@@ -110,3 +110,31 @@ The files in `dist/student_envs/` (one for each group) should then be distribute
     - `OAuth Authentication... PASS`
     - `Cluster Access... PASS`
     - `SQL Warehouse Read/Write Access... PASS`
+
+
+<hr>
+
+# 📋 Teardown
+To remove the Warehouse/schema/servicePrincipal/jobs,<br>
+change `enable_unified_catalog_isolation` to **`false`** in terraform.tfvars.
+
+Before running *tf apply* we need to undo the `seed_tables.py`
+
+Remove **ALL** tables in the schemas (also those created by students!) by running
+
+```bash 
+cd dbr
+source utils/venv/bin/activate # so we have the needed package
+#from dbr/dist/student_env/group*.env copy the needed vars:
+export DATABRICKS_SQL_ID=24a8ab8d4dfa079d
+export DATABRICKS_HOST=https://adb-7405617061350271.11.azuredatabricks.net
+
+# generate PAT (e.g. in the UI) and save here (or pass via `--token`)
+export DATABRICKS_TOKEN=***
+python utils/cleanup_schemas.py --catalog 94290_dev
+deactivate
+```
+
+
+After successful deletion of the schemas, run `tf apply`
+

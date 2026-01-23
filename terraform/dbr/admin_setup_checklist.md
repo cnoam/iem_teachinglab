@@ -5,11 +5,10 @@ As a Workspace Admin, follow these steps to manually configure permissions and s
 **Current Status:**
 - ✅ Service Principal creation & Permissions (Automated)
 - ✅ SQL Warehouse creation (Automated)
-- ⚠️ Service Principal Secrets (Managed via Key Vault)
-- ❌ Student Group Data Permissions (Manual Required due to UC/Workspace limitations)
+- ⚠️ Service Principal Secrets (Managed via Key Vault - Manual Entry Required)
+- ✅ Student Group Data Permissions (Automated - Assigned to individual users)
 
----
-
+---\n
 ## 📋 Phase 0: Infrastructure Prep (Key Vault)
 *We use Azure Key Vault to securely store SP secrets, allowing Terraform to read them automatically.*
 
@@ -17,12 +16,8 @@ As a Workspace Admin, follow these steps to manually configure permissions and s
 **Why?** To act as a bridge between the manual secret generation (by Admin) and Terraform automation.
 
 As of 2026-01, Creating secrets for Service Principals *using automation* can be done only by Admin account.
-
 Since I have only Workspace admin, we (tech support and me) decided that they generate the secrets, and put them in a vault.
-
 My code will read from the vault and do all the work.
-
-
 
 *   **CLI:**
     ```bash
@@ -46,8 +41,7 @@ My code will read from the vault and do all the work.
     ```
 *   **UI:** Go to Key Vault -> **Access control (IAM)** -> **Add role assignment** -> Select **"Key Vault Secrets Officer"** -> Assign access to **User** -> Select yourself.
 
----
-
+---\n
 ## 📋 Phase 1: Authentication (Secret Generation)
 *Perform this ONCE per group to populate the Key Vault.*
 
@@ -72,69 +66,41 @@ My code will read from the vault and do all the work.
         ```
     *   *Result:* The `.env` files in `dist/student_envs/` now contain the **real** secrets automatically!
 
----
-
-## 📋 Phase 2: Group Entitlements (Bypassing UI Hiding)
+---\n
+## 📋 Phase 2: Verify Group Entitlements (Bypassing UI Hiding)
 *Required for students to use the SQL Warehouse UI.*
 
 1.  Go to **Settings** > **Identity** > **Groups**.
 2.  Select `group_01`.
-3.  Ensure the checkbox for **Databricks SQL Access** is checked.
-4.  (Repeat for all 30 groups).
+3.  Verify that **Databricks SQL Access** is checked.
+    *   *Note:* Terraform enables this on the parent group `all_student_groups`. It should inherit, but it is good to verify.
 
----
-
-## 📋 Phase 3: SQL Warehouse Permissions (Inheritance Check)
+---\n
+## 📋 Phase 3: Verify SQL Warehouse Permissions (Inheritance Check)
 *Terraform granted `CAN_USE` to `all_student_groups` and specific Service Principals.*
 
 1.  Navigate to **SQL Warehouses** -> **"Shared Student Warehouse"** -> **Permissions**.
 2.  Verify `all_student_groups` has **Can Use**.
-3.  (Optional) If specific groups report access issues, manually add `group_XX` as **Can Use**.
 
----
-
-## 📋 Phase 4: Data Permissions (Unity Catalog SQL Workaround)
-*Terraform handled the Service Principals, but you must manually grant access to the Student Groups (`group_XX`).*
-
-1.  Open **SQL Editor**.
-2.  Select the **Shared Student Warehouse**.
-3.  Run this template for each group (replacing `XX` and Catalog Name):
-
-```sql
-USE CATALOG `94290_dev`;
-
--- 1. Grant Access to the Catalog (If not inherited)
-GRANT USE CATALOG, BROWSE ON CATALOG `94290_dev` TO `group_01`;
-
--- 2. Grant Access to the Schema (Critical)
-GRANT USE SCHEMA, SELECT, CREATE TABLE, MODIFY 
-ON SCHEMA `94290_dev`.`schema_01` 
-TO `group_01`;
-```
-*(Note: You do NOT need to run grants for `sp_01`; Terraform did that.)*
-
----
-
-## Phase 5: post Terraform
-After the `tf apply` completed successfully, run
+---\n
+## 📋 Phase 4: Post-Terraform Execution
+After the `tf apply` completed successfully, run:
 
 ```bash
+# 1. Export env vars (including sensitive secrets from KeyVault) to a JSON file
 terraform output -json sp_credentials_and_env_vars > all_groups.json
 
-# use all_groups.json to generate .env file for each group
+# 2. Use all_groups.json to generate .env file for each group in dist/student_envs/
 python utils/generate_env_files.py
 
-# create table for each of the groups.
-# This requires that 
-#   pip install databricks-sql-connector
-# ran before
+# 3. Create initial tables for each of the groups (Requires databricks-sql-connector)
 python utils/seed_tables.py
 ```
 
-The files in `dist/student_envs/` (one for each group) should then be passed by some way to the groups.
+The files in `dist/student_envs/` (one for each group) should then be distributed to the student groups.
 
-
-## 📋 Phase 6: Verification
+---\n
+## 📋 Phase 5: Verification
 1.  **Run the Test:**
     ```bash
     export $(grep -v '^#' dist/student_envs/group_01.env | xargs)

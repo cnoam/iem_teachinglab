@@ -65,16 +65,6 @@ variable "workspace_profiles" {
   # Example: { "dev" = "dbr-dev", "prod" = "dbr-prod" }
 }
 
-variable "databricks_account_id" {
-  description = "The Databricks account ID for managing Service Principals and secrets."
-  type        = string
-
-  validation {
-    condition     = length(trimspace(var.databricks_account_id)) > 0
-    error_message = "databricks_account_id must be provided (non-empty). Set it in terraform.tfvars, via -var, or via TF_VAR_databricks_account_id."
-  }
-}
-
 # From keyvault.tf
 variable "key_vault_name" {
   description = "Name of the Azure Key Vault containing SP secrets"

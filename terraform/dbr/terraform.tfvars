@@ -24,6 +24,3 @@ workspace_profiles = {
 enable_unified_catalog_isolation = true
 
 maven_packages = {}
-
-# the account that contains our workspace
-databricks_account_id = "3be16926-5630-48b3-afb5-59394da7cefe"

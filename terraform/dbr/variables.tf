@@ -74,3 +74,16 @@ variable "databricks_account_id" {
     error_message = "databricks_account_id must be provided (non-empty). Set it in terraform.tfvars, via -var, or via TF_VAR_databricks_account_id."
   }
 }
+
+# From keyvault.tf
+variable "key_vault_name" {
+  description = "Name of the Azure Key Vault containing SP secrets"
+  type        = string
+  default     = "sp-secrets-94290"
+}
+
+variable "key_vault_rg" {
+  description = "Resource Group of the Key Vault"
+  type        = string
+  default     = "databricks-rg-2025"
+}

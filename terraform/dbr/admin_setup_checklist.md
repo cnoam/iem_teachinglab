@@ -1,4 +1,24 @@
-# Workspace Admin: Post-Terraform Checklist (30 Groups)
+# Preparing external access to Databricks workspace
+
+The baseline scripts generate clusters and associated groups.
+
+In some use cases, the teacher wants to give students access from web server (external to the Databricks workspace) to resource inside the workspace.
+
+This memo describes the steps to accomplish it.
+
+*as an example, we assume there are 30 groups*
+
+if `enable_unified_catalog_isolation` in terraform.tfvars is set to `true`, the successful completion of the steps will create in the workspace:
+- SQL warehouse
+- For each group
+  - Service Principal and its secret
+  - schema
+  - sample notebook
+  - sample table in the schema
+  - sample job to run the notebook and get data from the table.
+  - all the needed permissions to use these sample objects.
+
+<br><br>
 
 As a Workspace Admin, follow these steps to manually configure permissions and secrets.
 
@@ -8,6 +28,12 @@ As a Workspace Admin, follow these steps to manually configure permissions and s
 - ⚠️ Service Principal Secrets (Managed via Key Vault - Manual Entry Required)
 - ✅ Student Group Data Permissions (Automated - Assigned to individual users)
 
+## Prerequisites
+- You have DataBricks Workspace Admin privileges.
+- `az cli` installed, and you are logged in with account that have needed permissions (TBD)
+- `databricks cli` is installed
+- the config for the affected Databricks workspace exists and is selected in `databricks auth login --profile THE_PROFILE`
+
 
 ## 📋 Phase 0: Infrastructure Prep (Key Vault)
 *We use Azure Key Vault to securely store SP secrets, allowing Terraform to read them automatically.*
@@ -16,8 +42,9 @@ As a Workspace Admin, follow these steps to manually configure permissions and s
 **Why?** To act as a bridge between the manual secret generation (by Admin) and Terraform automation.
 
 As of 2026-01, Creating secrets for Service Principals *using automation* can be done only by Admin account.
-Since I have only Workspace admin, we (tech support and me) decided that they generate the secrets, and put them in a vault.
-My code will read from the vault and do all the work.
+
+See [explanation](#annex-a-on-creating-secrets)
+
 
 *   **CLI:**
     ```bash
@@ -42,29 +69,32 @@ My code will read from the vault and do all the work.
 *   **UI:** Go to Key Vault -> **Access control (IAM)** -> **Add role assignment** -> Select **"Key Vault Secrets Officer"** -> Assign access to **User** -> Select yourself.
 
 
-## 📋 Phase 1: Authentication (Secret Generation)
+## 📋 Phase 1: Secret Generation
+
+
+**Generate & Store Secret:**
+
+*   Go to **Databricks Settings** -> **Service Principals**.
+*   For `sp_01`, generate a secret.
+*   Save the secret in a new row in a `secrets.csv`
+
+File format: 
+
+```csv 
+group_number,secret_value
+2     01,dapi-xxxxxxxxxxxxxxxxxxxxxxxx
+3     02,dapi-yyyyyyyyyyyyyyyyyyyyyyyy
+```
+
 *Perform this ONCE per group to populate the Key Vault.*
+    
+**Store in Vault:** 
 
-1.  **Generate & Store Secret:**
-    *   Go to **Databricks Settings** -> **Service Principals**.
-    *   For `sp_01`, generate a secret.
-    *   **Store in Vault:**
-        ```bash
-        az keyvault secret set --vault-name "sp-secrets-94290" --name "sp-secret-group_01" --value "<PASTE_SECRET_HERE>"
-        ```
-    *   (Repeat for all 30 groups).
+Run `utils\populate_secrets_from_csv.sh [--overwrite] secrets.csv`
 
-2.  **Generate Student Files:**
-    *   Run Terraform (it now reads from KV):
-        ```bash
-        terraform apply
-        terraform output -json sp_credentials_and_env_vars > all_groups.json
-        ```
-    *   Create files:
-        ```bash
-        python3 utils/generate_env_files.py
-        ```
-    *   *Result:* The `.env` files in `dist/student_envs/` now contain the **real** secrets automatically!
+⚠️ and remember to `rm secrets.csv`
+      
+
 
 
 ## 📋 Phase 2: Verify Group Entitlements (Bypassing UI Hiding)
@@ -96,8 +126,9 @@ python utils/generate_env_files.py
 # 3. Create initial tables for each of the groups (Requires databricks-sql-connector)
 python utils/seed_tables.py
 ```
-
-The files in `dist/student_envs/` (one for each group) should then be distributed to the student groups.
+> ⚠️ WARNING: `all_groups.json` contains secrets.
+> 
+The files in `dist/student_envs/` (one for each group) should then be distributed to the student groups. Each group has its own file. These file contains **secret** for that group.
 
 
 ## 📋 Phase 5: Verification
@@ -138,3 +169,21 @@ deactivate
 
 After successful deletion of the schemas, run `tf apply`
 
+
+<hr>
+
+# Annex A: On creating secrets
+
+On 2026-01-28 I (cnoam) talked with Lior S, who is responsible for MS infra in the Technion. We discussed who should generate the SP secrets.
+
+My understanding was that an Account Admin (i.e. Lior) will generate the 30 secrets (one per SP), using a script (I can provide the script). He will place these secrets in a vault, and my script will pull these secrets during `terraform apply`
+
+However, he said that:
+- he is not familiar enough with DBR
+- generating secrets is risky due to possible leakage, so he do not want to use a script. Rather, do it manually.
+
+Since the generation is manual, I can do it mayself using the GUI and simply copy paste 30 times into a temp file. that file will be read by a script that will insert the secrets into the vault.
+
+We concluded that the latter is the way we use for now.
+
+I don't like it very much due to the manual labor, but we don't have a workaround.

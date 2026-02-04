@@ -58,7 +58,7 @@ locals {
       group_name             = format("group_%02d", i + 1)
       schema_name            = format("schema_%02d", i + 1)
       service_principal_name = format("sp_%02d", i + 1)
-      job_name               = format("job_%02d", i + 1)
+      #job_name               = format("job_%02d", i + 1)
       cluster_name           = format("cluster_%02d", i + 1)
     }
   }

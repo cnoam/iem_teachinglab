@@ -10,8 +10,9 @@ terraform {
 }
 
 #
-# Jobs
+# Jobs (Disabled: Students will create these manually per instructions)
 #
+/*
 resource "databricks_job" "group_jobs" {
   for_each = var.group_configs
 
@@ -40,6 +41,7 @@ resource "databricks_permissions" "sp_job_permissions" {
     permission_level       = "CAN_MANAGE_RUN"
   }
 }
+*/
 
 #
 # Service Principals

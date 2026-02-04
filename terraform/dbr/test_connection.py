@@ -21,8 +21,6 @@ def test_step(name, func):
         print(f"   Error: {e}")
 
 def run_tests():
-    # Only optional field is job_id since students might not have created one yet.
-    # But for connection testing, we will focus on SQL/Table/Cluster.
     config = {
         "host": os.getenv("DATABRICKS_HOST"),
         "id": os.getenv("DATABRICKS_CLIENT_ID"),

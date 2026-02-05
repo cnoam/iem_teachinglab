@@ -10,7 +10,7 @@ terraform {
 }
 
 #
-# Jobs (Disabled: Students will create these manually per instructions)
+# Jobs
 #
 /*
 resource "databricks_job" "group_jobs" {

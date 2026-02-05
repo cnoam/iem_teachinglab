@@ -32,3 +32,19 @@ resource "databricks_group_member" "all_students_group_assignment" {
   group_id  = databricks_group.all_student_groups.id
   member_id = each.value.id
 }
+
+
+#
+# Assign each group to a cluster
+#
+# group "group_01" shall be assigned to "cluster_01" etc.
+resource "databricks_permissions" "cluster_permissions" {
+  for_each   = var.enable_unified_catalog_isolation ? {} : databricks_group.student_groups
+  cluster_id = databricks_cluster.clusters[replace(each.key, "group_", "")].id
+
+  access_control {
+    group_name       = each.key
+    permission_level = "CAN_RESTART"
+    #permission_level = "CAN_ATTACH_TO"
+  }
+}

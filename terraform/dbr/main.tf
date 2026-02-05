@@ -8,18 +8,18 @@ terraform {
 
   # This resource describe WHERE we keep the state file.
   # It does not change when deploying to other subscriptions.
-  #backend "azurerm" {
-  #  resource_group_name  = "ddsteachinglab-infrastructure-group"
-  #  storage_account_name = "ddsteachinglabdatastg"
-  #  container_name       = "terraform-states"
-  #  key                  = "terraform.tfstate"
-  #  subscription_id      = "5baf6ff6-d2b3-4df8-a9ca-3261f6424c01"
-  #}
+  backend "azurerm" {
+    resource_group_name  = "ddsteachinglab-infrastructure-group"
+    storage_account_name = "ddsteachinglabdatastg"
+    container_name       = "terraform-states"
+    key                  = "terraform.tfstate"
+    subscription_id      = "5baf6ff6-d2b3-4df8-a9ca-3261f6424c01"
+  }
 
   # If using local state, put the above clause in comment, and uncomment the one below. See the Readme.md
-  backend "local" {
-    path = "dev.tfstate" # re-use the file you just pulled
-  }
+  # backend "local" {
+  #   path = "dev.tfstate" # re-use the file you just pulled
+  # }
 }
 
 # This is the subscription where operations will be executed.
@@ -59,7 +59,7 @@ locals {
       schema_name            = format("schema_%02d", i + 1)
       service_principal_name = format("sp_%02d", i + 1)
       #job_name               = format("job_%02d", i + 1)
-      cluster_name           = format("cluster_%02d", i + 1)
+      cluster_name = format("cluster_%02d", i + 1)
     }
   }
 

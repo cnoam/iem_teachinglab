@@ -108,6 +108,9 @@ In `/home/azureuser`, create the files:
 logger -t dbr_scripts Periodic Poll starting
 cd /home/azureuser/iem_teachinglab
 source databricks/venv/bin/activate
+
+# if you don't specify the DB absolute path, a default will be used.
+export CLUSTER_UPTIMES_DB="/home/azureuser/iem_teachinglab/cluster_uptimes.db"
 timeout 30 python -m databricks.poll_clusters
 deactivate
 logger -t dbr_scripts Periodic Poll finished

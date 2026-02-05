@@ -5,7 +5,7 @@ variable "group_configs" {
     group_name             = string
     schema_name            = string
     service_principal_name = string
-    job_name               = string
+    #job_name               = string
     cluster_name           = string
   }))
 }

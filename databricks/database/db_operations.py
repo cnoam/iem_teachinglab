@@ -1,12 +1,20 @@
 import datetime
-import os
-
+import os, sys, logging
 from peewee import *
+from pathlib import Path
 
-# Use absolute path to the database file to make sure any (cron) process
-# uses the same file.
-# TODO: remove dependency on user name.
-DATABASE_FILE_NAME = '/home/azureuser/iem_teachinglab/cluster_uptimes.db'
+
+ENV_VAR='CLUSTER_UPTIMES_DB'
+env_value = os.environ.get(ENV_VAR)
+if env_value:
+    db_path = Path(env_value).expanduser()
+else:
+    db_path = Path.home() / ".local" / "share" / "iem_teachinglab" / "cluster_uptimes.db"
+    logging.warning(f" {ENV_VAR} is not set. "
+        f"Using default database path: {db_path}" )
+
+db_path.parent.mkdir(parents=True, exist_ok=True)
+DATABASE_FILE_NAME = str(db_path)
 
 
 # --- Model Definitions ---
@@ -81,7 +89,6 @@ class ClusterInfo(BaseModel):
 
 # NEW: Function to handle production setup (called in poll_clusters.py)
 def initialize_production_db():
-    #print(f"DEBUG: Database file is located at: {os.path.abspath(DATABASE_FILE_NAME)}")
     db_instance = SqliteDatabase(DATABASE_FILE_NAME,
              pragmas={
                  'journal_mode': 'wal',  # Vital for avoiding lock conflicts

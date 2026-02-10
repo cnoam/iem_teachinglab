@@ -42,9 +42,39 @@ At the end of the provisioning, the VMs are stopped(deallocated).
 
 **But there is no mechanism to power off after idle time.**
 
+## Destroying (clean teardown)
+Terraform destroys the VM extension `AADSSHLoginForLinux`. Azure requires the VM
+to be running to delete extensions; if the VM is deallocated, destroy can fail
+with a 409 conflict. If that happens, skip the extension resources in state and
+continue the destroy:
+
+```bash
+terraform workspace select dev
+
+terraform state rm \
+  'azurerm_virtual_machine_extension.entra_ssh["group_01"]' \
+  'azurerm_virtual_machine_extension.entra_ssh["group_02"]'
+
+terraform destroy -var "subscription_id=..."
+```
+
+After destroy, an orphaned OS disk can remain and block Resource Group deletion.
+Check and delete any remaining disks:
+
+```bash
+az resource list -g course-group_01 -o table
+az disk delete -g course-group_01 -n <OS_DISK_NAME> --yes
+```
+
+Then re-run `terraform destroy` or delete the RG:
+
+```bash
+az group delete -n course-group_01 --yes --no-wait
+```
+
 ## Remote Backend and State Migration
 This project is configured to use an Azure Storage backend. Update the backend block
-in `versions.tf` with your course-specific values (especially the `key` so the state
+in `versions.tf` with your course-specific values (The `key` so the state
 file is unique per course).
 
 ### Migrate existing local state to the remote backend

@@ -39,7 +39,7 @@ The Terraform execution identity (your `cnoam@technion.ac.il` user) lacked the n
 **Reason for Failure:**
 Even after ensuring the `az account get-access-token --resource-type ms-graph` command was used, repeated attempts to query the Microsoft Graph API for applications (`curl ... /v1.0/applications`) resulted in a 403. This indicated that the Terraform execution identity lacked even basic "Directory Readers" permissions in Azure AD to *read* existing application objects. Without the ability to read them, Terraform could not use `data "azuread_application"` to discover them.
 
-## Current Solution (Manual Application Creation, Terraform Creates Secrets)
+## Attempt 3: (Manual Application Creation, Terraform Creates Secrets)
 
 Given the stringent permission limitations, the most viable path is:
 
@@ -55,6 +55,23 @@ Given the stringent permission limitations, the most viable path is:
     *   Finally, the `databricks_service_principal` will be created/updated in Databricks, linking to the Azure AD Application using the provided `client_id`.
 
 This approach ensures the critical secret generation and management can be automated by Terraform, even though the initial application object creation remains a manual step by an Azure AD Admin.
+
+## Attempt 4: Databricks-Native Secret Generation — **Current Solution** ✅
+By ClaudeCode
+**Date:** March 2026
+
+**Key insight:** The earlier attempts focused on Azure AD / Entra-level secret management. However, `databricks_service_principal_secret` — a Databricks-native resource — can create secrets directly on a Databricks workspace Service Principal, bypassing Azure AD entirely. This only requires Databricks workspace-level permissions, not Azure AD or Account Admin rights.
+
+**Method:**
+*   `databricks_service_principal.group_sps` creates one Databricks-native SP per group (no Azure AD application involved).
+*   `databricks_service_principal_secret.group_sp_secrets` auto-generates a secret per SP with `lifetime = "1814400s"` (21 days).
+*   The secret is surfaced via the `sp_credentials_and_env_vars` sensitive output (used to generate `.env` files).
+*   Azure Key Vault is **no longer used** — `keyvault.tf` is fully commented out.
+*   All UC resources (SPs, secrets, schemas, warehouse, grants) are encapsulated in `modules/unified_catalog_setup/`, instantiated only when `enable_unified_catalog_isolation = true`.
+
+**Secret rotation:** `lifetime` governs expiry. Rotation requires running `tf apply` before expiry — a scheduled pipeline is recommended.
+
+**Outcome:** **Working.** Fully automated, no manual steps, no Azure AD permissions required.
 
 ## Manual Method Used Previously
 

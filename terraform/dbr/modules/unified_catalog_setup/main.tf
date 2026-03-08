@@ -3,9 +3,6 @@ terraform {
     databricks = {
       source = "databricks/databricks"
     }
-    azurerm = {
-      source = "hashicorp/azurerm"
-    }
   }
 }
 
@@ -109,7 +106,10 @@ resource "databricks_grants" "schema_grants" {
     privileges = ["USE_SCHEMA", "CREATE_TABLE", "SELECT"]
   }
 
-  # Individual Students
+  # WORKAROUND: Grant Access to Individual Students
+  # Unity Catalog cannot see Workspace-Local groups (like 'group_01'), causing "Principal does not exist" errors.
+  # Account-Level groups are required for UC, but we don't have Account Admin rights to create them.
+  # So, we are forced to grant permissions to EACH STUDENT INDIVIDUALLY by iterating over the CSV data.
   dynamic "grant" {
     for_each = [for m in var.student_groups_csv_rows[each.value.index] : trimspace(m) if trimspace(m) != ""]
 
@@ -154,20 +154,6 @@ resource "databricks_grants" "catalog_grants" {
       privileges = ["USE_CATALOG", "BROWSE"]
     }
   }
-}
-
-#
-# Secrets (Azure Key Vault)
-#
-data "azurerm_key_vault" "vault" {
-  name                = var.key_vault_name
-  resource_group_name = var.key_vault_rg
-}
-
-data "azurerm_key_vault_secret" "sp_secrets" {
-  for_each = var.group_configs
-  name         = "sp-secret-${replace(each.value.group_name, "_", "-")}"
-  key_vault_id = data.azurerm_key_vault.vault.id
 }
 
 #

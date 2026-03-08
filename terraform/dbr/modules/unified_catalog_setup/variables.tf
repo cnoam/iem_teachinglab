@@ -38,16 +38,6 @@ variable "sql_warehouse_name" {
   type        = string
 }
 
-variable "key_vault_name" {
-  description = "Name of the Azure Key Vault"
-  type        = string
-}
-
-variable "key_vault_rg" {
-  description = "Resource Group of the Key Vault"
-  type        = string
-  default     = "databricks-rg-2025"
-}
 
 variable "databricks_host" {
   description = "Databricks host URL"

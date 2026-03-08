@@ -9,8 +9,6 @@ module "uc_setup" {
 
   catalog_name       = var.catalog_name
   sql_warehouse_name = var.sql_warehouse_name
-  key_vault_name     = var.key_vault_name
-  key_vault_rg       = var.key_vault_rg
   databricks_host    = data.databricks_current_config.this.host
 
   cluster_ids = { for k, v in databricks_cluster.clusters : k => v.id }

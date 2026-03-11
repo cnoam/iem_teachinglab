@@ -53,7 +53,7 @@ DATABRICKS_URL = f"https://{host_name}/api/2.0/preview/scim/v2/"
 # Get all users
 msg = f"{DATABRICKS_URL}Users"
 headers={"Authorization": f"Bearer {DATABRICKS_TOKEN}"}
-print(f"Getting users from {msg}, headers {headers}")
+print(f"Getting users from {msg}")
 response = requests.get(f"{DATABRICKS_URL}Users", headers={"Authorization": f"Bearer {DATABRICKS_TOKEN}"})
 users = response.json()["Resources"]
 

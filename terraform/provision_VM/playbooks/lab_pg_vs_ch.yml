@@ -1,0 +1,35 @@
+---
+- name: Lab - PostgreSQL vs ClickHouse
+  hosts: lab_vms
+  become: yes
+  tasks:
+    - name: Check for NVMe mount
+      command: mountpoint -q /mnt/nvme
+      register: nvme_mounted
+      failed_when: false
+      changed_when: false
+
+    - name: Deploy PostgreSQL container
+      community.docker.docker_container:
+        name: postgres-lab
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: "labpassword"
+        ports:
+          - "5432:5432"
+        volumes:
+          - "{{ '/mnt/nvme/postgres-data' if nvme_mounted.rc == 0 else '/var/lib/postgresql/data' }}:/var/lib/postgresql/data"
+        state: started
+
+    - name: Deploy ClickHouse container
+      community.docker.docker_container:
+        name: clickhouse-lab
+        image: clickhouse/clickhouse-server
+        ports:
+          - "8123:8123"
+          - "9000:9000"
+        volumes:
+          - "{{ '/mnt/nvme/clickhouse-data' if nvme_mounted.rc == 0 else '/var/lib/clickhouse' }}:/var/lib/clickhouse"
+        state: started
+
+# gemini 2026-03-16 10:30

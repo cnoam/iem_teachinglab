@@ -31,6 +31,28 @@ az ssh vm -n <VM_RESOURCE_NAME> -g <RG>
 
 VM and RG values can be taken from the outputs, or shared per team.
 
+## Ansible Management (Configuration & Labs)
+
+This project uses Ansible for post-provisioning configuration. Terraform automatically generates `inventory.ini` and `ansible.cfg` in the root directory.
+
+### 1. Initial Base Setup
+Run this once after `terraform apply` to install Docker, configure NVMe disks, and prepare the base environment:
+```bash
+ansible-playbook playbooks/base_setup.yml
+```
+
+### 2. Deploying a Specific Lab
+Run the lab-specific playbook (e.g., PostgreSQL vs. ClickHouse):
+```bash
+ansible-playbook playbooks/lab_pg_vs_ch.yml
+```
+
+### 3. Targeting Specific Teams
+You can target a single team using the `-l` (limit) flag:
+```bash
+ansible-playbook -l group_01 playbooks/lab_pg_vs_ch.yml
+```
+
 ## References
 
 - Microsoft Learn: "Sign in to a Linux virtual machine in Azure by using Microsoft Entra ID"
@@ -38,9 +60,14 @@ VM and RG values can be taken from the outputs, or shared per team.
 
 
 ## NOTE on powering off
-At the end of the provisioning, the VMs are stopped(deallocated).
+The automatic deallocation resource (`stop_vm`) is currently **commented out** in `main.tf` to allow for Ansible configuration. 
 
-**But there is no mechanism to power off after idle time.**
+**Manual deallocation is required to avoid compute costs.**
+
+```bash
+# Deallocate all VMs in the dev workspace
+az vm deallocate --ids $(terraform output -json team_vm_names | jq -r 'values[]' | xargs -I {} az vm show -d -g <RG_NAME> -n {} --query id -o tsv)
+```
 
 ## Destroying (clean teardown)
 Terraform destroys the VM extension `AADSSHLoginForLinux`. Azure requires the VM

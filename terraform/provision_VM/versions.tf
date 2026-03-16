@@ -14,6 +14,14 @@ terraform {
       source  = "hashicorp/tls"
       version = ">= 4.0.0"
     }
+    local = {
+      source  = "hashicorp/local"
+      version = ">= 2.5.0"
+    }
+    null = {
+      source  = "hashicorp/null"
+      version = ">= 3.2.0"
+    }
   }
 
   # Remote state backend (Azure Storage). Update the key per course.

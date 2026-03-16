@@ -18,8 +18,8 @@ locals {
   # containing all names for that logical group.
   group_configs = {
     for i in range(local.group_count) : format("%02d", i + 1) => {
-      index                  = i
-      group_name             = format("group_%02d", i + 1)
+      index      = i
+      group_name = format("group_%02d", i + 1)
     }
   }
 
@@ -65,14 +65,44 @@ resource "tls_private_key" "bootstrap" {
 }
 
 # Write the VM admin SSH keypair to disk for easy use.
-resource "local_file" "vmadmin_private_key" {
-  filename = "${path.module}/vmadmin_id_rsa"
-  content  = tls_private_key.bootstrap.private_key_pem
+resource "local_file" "private_key" {
+  filename        = "${path.module}/id_rsa_lab.pem"
+  content         = tls_private_key.bootstrap.private_key_pem
+  file_permission = "0600"
 }
 
-resource "local_file" "vmadmin_public_key" {
-  filename = "${path.module}/vmadmin_id_rsa.pub"
+resource "local_file" "public_key" {
+  filename = "${path.module}/id_rsa_lab.pub"
   content  = tls_private_key.bootstrap.public_key_openssh
+}
+
+# Generate Ansible Inventory with team-specific groups
+resource "local_file" "ansible_inventory" {
+  filename = "${path.module}/inventory.ini"
+  content  = <<EOT
+[lab_vms]
+%{for team, pip in azurerm_public_ip.team~}
+${pip.ip_address} team=${team}
+%{endfor~}
+
+%{for team, pip in azurerm_public_ip.team~}
+[${team}]
+${pip.ip_address}
+%{endfor~}
+EOT
+}
+
+# Generate ansible.cfg
+resource "local_file" "ansible_cfg" {
+  filename = "${path.module}/ansible.cfg"
+  content  = <<EOT
+[defaults]
+host_key_checking = False
+inventory = ./inventory.ini
+private_key_file = ./id_rsa_lab.pem
+remote_user = vmadmin
+roles_path = ./roles
+EOT
 }
 
 # Create one RG per team (recommended for clean isolation)
@@ -157,7 +187,7 @@ resource "azurerm_linux_virtual_machine" "team" {
   for_each = local.team_members
 
   name                = "${var.name_prefix}-${each.key}-vm"
-  computer_name  = "${var.name_prefix}-${replace(each.key, "_", "-")}-vm"
+  computer_name       = "${var.name_prefix}-${replace(each.key, "_", "-")}-vm"
   resource_group_name = azurerm_resource_group.team[each.key].name
   location            = azurerm_resource_group.team[each.key].location
   size                = var.vm_size
@@ -173,6 +203,10 @@ resource "azurerm_linux_virtual_machine" "team" {
     username   = "vmadmin"
     public_key = tls_private_key.bootstrap.public_key_openssh
   }
+
+  custom_data = base64encode(templatefile("${path.module}/cloud-init.yaml.tpl", {
+    public_key = tls_private_key.bootstrap.public_key_openssh
+  }))
 
   os_disk {
     caching              = "ReadWrite"
@@ -206,6 +240,7 @@ resource "azurerm_virtual_machine_extension" "entra_ssh" {
 
 # After provisioning is complete, deallocate the VMs to avoid compute costs.
 # This depends on the VM extension so we only stop once the VM is fully ready.
+/*
 resource "null_resource" "stop_vm" {
   for_each = local.team_members
 
@@ -218,6 +253,7 @@ resource "null_resource" "stop_vm" {
     command = "az vm deallocate --ids ${azurerm_linux_virtual_machine.team[each.key].id}"
   }
 }
+*/
 
 # --- RBAC assignments ---
 # Reader on the team RG: required for 'az ssh vm' to read VM/NIC/PublicIP metadata via ARM.

@@ -1,0 +1,17 @@
+# Terraform artifacts
+.terraform/
+*.tfstate
+*.tfstate.backup
+terraform.tfstate.d/
+
+# Ansible artifacts
+inventory.ini
+ansible.cfg
+
+# SSH Keys
+id_rsa_lab.pem
+id_rsa_lab.pub
+vmadmin_id_rsa
+vmadmin_id_rsa.pub
+
+# gemini 2026-03-16 10:45

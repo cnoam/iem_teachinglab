@@ -1,0 +1,49 @@
+---
+- name: Base Infrastructure Setup
+  hosts: lab_vms
+  become: yes
+  tasks:
+    - name: Wait for connection
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+
+    - name: Update apt and install prerequisites
+      apt:
+        update_cache: yes
+        name:
+          - docker.io
+          - python3-pip
+          - nvme-cli
+        state: present
+
+    - name: Check for NVMe disk
+      shell: lsblk -d -n -o NAME | grep nvme || true
+      register: nvme_check
+      changed_when: false
+
+    - name: Format and mount NVMe disk if exists
+      block:
+        - name: Create filesystem on NVMe
+          filesystem:
+            fstype: ext4
+            dev: /dev/nvme0n1
+        - name: Create mount point
+          file:
+            path: /mnt/nvme
+            state: directory
+            mode: '0777'
+        - name: Mount NVMe disk
+          mount:
+            path: /mnt/nvme
+            src: /dev/nvme0n1
+            fstype: ext4
+            state: mounted
+      when: nvme_check.stdout != ""
+
+    - name: Ensure Docker service is started
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+# gemini 2026-03-16 10:30

@@ -1,6 +1,7 @@
 ---
 - name: Lab - PostgreSQL vs ClickHouse
   hosts: lab_vms
+  gather_facts: no
   become: yes
   tasks:
     - name: Check for NVMe mount

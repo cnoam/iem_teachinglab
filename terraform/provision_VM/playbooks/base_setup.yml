@@ -1,6 +1,7 @@
 ---
 - name: Base Infrastructure Setup
   hosts: lab_vms
+  gather_facts: no
   become: yes
   tasks:
     - name: Wait for connection

@@ -36,7 +36,7 @@ terraform {
 
 provider "azurerm" {
   features {}
-  subscription_id = local.effective_subscription_id
+  subscription_id = var.subscription_id
 }
 
 provider "azuread" {}

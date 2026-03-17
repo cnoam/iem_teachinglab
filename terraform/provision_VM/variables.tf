@@ -7,7 +7,7 @@ variable "location" {
 variable "subscription_id" {
   type        = string
   description = "Subscription where VMs are created."
-  default     = null
+  default     = "b3931bf1-b901-4dc2-bf3e-b020fa67cb8b"
 }
 
 variable "name_prefix" {
@@ -32,5 +32,14 @@ variable "ubuntu_sku" {
   type        = string
   description = "Ubuntu SKU (e.g. 22_04-lts)."
   default     = "22_04-lts"
+}
+
+variable "tags" {
+  type        = map(string)
+  description = "Tags applied to all Azure resources. Use to label test runs (e.g. environment=terraform-test)."
+  default = {
+    project    = "iem-teachinglab"
+    managed_by = "terraform"
+  }
 }
 # gemini 2026-02-10 13:30

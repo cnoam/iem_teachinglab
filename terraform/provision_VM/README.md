@@ -53,6 +53,58 @@ You can target a single team using the `-l` (limit) flag:
 ansible-playbook -l group_01 playbooks/lab_pg_vs_ch.yml
 ```
 
+## Testing
+
+Deploys real VMs (~5 min total including teardown). RBAC assignments and the
+VM extension are mocked so the test stays fast and doesn't require real Entra
+users. Run locally or in CI:
+
+```bash
+terraform test
+```
+
+### Manual SSH / cloud-init verification
+
+`terraform test` tears down resources immediately after assertions, so SSH
+connectivity must be verified in a separate manual step:
+
+```bash
+terraform apply -var "subscription_id=..."   # deploy real VMs
+bash tests/verify_ssh.sh                      # check cloud-init users on every VM
+terraform destroy -var "subscription_id=..."  # clean up
+```
+
+`verify_ssh.sh` reads `terraform output team_public_ip_addresses`, SSHes into
+each VM as `vmadmin`, and confirms that both `vmadmin` and `azureuser` exist.
+It retries for up to 5 minutes to allow for VM boot time.
+
+### Interrupting a test run
+
+If you need to cancel `terraform test`, press `Ctrl+C` once and wait. Terraform
+will attempt a graceful destroy before exiting. Expected wait times:
+
+- teardown after `terraform test` — up to **15 min** if extension wasn't mocked; ~5 min with current mocks
+
+If the graceful shutdown has been running for more than 15 minutes, press
+`Ctrl+C` a second time to force-kill. Then check for and remove orphaned
+resources manually (see below).
+
+### Checking for dangling test resources
+
+All resources created during tests carry the tag `environment=terraform-test`.
+To find any that were not cleaned up:
+
+```bash
+az resource list --tag environment=terraform-test --output table
+```
+
+To delete all matching resource groups at once:
+
+```bash
+az group list --tag environment=terraform-test --query "[].name" -o tsv \
+  | xargs -r -I {} az group delete -n {} --yes --no-wait
+```
+
 ## References
 
 - Microsoft Learn: "Sign in to a Linux virtual machine in Azure by using Microsoft Entra ID"
@@ -60,13 +112,20 @@ ansible-playbook -l group_01 playbooks/lab_pg_vs_ch.yml
 
 
 ## NOTE on powering off
-The automatic deallocation resource (`stop_vm`) is currently **commented out** in `main.tf` to allow for Ansible configuration. 
+The automatic deallocation resource (`stop_vm`) is currently **commented out** in `main.tf` to allow for Ansible configuration.
 
 **Manual deallocation is required to avoid compute costs.**
 
 ```bash
-# Deallocate all VMs in the dev workspace
-az vm deallocate --ids $(terraform output -json team_vm_names | jq -r 'values[]' | xargs -I {} az vm show -d -g <RG_NAME> -n {} --query id -o tsv)
+# Deallocate all team VMs (each lives in its own RG — use tags to find them all)
+az resource list --tag project=iem-teachinglab \
+  --query "[?type=='Microsoft.Compute/virtualMachines'].id" -o tsv \
+  | xargs -r az vm deallocate --no-wait --ids
+
+# Show only VMs that are NOT deallocated (i.e. running, starting, stopping, etc.)
+az vm list --show-details \
+  --query "[?tags.project=='iem-teachinglab' && powerState!='VM deallocated'].{name:name, state:powerState, rg:resourceGroup}" \
+  -o table
 ```
 
 ## Destroying (clean teardown)

@@ -2,10 +2,7 @@ data "local_file" "user_names" {
   filename = "./users.csv"
 }
 
-
-
 locals {
-  # Prefer explicit input, otherwise use the subscription from the current Azure CLI login.
   effective_subscription_id = var.subscription_id
 
   # Parse the CSV into a list of maps, where each map is a group of students
@@ -102,6 +99,9 @@ inventory = ./inventory.ini
 private_key_file = ./id_rsa_lab.pem
 remote_user = vmadmin
 roles_path = ./roles
+
+[ssh_connection]
+ssh_args = -o IdentitiesOnly=yes
 EOT
 }
 
@@ -111,6 +111,7 @@ resource "azurerm_resource_group" "team" {
 
   name     = "${var.name_prefix}-${each.key}"
   location = var.location
+  tags     = var.tags
 }
 
 resource "azurerm_virtual_network" "team" {
@@ -120,6 +121,7 @@ resource "azurerm_virtual_network" "team" {
   location            = azurerm_resource_group.team[each.key].location
   resource_group_name = azurerm_resource_group.team[each.key].name
   address_space       = ["10.${100 + index(local.teams, each.key)}.0.0/16"]
+  tags                = var.tags
 }
 
 resource "azurerm_subnet" "team" {
@@ -137,6 +139,7 @@ resource "azurerm_network_security_group" "team" {
   name                = "${var.name_prefix}-${each.key}-nsg"
   location            = azurerm_resource_group.team[each.key].location
   resource_group_name = azurerm_resource_group.team[each.key].name
+  tags                = var.tags
 
   security_rule {
     name                       = "allow-ssh"
@@ -159,6 +162,7 @@ resource "azurerm_public_ip" "team" {
   resource_group_name = azurerm_resource_group.team[each.key].name
   allocation_method   = "Static"
   sku                 = "Standard"
+  tags                = var.tags
 }
 
 resource "azurerm_network_interface" "team" {
@@ -167,6 +171,7 @@ resource "azurerm_network_interface" "team" {
   name                = "${var.name_prefix}-${each.key}-nic"
   location            = azurerm_resource_group.team[each.key].location
   resource_group_name = azurerm_resource_group.team[each.key].name
+  tags                = var.tags
 
   ip_configuration {
     name                          = "ipconfig1"
@@ -208,6 +213,8 @@ resource "azurerm_linux_virtual_machine" "team" {
     public_key = tls_private_key.bootstrap.public_key_openssh
   }))
 
+  tags = var.tags
+
   os_disk {
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
@@ -238,22 +245,21 @@ resource "azurerm_virtual_machine_extension" "entra_ssh" {
   auto_upgrade_minor_version = true
 }
 
-# After provisioning is complete, deallocate the VMs to avoid compute costs.
-# This depends on the VM extension so we only stop once the VM is fully ready.
-/*
+# After provisioning, deallocate each VM after 20 minutes to avoid compute costs.
+# Runs in the background so apply completes immediately.
+# Depends on the VM extension so the timer starts only once the VM is fully ready.
 resource "null_resource" "stop_vm" {
   for_each = local.team_members
 
   triggers = {
-    vm_id      = azurerm_linux_virtual_machine.team[each.key].id
-    extension  = azurerm_virtual_machine_extension.entra_ssh[each.key].id
+    vm_id     = azurerm_linux_virtual_machine.team[each.key].id
+    extension = azurerm_virtual_machine_extension.entra_ssh[each.key].id
   }
 
   provisioner "local-exec" {
-    command = "az vm deallocate --ids ${azurerm_linux_virtual_machine.team[each.key].id}"
+    command = "nohup bash -c 'sleep 1200 && az vm deallocate --ids ${azurerm_linux_virtual_machine.team[each.key].id}' >/dev/null 2>&1 &"
   }
 }
-*/
 
 # --- RBAC assignments ---
 # Reader on the team RG: required for 'az ssh vm' to read VM/NIC/PublicIP metadata via ARM.

@@ -14,14 +14,6 @@ output "team_resource_groups" {
   }
 }
 
-output "team_public_ip_fqdns" {
-  description = "Public IP FQDNs (may be null if you did not set DNS labels)."
-  value = {
-    for team, _ in azurerm_public_ip.team :
-    team => azurerm_public_ip.team[team].fqdn
-  }
-}
-
 output "team_public_ip_addresses" {
   description = "Public IP addresses by team."
   value = {

@@ -1,5 +1,5 @@
 max_workers   = 4
-spark_version = "15.4.x-cpu-ml-scala2.12"
+spark_version = "15.4.x-scala2.12"
 
 
 # Using env vars:
@@ -18,7 +18,7 @@ python_packages = []
 # value is DBR profile name. They do not have to be identical
 workspace_profiles = {
   dev        = "dev_profile"
-  lab94290w3 = "lab94290w3"
+  prod       = "avi-lab"
 }
 
 enable_unified_catalog_isolation = false

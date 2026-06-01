@@ -29,19 +29,13 @@ resource "databricks_cluster" "clusters" {
   ssh_public_keys     = []
   custom_tags         = { "origin" = "terraform" }
 
-  cluster_log_conf {
-    dbfs {
-      destination = "dbfs:/cluster-logs"
-    }
-  }
-
   spark_env_vars = {
     "PYSPARK_PYTHON" = "/databricks/python3/bin/python3"
   }
 
   autotermination_minutes = var.autotermination_minutes
   enable_elastic_disk     = true
-  data_security_mode      = "NONE"
+  data_security_mode      = "USER_ISOLATION"
   runtime_engine          = "STANDARD"
   is_pinned               = true
 

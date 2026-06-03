@@ -25,13 +25,7 @@ variable "allowed_ssh_cidrs" {
 variable "vm_size" {
   type        = string
   description = "VM size."
-  default     = "Standard_B2s"
-}
-
-variable "ubuntu_sku" {
-  type        = string
-  description = "Ubuntu SKU (e.g. 22_04-lts)."
-  default     = "22_04-lts"
+  default     = "Standard_D4as_v4"
 }
 
 variable "tags" {
@@ -41,5 +35,10 @@ variable "tags" {
     project    = "iem-teachinglab"
     managed_by = "terraform"
   }
+}
+variable "auto_shutdown_time" {
+  type        = string
+  description = "Daily auto-shutdown time in HHMM format (24h, UTC). Set to empty string to disable."
+  default     = "2350"
 }
 # gemini 2026-02-10 13:30

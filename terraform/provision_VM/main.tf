@@ -222,8 +222,8 @@ resource "azurerm_linux_virtual_machine" "team" {
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "0001-com-ubuntu-server-jammy"
-    sku       = var.ubuntu_sku
+    offer     = "ubuntu-24_04-lts"
+    sku       = "server"
     version   = "latest"
   }
 
@@ -259,6 +259,24 @@ resource "null_resource" "stop_vm" {
   provisioner "local-exec" {
     command = "nohup bash -c 'sleep 1200 && az vm deallocate --ids ${azurerm_linux_virtual_machine.team[each.key].id}' >/dev/null 2>&1 &"
   }
+}
+
+resource "azurerm_dev_test_global_vm_shutdown_schedule" "team" {
+  for_each = var.auto_shutdown_time != "" ? local.team_members : {}
+
+  virtual_machine_id    = azurerm_linux_virtual_machine.team[each.key].id
+  location              = azurerm_resource_group.team[each.key].location
+  enabled               = true
+  daily_recurrence_time = var.auto_shutdown_time
+  timezone              = "UTC"
+
+  notification_settings {
+    enabled        = true
+    email          = local.team_members[each.key][0]
+    time_in_minutes = 30
+  }
+
+  tags = var.tags
 }
 
 # --- RBAC assignments ---

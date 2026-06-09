@@ -303,4 +303,16 @@ resource "azurerm_role_assignment" "vm_user_login" {
   role_definition_name = "Virtual Machine User Login"
   principal_id         = data.azuread_user.members[each.value.upn].object_id
 }
+
+# Virtual Machine Contributor on the VM: allows users to start/stop/restart the VM.
+resource "azurerm_role_assignment" "vm_contributor" {
+  for_each = {
+    for pair in local.team_member_pairs :
+    "${pair.team}|${pair.upn}|vmcontributor" => pair
+  }
+
+  scope                = azurerm_linux_virtual_machine.team[each.value.team].id
+  role_definition_name = "Virtual Machine Contributor"
+  principal_id         = data.azuread_user.members[each.value.upn].object_id
+}
 # gemini 2026-02-10 13:30

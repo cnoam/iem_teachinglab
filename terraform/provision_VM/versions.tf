@@ -29,7 +29,7 @@ terraform {
     resource_group_name  = "ddsteachinglab-infrastructure-group"
     storage_account_name = "ddsteachinglabdatastg"
     container_name       = "terraform-states"
-    key                  = "course-<COURSE_ID>.tfstate"
+    key                  = "course-96214.tfstate"
     subscription_id      = "5baf6ff6-d2b3-4df8-a9ca-3261f6424c01"
   }
 }

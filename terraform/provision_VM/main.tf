@@ -46,6 +46,30 @@ locals {
       }
     ]
   ])
+
+  # Two VMs per team, keyed by "<team>-vm1" / "<team>-vm2"
+  team_vms = {
+    for pair in flatten([
+      for team in local.teams : [
+        for vm_suffix in ["vm1", "vm2"] : {
+          key       = "${team}-${vm_suffix}"
+          team      = team
+          vm_suffix = vm_suffix
+        }
+      ]
+    ]) : pair.key => { team = pair.team, vm_suffix = pair.vm_suffix }
+  }
+
+  # (team, upn, vm_key) triples for per-VM RBAC assignments
+  team_member_vm_triples = flatten([
+    for pair in local.team_member_pairs : [
+      for vm_key, vm in local.team_vms : {
+        team   = pair.team
+        upn    = pair.upn
+        vm_key = vm_key
+      } if vm.team == pair.team
+    ]
+  ])
 }
 
 
@@ -73,18 +97,23 @@ resource "local_file" "public_key" {
   content  = tls_private_key.bootstrap.public_key_openssh
 }
 
-# Generate Ansible Inventory with team-specific groups
+# Generate Ansible Inventory with team-specific groups, two VMs per team
 resource "local_file" "ansible_inventory" {
   filename = "${path.module}/inventory.ini"
   content  = <<EOT
 [lab_vms]
-%{for team, pip in azurerm_public_ip.team~}
-${pip.ip_address} team=${team}
+%{for vm_key, pip in azurerm_public_ip.team~}
+${pip.ip_address} team=${local.team_vms[vm_key].team} vm=${local.team_vms[vm_key].vm_suffix}
 %{endfor~}
 
-%{for team, pip in azurerm_public_ip.team~}
+%{for team in local.teams~}
 [${team}]
+%{for vm_key, pip in azurerm_public_ip.team~}
+%{if local.team_vms[vm_key].team == team~}
 ${pip.ip_address}
+%{endif~}
+%{endfor~}
+
 %{endfor~}
 EOT
 }
@@ -155,46 +184,46 @@ resource "azurerm_network_security_group" "team" {
 }
 
 resource "azurerm_public_ip" "team" {
-  for_each = local.team_members
+  for_each = local.team_vms
 
   name                = "${var.name_prefix}-${each.key}-pip"
-  location            = azurerm_resource_group.team[each.key].location
-  resource_group_name = azurerm_resource_group.team[each.key].name
+  location            = azurerm_resource_group.team[each.value.team].location
+  resource_group_name = azurerm_resource_group.team[each.value.team].name
   allocation_method   = "Static"
   sku                 = "Standard"
   tags                = var.tags
 }
 
 resource "azurerm_network_interface" "team" {
-  for_each = local.team_members
+  for_each = local.team_vms
 
   name                = "${var.name_prefix}-${each.key}-nic"
-  location            = azurerm_resource_group.team[each.key].location
-  resource_group_name = azurerm_resource_group.team[each.key].name
+  location            = azurerm_resource_group.team[each.value.team].location
+  resource_group_name = azurerm_resource_group.team[each.value.team].name
   tags                = var.tags
 
   ip_configuration {
     name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.team[each.key].id
+    subnet_id                     = azurerm_subnet.team[each.value.team].id
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.team[each.key].id
   }
 }
 
 resource "azurerm_network_interface_security_group_association" "team" {
-  for_each = local.team_members
+  for_each = local.team_vms
 
   network_interface_id      = azurerm_network_interface.team[each.key].id
-  network_security_group_id = azurerm_network_security_group.team[each.key].id
+  network_security_group_id = azurerm_network_security_group.team[each.value.team].id
 }
 
 resource "azurerm_linux_virtual_machine" "team" {
-  for_each = local.team_members
+  for_each = local.team_vms
 
-  name                = "${var.name_prefix}-${each.key}-vm"
-  computer_name       = "${var.name_prefix}-${replace(each.key, "_", "-")}-vm"
-  resource_group_name = azurerm_resource_group.team[each.key].name
-  location            = azurerm_resource_group.team[each.key].location
+  name                = "${var.name_prefix}-${each.key}"
+  computer_name       = "${var.name_prefix}-${replace(each.key, "_", "-")}"
+  resource_group_name = azurerm_resource_group.team[each.value.team].name
+  location            = azurerm_resource_group.team[each.value.team].location
   size                = var.vm_size
 
   admin_username                  = "vmadmin"
@@ -235,7 +264,7 @@ resource "azurerm_linux_virtual_machine" "team" {
 # Enable Microsoft Entra ID (Azure AD) SSH login via VM extension.
 # This installs the aadsshlogin packages used for Entra SSH auth. See Microsoft Learn.
 resource "azurerm_virtual_machine_extension" "entra_ssh" {
-  for_each = local.team_members
+  for_each = local.team_vms
 
   name                       = "AADSSHLoginForLinux"
   virtual_machine_id         = azurerm_linux_virtual_machine.team[each.key].id
@@ -249,7 +278,7 @@ resource "azurerm_virtual_machine_extension" "entra_ssh" {
 # Runs in the background so apply completes immediately.
 # Depends on the VM extension so the timer starts only once the VM is fully ready.
 resource "null_resource" "stop_vm" {
-  for_each = local.team_members
+  for_each = local.team_vms
 
   triggers = {
     vm_id     = azurerm_linux_virtual_machine.team[each.key].id
@@ -262,17 +291,17 @@ resource "null_resource" "stop_vm" {
 }
 
 resource "azurerm_dev_test_global_vm_shutdown_schedule" "team" {
-  for_each = var.auto_shutdown_time != "" ? local.team_members : {}
+  for_each = var.auto_shutdown_time != "" ? local.team_vms : {}
 
   virtual_machine_id    = azurerm_linux_virtual_machine.team[each.key].id
-  location              = azurerm_resource_group.team[each.key].location
+  location              = azurerm_resource_group.team[each.value.team].location
   enabled               = true
   daily_recurrence_time = var.auto_shutdown_time
   timezone              = "UTC"
 
   notification_settings {
-    enabled        = true
-    email          = local.team_members[each.key][0]
+    enabled         = true
+    email           = local.team_members[each.value.team][0]
     time_in_minutes = 30
   }
 
@@ -295,11 +324,11 @@ resource "azurerm_role_assignment" "rg_reader" {
 # Virtual Machine User Login on the VM: authorizes Entra-based SSH login.
 resource "azurerm_role_assignment" "vm_user_login" {
   for_each = {
-    for pair in local.team_member_pairs :
-    "${pair.team}|${pair.upn}|vmuser" => pair
+    for triple in local.team_member_vm_triples :
+    "${triple.vm_key}|${triple.upn}|vmuser" => triple
   }
 
-  scope                = azurerm_linux_virtual_machine.team[each.value.team].id
+  scope                = azurerm_linux_virtual_machine.team[each.value.vm_key].id
   role_definition_name = "Virtual Machine User Login"
   principal_id         = data.azuread_user.members[each.value.upn].object_id
 }
@@ -307,12 +336,11 @@ resource "azurerm_role_assignment" "vm_user_login" {
 # Virtual Machine Contributor on the VM: allows users to start/stop/restart the VM.
 resource "azurerm_role_assignment" "vm_contributor" {
   for_each = {
-    for pair in local.team_member_pairs :
-    "${pair.team}|${pair.upn}|vmcontributor" => pair
+    for triple in local.team_member_vm_triples :
+    "${triple.vm_key}|${triple.upn}|vmcontributor" => triple
   }
 
-  scope                = azurerm_linux_virtual_machine.team[each.value.team].id
+  scope                = azurerm_linux_virtual_machine.team[each.value.vm_key].id
   role_definition_name = "Virtual Machine Contributor"
   principal_id         = data.azuread_user.members[each.value.upn].object_id
 }
-# gemini 2026-02-10 13:30

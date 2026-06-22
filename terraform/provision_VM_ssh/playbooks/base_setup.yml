@@ -1,0 +1,25 @@
+---
+- name: Base Infrastructure Setup
+  hosts: lab_vms
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: Wait for connection
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+
+    - name: Update apt and install prerequisites
+      apt:
+        update_cache: yes
+        name:
+          - docker.io
+          - python3-pip
+        state: present
+
+    - name: Ensure Docker service is started
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+# gemini 2026-03-16 10:30

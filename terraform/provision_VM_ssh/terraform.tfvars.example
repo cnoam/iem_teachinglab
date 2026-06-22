@@ -1,0 +1,19 @@
+# Copy to terraform.tfvars and fill in. terraform.tfvars is auto-loaded
+# (no -var-file needed) and is gitignored — keep deployment-specific values there.
+
+# REQUIRED — no default. The subscription VMs are created in.
+#   az account show --query id -o tsv
+subscription_id = "00000000-0000-0000-0000-000000000000"
+
+# Azure region. Verify the chosen vm_size is offered here:
+#   az vm list-skus --location <location> --size <vm_size> --output table
+location = "eastus"
+
+# Resource naming prefix (e.g. course code).
+name_prefix = "course"
+
+# VM SKU. e.g. Standard_D4as_v6 = 4 vCPU / 16 GiB, AMD. Confirm availability/quota in the region first.
+vm_size = "Standard_B1s"
+
+# Daily auto-shutdown, HHMM 24h UTC. Empty string disables.
+auto_shutdown_time = "2350"

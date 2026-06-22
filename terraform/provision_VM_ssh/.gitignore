@@ -5,6 +5,10 @@
 *.tfstate.backup
 .terraform.lock.hcl
 
+# Deployment-specific vars (subscription id, per-semester config) — commit the .example instead
+*.tfvars
+!*.tfvars.example
+
 # Admin SSH key (TF-generated — keep only in TF state, not in git)
 id_rsa_lab.pem
 id_rsa_lab.pub

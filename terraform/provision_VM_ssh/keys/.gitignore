@@ -1,0 +1,5 @@
+# Per-group public deploy keys are generated locally from the students' CSV
+# (scripts/parse_student_keys.py); keep the folder, don't commit the keys.
+*.pub
+!.gitignore
+!.gitkeep

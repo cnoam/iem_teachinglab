@@ -1,0 +1,36 @@
+output "team_vm_names" {
+  description = "VM resource names by team."
+  value = {
+    for team, _ in azurerm_linux_virtual_machine.team :
+    team => azurerm_linux_virtual_machine.team[team].name
+  }
+}
+
+output "team_resource_groups" {
+  description = "Resource group names by team."
+  value = {
+    for team, _ in azurerm_resource_group.team :
+    team => azurerm_resource_group.team[team].name
+  }
+}
+
+output "team_public_ip_addresses" {
+  description = "Public IP addresses by team."
+  value = {
+    for team, pip in azurerm_public_ip.team :
+    team => pip.ip_address
+  }
+}
+
+output "vm_fqdns" {
+  description = "FQDNs by team (<name_prefix>-<team>.<region>.cloudapp.azure.com). Give each group its FQDN — this is the address they use for HTTPS and Let's Encrypt."
+  value = {
+    for team, pip in azurerm_public_ip.team :
+    team => pip.fqdn
+  }
+}
+
+output "subscription_id" {
+  description = "Effective subscription ID."
+  value       = local.effective_subscription_id
+}

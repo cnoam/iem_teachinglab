@@ -1,0 +1,24 @@
+---
+# Push (or rotate/revoke) each group's deploy key to its VM.
+#
+# Key-to-VM matching:
+#   Terraform generates inventory.ini with group_name=<team> per host.
+#   This playbook looks up keys/<group_name>.pub for each host.
+#   The file the student sends (e.g. group_01.pub) must match the team
+#   name derived from users.csv (group_01, group_02, …).
+#
+# Usage:
+#   ansible-playbook playbooks/deploy-keys.yml          # all groups
+#   ansible-playbook -l group_01 playbooks/deploy-keys.yml  # one group
+#
+# To rotate: replace keys/<group>.pub and re-run.
+# To revoke: replace keys/<group>.pub with an empty file and re-run.
+
+- hosts: vms
+  become: true
+  tasks:
+    - name: install the group's deploy key (exclusive — replaces authorized_keys)
+      ansible.posix.authorized_key:
+        user: deploy
+        key: "{{ lookup('file', playbook_dir + '/../keys/' + group_name + '.pub') }}"
+        exclusive: true

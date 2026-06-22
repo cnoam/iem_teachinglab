@@ -101,9 +101,15 @@ inventory = ./inventory.ini
 private_key_file = ./id_rsa_lab.pem
 remote_user = vmadmin
 roles_path = ./roles
+# Target VMs are Ubuntu with python3 at a stable path — skip discovery noise.
+interpreter_python = auto_silent
+# Silence deprecation warnings raised inside third-party collections (e.g. ansible.posix).
+deprecation_warnings = False
 
 [ssh_connection]
 ssh_args = -o IdentitiesOnly=yes
+# Fewer SSH round-trips per task; safe on the Ubuntu cloud image (no requiretty).
+pipelining = True
 EOT
 }
 

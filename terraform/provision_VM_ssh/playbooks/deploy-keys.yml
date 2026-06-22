@@ -16,6 +16,7 @@
 
 - hosts: vms
   become: true
+  gather_facts: false   # this playbook needs no facts; skipping it is faster
   tasks:
     - name: install the group's deploy key (exclusive — replaces authorized_keys)
       ansible.posix.authorized_key:

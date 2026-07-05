@@ -1,0 +1,22 @@
+# Terraform
+**/.terraform/
+**/.terraform.lock.hcl
+*.tfplan
+**/plan.out
+**/plan.json
+*.tfstate
+*.tfstate.*
+terraform.tfstate.d/
+**/terraform.tfvars
+
+# Secrets / bootstrap keypair (generated per course)
+**/id_rsa_lab.pem
+**/id_rsa_lab.pub
+
+# Generated ansible artifacts (rendered into each course folder by Terraform)
+**/inventory.ini
+**/ansible.cfg
+
+# Student deploy keys and real course rosters — never commit
+**/keys/
+courses/*/users.csv

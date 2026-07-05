@@ -1,0 +1,26 @@
+---
+# deploy_key auth only. Push (rotate/revoke) each group's public key to the
+# student account 'azureuser' on its VM.
+#
+# Key-to-VM matching:
+#   Terraform writes inventory.ini with group_name=<team> per host.
+#   parse_student_keys.py writes keys/<team>.pub into the course folder.
+#   This playbook (run from the course folder) installs keys/<group_name>.pub.
+#   inventory_dir resolves to the course folder, so the lookup is unambiguous
+#   even though this playbook lives in the shared ../../ansible tree.
+#
+# Usage (from inside courses/<course>/):
+#   ansible-playbook ../../ansible/playbooks/deploy-keys.yml                 # all groups
+#   ansible-playbook -l course-group_01 ../../ansible/playbooks/deploy-keys.yml  # one group
+#
+# Rotate: replace keys/<group>.pub and re-run.
+# Revoke: replace keys/<group>.pub with an empty file and re-run.
+- hosts: vms
+  become: true
+  gather_facts: false
+  tasks:
+    - name: install the group's deploy key (exclusive — replaces authorized_keys)
+      ansible.posix.authorized_key:
+        user: azureuser
+        key: "{{ lookup('file', inventory_dir + '/keys/' + group_name + '.pub') }}"
+        exclusive: true

@@ -1,0 +1,71 @@
+#cloud-config
+# Rendered via templatefile(): idle_shutdown_hours is the only Terraform
+# interpolation. Literal shell $${...} sequences are escaped with a double $.
+package_update: true
+packages: [docker.io, docker-compose-v2, azure-cli]
+
+users:
+  - default   # preserve the Azure-provisioned vmadmin user and its injected SSH key
+  - name: azureuser
+    groups: [docker]
+    shell: /bin/bash
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    # No keys at boot. deploy_key: pushed later by deploy-keys.yml.
+    # entra: students log in via Entra (az ssh vm), not this local account.
+
+write_files:
+  - path: /opt/idlewatch/idlewatch.sh
+    owner: root:root
+    permissions: "0700"
+    content: |
+      #!/usr/bin/env bash
+      # Deallocate this VM after T_IDLE_HOURS of low CPU load. Root-only.
+      # CPU load (not network) because an external uptime monitor may poll often.
+      set -euo pipefail
+      T_IDLE_HOURS=${idle_shutdown_hours}
+      LOAD_THRESHOLD="0.20"   # 15-min load avg below this = idle
+      STATE=/opt/idlewatch/idle_since
+
+      load15=$(awk '{print $3}' /proc/loadavg)
+      if awk "BEGIN{exit !($load15 < $LOAD_THRESHOLD)}"; then
+        [ -f "$STATE" ] || date +%s > "$STATE"
+        idle_secs=$(( $(date +%s) - $(cat "$STATE") ))
+        if [ "$idle_secs" -ge $(( T_IDLE_HOURS * 3600 )) ]; then
+          az login --identity >/dev/null
+          rid=$(curl -s -H Metadata:true \
+            "http://169.254.169.254/metadata/instance/compute/resourceId?api-version=2021-02-01&format=text")
+          logger -t idlewatch "idle $${idle_secs}s — deallocating $rid"
+          az vm deallocate --ids "$rid" --no-wait
+        fi
+      else
+        rm -f "$STATE"
+      fi
+
+  - path: /etc/systemd/system/idlewatch.service
+    owner: root:root
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Idle watcher — deallocate VM when idle
+      [Service]
+      Type=oneshot
+      ExecStart=/opt/idlewatch/idlewatch.sh
+
+  - path: /etc/systemd/system/idlewatch.timer
+    owner: root:root
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=Run idle watcher every 15 minutes
+      [Timer]
+      OnBootSec=15min
+      OnUnitActiveSec=15min
+      [Install]
+      WantedBy=timers.target
+
+runcmd:
+  - systemctl enable --now docker
+  - sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+  - systemctl restart ssh
+  - systemctl daemon-reload
+  - systemctl enable --now idlewatch.timer

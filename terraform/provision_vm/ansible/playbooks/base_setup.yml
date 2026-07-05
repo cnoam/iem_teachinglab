@@ -1,0 +1,26 @@
+---
+# Base setup, run once after `terraform apply` (works for both auth methods).
+# cloud-init already installs Docker + Azure CLI; this is the idempotent
+# Ansible-side guarantee and a connectivity gate before lab playbooks.
+- name: Base Infrastructure Setup
+  hosts: vms
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: Wait for connection
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+
+    - name: Update apt and install prerequisites
+      apt:
+        update_cache: yes
+        name:
+          - docker.io
+          - python3-pip
+        state: present
+
+    - name: Ensure Docker service is started
+      service:
+        name: docker
+        state: started
+        enabled: yes

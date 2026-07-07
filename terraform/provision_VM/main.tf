@@ -272,6 +272,7 @@ resource "azurerm_virtual_machine_extension" "entra_ssh" {
   type                       = "AADSSHLoginForLinux"
   type_handler_version       = "1.0"
   auto_upgrade_minor_version = true
+  tags                       = var.tags
 }
 
 # After provisioning, deallocate each VM after 20 minutes to avoid compute costs.

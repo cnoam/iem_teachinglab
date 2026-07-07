@@ -32,6 +32,8 @@ In practice, the group list is dynamic, so we need to be able to update the setu
   - [Debugging](#debugging)
     - [Checking the dependency graph](#checking-the-dependency-graph)
 - [Using local state file for development](#using-local-state-file-for-development)
+- [Adding Azure Role Assignments to students](#adding-azure-role-assignments-to-students)
+- [SEE ALSO](#see-also)
 - [Troubleshooting](#troubleshooting)
   - [Mismatch between the state known by TF and the actual state in the cloud](#mismatch-between-the-state-known-by-tf-and-the-actual-state-in-the-cloud)
   - ["Error: failed to find the installed library"](#error-failed-to-find-the-installed-library)
@@ -61,11 +63,11 @@ Transform this file using `cd dbr && python ../convert_moodle_to_tf_format.py pa
 The output is named  "users.csv" <br>
 
 2. Create a Databricks workspace (I use Azure portal).
-1. generate a Databricks personal token or the CLI's hidden token (next item)
+3. generate a Databricks personal token **or** the CLI's hidden token (next item)
   - enter the workspace, user settings,  developer tools, manage access tokens, generate new token.
  
 
-3. Configure Databricks Profiles:
+4. Configure Databricks Profiles:
    - Use the Databricks CLI: `databricks auth login --host <workspace-url>`.
    - Example `~/.databrickscfg`:
      ```ini
@@ -239,6 +241,22 @@ When ready, push the finished state back to the remote backend:
 1. update the backend{} to use the remote in main.tf
 2. `terraform init  -migrate-state`
 
+# Adding Azure Role Assignments to students
+ Students use Azure Entra ID (Entra group) to login into the portal. We need to add role assignment so they can connect to the Databricks workspace.
+
+ - choose relevant subscription
+ - choose Access Control 
+ - Add role Assignment READER, *next*
+ - select Members
+ - choose the course group of this year ("dds00960224s-2025") 
+ - **IMPORTANT**: in the "Assignment type" tab choose "Active" and "Time bound" 
+ - "review + assign"
+ 
+Add the test user: `efratsupp@technion.ac.il` using the above procedure (with the same READ role)
+  
+
+# SEE ALSO
+[["../../docs/Preparing DBR environment for students"]]
 
 # Troubleshooting
 

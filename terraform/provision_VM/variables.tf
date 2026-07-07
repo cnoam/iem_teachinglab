@@ -6,8 +6,7 @@ variable "location" {
 
 variable "subscription_id" {
   type        = string
-  description = "Subscription where VMs are created."
-  default     = "b3931bf1-b901-4dc2-bf3e-b020fa67cb8b"
+  description = "Subscription where VMs are created. Must be set explicitly — no default to prevent accidental cross-subscription deploys."
 }
 
 variable "name_prefix" {

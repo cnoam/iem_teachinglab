@@ -1,0 +1,20 @@
+2026-06-01
+inputSAS : https://coursedata2024.blob.core.windows.net/fwm-stb-data?sp=rl&st=2026-06-01T11:28:38Z*****
+ 
+outputSAS: https://coursedata2024.blob.core.windows.net/student-output?sp=rcwl&st=2026-06-01*****
+ 
+ created a safe in DBR:
+ 
+ ```
+ $ databrics secrets create-scope coursedata_storage_account
+ $ databricks secrets put-secret coursedata_storage_account input-sas
+         it will ask which profile, and then for the secret value
+         
+ $ databricks secrets put-secret coursedata_storage_account output-sas
+      ditto...
+     
+ ```
+ 
+ Verify by :
+ 'avi-lab' is the profile name.
+ $ databricks --profile avi-lab secrets get-secret coursedata_storage_account input-sas |jq -r .value | base64 --decode

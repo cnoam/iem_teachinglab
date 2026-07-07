@@ -35,8 +35,18 @@ resource "databricks_cluster" "clusters" {
 
   autotermination_minutes = var.autotermination_minutes
   enable_elastic_disk     = true
-  data_security_mode      = "USER_ISOLATION"
   runtime_engine          = "STANDARD"
   is_pinned               = true
 
+  # Dedicated cluster shared by the whole group (DBR 15.4+, UC-enabled workspace).
+  # Group members share one identity's permissions, so no isolation between them is
+  # needed -- only isolation *between* groups, which is already given by one cluster
+  # per group. Dedicated mode (unlike USER_ISOLATION/Shared) supports the ML runtime,
+  # so MLlib classes like StringIndexer aren't blocked by the Py4J security manager.
+  kind               = "CLASSIC_PREVIEW"
+  data_security_mode = "DATA_SECURITY_MODE_DEDICATED"
+  use_ml_runtime     = true
+  single_user_name   = each.value.group_name
+
+  depends_on = [databricks_group.student_groups]
 }

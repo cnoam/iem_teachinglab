@@ -24,6 +24,7 @@ The DBR workspace costs money even when idle[I might be wrong here], so I delete
 - press "Create". wait . "Go to resource" -> "Launch Workspace"
 - save the url. You will need it in the `.env` file . It looks like https://adb-1146639627338169.9.azuredatabricks.net/
 - since you are already in the workspace, create a token.
+- - [2026-06-30] tokens now have scopes try to use [clusters, workspace] .
 - that's it. Note: It can be done using TF, but not worth the effort.
 
 
@@ -140,8 +141,8 @@ Everything becomes stale. Must check every aspect.
 -  First, activate the venv
 
 ##  email sending
-- `cd databricks` and run `python main.py --test_email` . Verify you got mail
-- run `python end_of_day_operations.py`
+- `cd ~/iemteachinglab` and run `python3 -m databricks.main --test_email` . Verify you got mail
+- run `cd ~; source end_of_day_ops.sh`
 - expect to get email with usage report. Having the report proves that there is access to the workspace.
 
 ##  cron works as expected 

@@ -19,3 +19,4 @@ output "team_vm_names" { value = module.vms.team_vm_names }
 output "team_resource_groups" { value = module.vms.team_resource_groups }
 output "team_public_ip_addresses" { value = module.vms.team_public_ip_addresses }
 output "vm_fqdns" { value = module.vms.vm_fqdns }
+output "next_steps" { value = module.vms.next_steps }

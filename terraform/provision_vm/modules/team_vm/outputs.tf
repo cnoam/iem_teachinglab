@@ -22,3 +22,12 @@ output "auth_method" {
   description = "Auth method this course was deployed with."
   value       = var.auth_method
 }
+
+output "next_steps" {
+  description = "Reminder of manual post-apply steps, printed at the end of `terraform apply`."
+  value = local.is_entra ? (
+    "auth_method=entra: no key deployment needed. Students run `az ssh vm ...`."
+    ) : (
+    "\n\n\nACTION REQUIRED while the VMs are up: run `ansible-playbook ../../ansible/playbooks/deploy-keys.yml` from this course folder to push each group's keys/<group>.pub into azureuser's authorized_keys.\nUse `../../scripts/vm-power.sh start|stop` to boot/deallocate all course VMs, or run the whole cycle (apply + start + ansible + stop) with `../../scripts/provision-course.sh`.\n\n\n"
+  )
+}

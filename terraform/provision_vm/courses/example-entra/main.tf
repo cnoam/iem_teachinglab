@@ -16,3 +16,4 @@ module "vms" {
 output "team_vm_names" { value = module.vms.team_vm_names }
 output "team_resource_groups" { value = module.vms.team_resource_groups }
 output "team_public_ip_addresses" { value = module.vms.team_public_ip_addresses }
+output "next_steps" { value = module.vms.next_steps }

@@ -1,0 +1,1 @@
+scripts/provision-course.sh

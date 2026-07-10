@@ -9,7 +9,7 @@ module "vms" {
 
   name_prefix = "sweng" # MUST be unique across concurrent courses
   location    = "eastus"
-  vm_size     = "Standard_B1s"
+  vm_size     = "Standard_E4ads_v5"
 
   open_web_ports = true
   enable_fqdn    = true

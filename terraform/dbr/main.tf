@@ -23,10 +23,11 @@ terraform {
 }
 
 # This is the subscription where operations will be executed.
+# subscription_id has no default (see variables.tf) -- supply it via
+# -var, TF_VAR_subscription_id, or a .tfvars file. This changes per deployment.
 provider "azurerm" {
   features {}
-  # BUG hardecoded value
-  subscription_id = "b3931bf1-b901-4dc2-bf3e-b020fa67cb8b"
+  subscription_id = var.subscription_id
   #resource_provider_registrations = "none"
 }
 

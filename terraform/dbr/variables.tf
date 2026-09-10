@@ -39,6 +39,11 @@ variable "databricks_profile" {
   default     = "default"
 }
 
+variable "subscription_id" {
+  description = "Azure subscription ID where resources are deployed. Supply via -var, TF_VAR_subscription_id, or a .tfvars file -- it differs per deployment and must not be hardcoded."
+  type        = string
+}
+
 
 
 variable "maven_packages" {

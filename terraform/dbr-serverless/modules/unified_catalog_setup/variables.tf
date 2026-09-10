@@ -1,0 +1,55 @@
+variable "group_configs" {
+  description = "Map of group configurations derived from CSV"
+  type = map(object({
+    index                  = number
+    group_name             = string
+    schema_name            = string
+    service_principal_name = string
+    cluster_name           = string # retained for output compatibility; no cluster is created
+  }))
+}
+
+variable "student_groups_csv_rows" {
+  description = "Raw CSV rows (list of maps) for student groups"
+  type        = list(map(string))
+}
+
+variable "group_members_flattened" {
+  description = "Flattened list of all group members"
+  type = list(object({
+    group_name  = string
+    member_name = string
+  }))
+}
+
+variable "all_student_groups_name" {
+  description = "Display name of the group containing all students"
+  type        = string
+}
+
+variable "catalog_name" {
+  description = "Unity Catalog name"
+  type        = string
+}
+
+variable "sql_warehouse_name" {
+  description = "Name of the shared SQL Warehouse"
+  type        = string
+}
+
+variable "databricks_host" {
+  description = "Databricks host URL"
+  type        = string
+}
+
+variable "user_ids" {
+  description = "List of user IDs to ensure dependency ordering"
+  type        = list(string)
+  default     = []
+}
+
+variable "student_group_ids" {
+  description = "List of student group IDs to ensure dependency ordering"
+  type        = list(string)
+  default     = []
+}

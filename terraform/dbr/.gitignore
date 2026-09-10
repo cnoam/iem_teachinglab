@@ -5,3 +5,5 @@ terraform.tfstate.*
 *.tfstate
 *.tfstate.*
 create_vars.sh
+tfplan
+destroy_plan

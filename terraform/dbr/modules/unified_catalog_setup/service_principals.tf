@@ -8,6 +8,6 @@
 resource "databricks_service_principal_secret" "group_sp_secrets" {
   for_each = var.group_configs
 
-  service_principal_id = databricks_service_principal.group_sps[each.key].id
+  service_principal_id = var.service_principals[each.key].id
   lifetime        = "1814400s"  # 21 days (3 weeks); Go durations don't support "w"
 }

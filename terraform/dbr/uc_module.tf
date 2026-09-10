@@ -13,7 +13,14 @@ module "uc_setup" {
 
   cluster_ids = { for k, v in databricks_cluster.clusters : k => v.id }
 
-  # Dependencies passed as lists to ensure ordering if used, 
+  service_principals = {
+    for k, v in databricks_service_principal.group_sps : k => {
+      id             = v.id
+      application_id = v.application_id
+    }
+  }
+
+  # Dependencies passed as lists to ensure ordering if used,
   # but mainly explicit depends_on below handles it.
   user_ids          = [for u in databricks_user.workspace_user : u.id]
   student_group_ids = [for g in databricks_group.student_groups : g.id]
@@ -24,6 +31,7 @@ module "uc_setup" {
     databricks_cluster.clusters,
     databricks_group.all_student_groups,
     databricks_group_member.student_assignments,
-    databricks_group_member.all_students_group_assignment
+    databricks_group_member.all_students_group_assignment,
+    databricks_service_principal.group_sps
   ]
 }

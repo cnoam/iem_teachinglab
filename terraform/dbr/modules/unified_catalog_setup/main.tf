@@ -34,21 +34,17 @@ resource "databricks_permissions" "sp_job_permissions" {
   job_id = databricks_job.group_jobs[each.key].id
 
   access_control {
-    service_principal_name = databricks_service_principal.group_sps[each.key].application_id
+    service_principal_name = var.service_principals[each.key].application_id
     permission_level       = "CAN_MANAGE_RUN"
   }
 }
 */
 
 #
-# Service Principals
+# Service Principals -- created once in the root module (create_objects.tf) since
+# they're also used as each cluster's single_user_name; reused here via
+# var.service_principals.
 #
-resource "databricks_service_principal" "group_sps" {
-  for_each = var.group_configs
-
-  display_name = each.value.service_principal_name
-  active       = true
-}
 
 #
 # SQL Warehouse (Shared)
@@ -86,7 +82,7 @@ resource "databricks_permissions" "warehouse_usage" {
   }
 
   dynamic "access_control" {
-    for_each = databricks_service_principal.group_sps
+    for_each = var.service_principals
     content {
       service_principal_name = access_control.value.application_id
       permission_level       = "CAN_USE"
@@ -102,7 +98,7 @@ resource "databricks_grants" "schema_grants" {
 
   # Matching SP
   grant {
-    principal  = databricks_service_principal.group_sps[each.key].application_id
+    principal  = var.service_principals[each.key].application_id
     privileges = ["USE_SCHEMA", "CREATE_TABLE", "SELECT"]
   }
 
@@ -139,7 +135,7 @@ resource "databricks_grants" "catalog_grants" {
   }
 
   dynamic "grant" {
-    for_each = databricks_service_principal.group_sps
+    for_each = var.service_principals
     content {
       principal  = grant.value.application_id
       privileges = ["USE_CATALOG"]
@@ -169,7 +165,7 @@ resource "databricks_permissions" "cluster_permissions" {
   }
 
   access_control {
-    service_principal_name = databricks_service_principal.group_sps[each.key].application_id
+    service_principal_name = var.service_principals[each.key].application_id
     permission_level       = "CAN_ATTACH_TO"
   }
 }

@@ -1,7 +1,7 @@
 output "sp_credentials_and_env_vars" {
   value = {
     for k, v in var.group_configs : k => {
-      DATABRICKS_CLIENT_ID     = try(databricks_service_principal.group_sps[k].application_id, "")
+      DATABRICKS_CLIENT_ID     = try(var.service_principals[k].application_id, "")
       DATABRICKS_CLIENT_SECRET = try(databricks_service_principal_secret.group_sp_secrets[k].secret, "SECRET_NOT_YET_GENERATED")
       DATABRICKS_HOST          = var.databricks_host
       DATABRICKS_SQL_ID        = databricks_sql_endpoint.shared_warehouse.id

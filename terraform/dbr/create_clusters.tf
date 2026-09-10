@@ -46,7 +46,9 @@ resource "databricks_cluster" "clusters" {
   kind               = "CLASSIC_PREVIEW"
   data_security_mode = "DATA_SECURITY_MODE_DEDICATED"
   use_ml_runtime     = true
-  single_user_name   = each.value.group_name
+  # Must be an account-level identity (user or service principal); a workspace-local
+  # group like databricks_group.student_groups does not resolve here.
+  single_user_name = databricks_service_principal.group_sps[each.key].application_id
 
-  depends_on = [databricks_group.student_groups]
+  depends_on = [databricks_group.student_groups, databricks_service_principal.group_sps]
 }

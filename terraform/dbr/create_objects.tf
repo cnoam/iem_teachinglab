@@ -9,13 +9,30 @@ resource "databricks_group" "student_groups" {
 }
 
 #
+# Per-group service principal, used as the DEDICATED cluster's single_user_name.
+# Databricks resolves single_user_name against account-level identities, and a
+# workspace-local group (databricks_group) does not qualify -- see
+# "Did not find account group assigned to workspace ... with name group_NN".
+# A service principal, unlike a group, is itself a valid account-level identity.
+#
+resource "databricks_service_principal" "group_sps" {
+  for_each = local.group_configs
+
+  display_name = each.value.service_principal_name
+  active       = true
+}
+
+#
 # Create users
 # Users are keyed ONLY by their e-mail. This separation cleans the code
 # and allows more flexible memberships
 #
 resource "databricks_user" "workspace_user" {
-  for_each         = toset([for m in local.group_members_flattened : m.member_name])
-  user_name        = each.key
+  for_each  = toset([for m in local.group_members_flattened : m.member_name])
+  user_name = each.key
+  # Keep false: Databricks sends the SCIM invitation email only when a user is
+  # provisioned WITH workspace access. Students log in via Entra ID role
+  # assignment (see readme.md), so an invite email would only confuse them.
   workspace_access = false
   active           = true
 }

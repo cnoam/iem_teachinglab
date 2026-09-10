@@ -49,6 +49,14 @@ variable "cluster_ids" {
   type        = map(string)
 }
 
+variable "service_principals" {
+  description = "Map of pre-created service principals (root module), keyed like group_configs"
+  type = map(object({
+    id             = string
+    application_id = string
+  }))
+}
+
 variable "user_ids" {
   description = "List of user IDs to ensure dependency"
   type        = list(string)

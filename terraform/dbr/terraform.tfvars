@@ -18,7 +18,7 @@ python_packages = []
 # value is DBR profile name. They do not have to be identical
 workspace_profiles = {
   dev        = "dev_profile"
-  prod       = "avi-lab"
+  prod       = "94290_2026"
 }
 
 enable_unified_catalog_isolation = false

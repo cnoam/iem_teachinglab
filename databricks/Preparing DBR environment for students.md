@@ -26,6 +26,8 @@ To accomplish this, we need to use both Azure's and Databricks permissions
 
 If not done already, choose the "databricks" resource in the portal's home.
 
+**make sure to use the correct subscription!**
+
 Create. **MAKE SURE you create it in the correct subscription**
 
 ## Set user permissions
@@ -41,12 +43,14 @@ To allow a user to see the DBR resource in her portal, she needs READER role.
 - - "Review + assign"
 
 You can add specific users (who are not in the AD groups) directly: for example the TA and the test account.
-- The TA should have "contributor" role
+- The TA should have "contributor" role (use end date)
 - the test account ("efratsupp@technion.ac.il") should have the same role (READER) as the AD group.
   
 The above steps implemnt step 1 of the requirements.
 
 # Give users permission to open the DBR workspace
+> WARNING: You should use the Terraform method 
+
 Here is the trick: we are now moving to the realm of DBR!
 
 A user MUST be defined in the DBR setting, and have the "Workspace access" and "Databricks sql access".
@@ -57,7 +61,7 @@ in the dbr workspace (web ui), click on the top right YourName --> Settings --> 
 Here you can add a user and give her entitlements.
 
 # Adding all the students in the course
-Use the Terraform scripts. A detailed description is in the Readme.md
+Use the Terraform scripts. A detailed description is in the ../terraform/dbr/Readme.md
 
 This script will add the users, set their groups and provide the correct permissions (Entitlement) (step 4 in the list)
 

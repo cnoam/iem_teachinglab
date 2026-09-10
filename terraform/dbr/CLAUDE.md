@@ -2,7 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-> This file is scoped to the `dbr/` subdirectory. The parent `terraform/CLAUDE.md` covers the overall repo and common commands — read it first.
+> This file is scoped to the `dbr/` subdirectory.
+
+> **As of 2026-09, `../dbr-serverless/` is the default deployment** (see its `MIGRATION.md`). This project
+> (`dbr/`, classic per-group clusters) is kept specifically as the fallback for course modules that need
+> Maven/JVM libraries (e.g. `spark-nlp`), which Serverless compute does not support. Don't use `dbr/` as the
+> default going forward -- only when a module has a JVM-library dependency.
+>
+> **Not currently validated end-to-end**: `terraform apply` succeeds, but the DEDICATED cluster's
+> service-principal owner means only that SP -- not students -- can attach/run on it. See readme.md's
+> banner and `docs/uc_vs_ml_cluster_mode.md`.
 
 ## File Map
 
@@ -44,6 +53,6 @@ Implemented in `modules/unified_catalog_setup/`:
 
 - **`databricks_permissions` is authoritative** — declare it exactly once per object type. Multiple declarations cause endless ping-pong between applies (documented in `service_principals.tf`).
 - **`databricks_grants` is also authoritative** — the catalog grant resource uses `dynamic` blocks to merge all principals into a single resource for this reason.
-- **`main.tf` has a hardcoded subscription ID** — the `azurerm` provider block contains a `# BUG hardcoded value` comment; update it per deployment.
+- **`subscription_id` is a required variable** (`variables.tf`, no default) — the `azurerm` provider block reads `var.subscription_id`. Supply it via `-var`, `TF_VAR_subscription_id`, or `.tfvars`; Terraform prompts/errors if it's missing rather than silently reusing a stale value.
 - **`catalog_name` default is hardcoded** — `94290_dev` in `variables_UCatalog.tf`; override in `.tfvars` per course.
 - **Backend is set to local** in the committed `main.tf` — switch to the commented `azurerm` backend block for production use.

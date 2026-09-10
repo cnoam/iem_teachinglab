@@ -2,6 +2,22 @@
 
 # Using Terraform to deploy DataBricks clusters for students
 
+> **Fallback project, not the default -- and not currently validated end-to-end.** As of 2026-09,
+> `../dbr-serverless/` is the default deployment for new semesters (instant-start Serverless compute, see
+> its `MIGRATION.md`). Use **this** project only for course modules that need Maven/JVM libraries (e.g.
+> `spark-nlp`), which Serverless does not support.
+>
+> **Known gap**: `terraform apply` succeeds (see "Cluster ownership (service principals)" below), but the
+> resulting `DATA_SECURITY_MODE_DEDICATED` cluster's owner is a service principal, not a group -- and a
+> Dedicated/Assigned cluster only allows its *exact* owning identity to attach notebooks and run code.
+> Students currently **cannot use the resulting cluster**, only the SP can. The proper fix (an account-level
+> group as owner, enabling "Dedicated compute group access") needs Databricks Account Admin, which this
+> project does not have. See `docs/uc_vs_ml_cluster_mode.md` before relying on this project for a real
+> course module.
+>
+> The Azure Role Assignment steps below (Entra login setup) apply to **both** projects equally, regardless
+> of compute mode -- read them even if you're deploying `dbr-serverless/`.
+
 Students are divided to groups (usually 3 or 4 people).  Each group is allocated its own cluster.
 
 This simple setup requires:
@@ -19,9 +35,9 @@ In practice, the group list is dynamic, so we need to be able to update the setu
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**
 
-- [Using Terraform to deploy DataBricks clusters for students](#using-terraform-to-deploy-databricks-clusters-for-students)
 - [Installation](#installation)
 - [Usage](#usage)
+  - [Cluster ownership (service principals)](#cluster-ownership-service-principals)
   - [Modifying properties in existing deployment](#modifying-properties-in-existing-deployment)
 - [Installing libraries](#installing-libraries)
 - [Using the same code to create different environments](#using-the-same-code-to-create-different-environments)
@@ -38,6 +54,8 @@ In practice, the group list is dynamic, so we need to be able to update the setu
   - [Mismatch between the state known by TF and the actual state in the cloud](#mismatch-between-the-state-known-by-tf-and-the-actual-state-in-the-cloud)
   - ["Error: failed to find the installed library"](#error-failed-to-find-the-installed-library)
   - [Deleting resources temporarily - for debugging](#deleting-resources-temporarily---for-debugging)
+  - ["Did not find account group assigned to workspace ... with name group_NN"](#did-not-find-account-group-assigned-to-workspace--with-name-group_nn)
+  - [A user has a visible Reader role but still can't see/open the Databricks workspace](#a-user-has-a-visible-reader-role-but-still-cant-seeopen-the-databricks-workspace)
 - [History timeline](#history-timeline)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -98,11 +116,13 @@ The output is named  "users.csv" <br>
 > Specifying it automatically did not work for me, so I use semi-manual
 > dependency.
 
-> NOTE: the following instructions might be not needed. Try to run `tf apply --parallelim=50` and maybe you are lucky.
-1. run `terraform plan --target=null_resource.force_creation`. check that the plan is reasonable.
-2. `terraform apply --target=null_resource.force_creation`. After it finished, check that the resources in the Databricks portal are as expected: users created, they are in the correct group, the group has correct permissions in the correct cluster. All cluster should be turned ON. <br>
- *It will take a few minutes* : Creating a cluster takes about 5 minutes. (This is why parallel is so important)
-1. Now that the clusters are created and running, apply the second half -- installing libs and shutting down the clusters:<br> `terraform apply`
+> NOTE: the old 2-phase `--target=null_resource.force_creation` workflow is no longer needed -- all
+> dependencies are now correctly declared, so a single `terraform apply` handles cluster/group/user
+> creation, library installation, and permissions in one pass. (The `null_resource.force_creation`
+> resource is kept, commented out, in `main.tf` for reference.)
+1. `terraform plan`. Check that the plan is reasonable.
+2. `terraform apply`. Users/groups/clusters/permissions/libraries are all created in one pass. <br>
+ *It will take a few minutes* : Creating a cluster takes about 5 minutes. (This is why parallelism matters.)
 
 
 > NOTE: I strongly recommend increasing the default parallelism (10 resources) - e.g. `terraform apply -parallelism=50`
@@ -110,6 +130,18 @@ The output is named  "users.csv" <br>
 > `export TF_CLI_ARGS_apply="-parallelism=50"`
 
 
+
+## Cluster ownership (service principals)
+
+Each cluster is `DATA_SECURITY_MODE_DEDICATED` (needed for UC `/Volumes` access + unrestricted ML runtime).
+`single_user_name` on a Dedicated cluster must be an **account-level identity** -- a workspace-local
+`databricks_group` does not qualify, and using one fails with:
+`Did not find account group assigned to workspace ... with name group_NN`.
+
+To fix this, `create_objects.tf` creates one `databricks_service_principal` per group (`sp_01`, `sp_02`, ...)
+and `create_clusters.tf` uses its `application_id` as `single_user_name`. Students still attach to /
+restart the cluster via their workspace group's `CAN_ATTACH_TO`/`CAN_RESTART` permission
+(`assign_groups.tf`) -- the SP only owns the cluster, it isn't meant to be logged into.
 
 ## Modifying properties in existing deployment
 You may want to add/remove user, or change the auto-termination, max_workers etc.
@@ -134,11 +166,11 @@ Imagine you want to run the same plan to generate workspaces for two courses. Ea
 
 A Databricks profile is a set of configuration details—such as credentials, workspace URL, and other settings—used by the Databricks CLI or client libraries to securely connect to and interact with a specific Databricks workspace.
 
-Profiles are now the primary way to authenticate. The `provider` block in `main.tf` uses a `lookup` to find the correct profile based on your active TF workspace.
+Profiles are now the primary way to authenticate. The `provider` block in `main.tf` indexes `workspace_profiles` by your active TF workspace to find the correct profile.
 
 ```hcl
 provider "databricks" {
-  profile = lookup(var.workspace_profiles, terraform.workspace, null)
+  profile = var.workspace_profiles[terraform.workspace]
 }
 ```
 
@@ -178,14 +210,18 @@ The current architecture enforces a strict 1-to-1 binding between a Terraform wo
 
 
 
-1. in main.tf , update the AZURE subscription ID
+1. Supply the AZURE subscription ID -- it is a required Terraform variable (`subscription_id` in `variables.tf`), no longer hardcoded in `main.tf`. Provide it one of these ways:
   ```
-  # This is the subscription where operations will be executed.
-  provider "azurerm" {
-    subscription_id = "dfabd25-794a-4610-a071-2dc334da70b7" # second subscription
-    features {}
-  }
+  # CLI flag
+  terraform plan -var="subscription_id=<id>"
+
+  # env var
+  export TF_VAR_subscription_id=<id>
+
+  # terraform.tfvars
+  subscription_id = "<id>"
   ```
+  If none is supplied, Terraform prompts interactively or fails with a clear error -- it will not silently use a stale value.
 
 
 
@@ -206,7 +242,7 @@ We are currently using TF Workspace.
 2. run  `databricks auth login --host adb-<<WS-ID>>.azuredatabricks.net`
 3. run `tf workspace select dev` (or create it first`tf workspace new dev_94290`)
 4. verify `tf plan` fails due to unmatched TF workspace to DBR profile.
-5. Add the DBR profile to the list of TF workspace mapping (in main.tf)
+5. Add the DBR profile to the `workspace_profiles` map in `terraform.tfvars`
 6. create a minimal `users.csv`
 7. run `tf plan` and check reasonability.
 8. 
@@ -245,13 +281,26 @@ When ready, push the finished state back to the remote backend:
  Students use Azure Entra ID (Entra group) to login into the portal. We need to add role assignment so they can connect to the Databricks workspace.
 
  - choose relevant subscription
+ - choose the resource group containing the Databricks workspace (e.g. `databricks-rg-2026`) -- Reader
+   scoped to a different resource group in the same subscription will NOT let the user see the workspace.
  - choose Access Control 
  - Add role Assignment READER, *next*
  - select Members
- - choose the course group of this year ("dds00960224s-2025") 
- - **IMPORTANT**: in the "Assignment type" tab choose "Active" and "Time bound" 
+ - choose the course group of this year (e.g. `dds0094...-2026` -- name changes every year, verify in Entra ID)
+ - **IMPORTANT**: in the "Assignment type" tab choose "Active" and "Time bound"
  - "review + assign"
- 
+
+> **Pitfall (hit 2026-09-09):** if your tenant uses PIM, it is easy to accidentally create the assignment as
+> **Eligible** instead of Active. Eligible assignments show up in the IAM blade's assignment list, looking
+> correct, but grant **zero actual access** until self-activated by the user -- which defeats the purpose
+> here. If a user with a visible Reader role still can't see the workspace, check for a stray Eligible
+> assignment instead of an Active one:
+> ```
+> az rest --method get --url "https://management.azure.com/subscriptions/<sub-id>/resourceGroups/<rg>/providers/Microsoft.Authorization/roleEligibilityScheduleInstances?api-version=2020-10-01"
+> ```
+> Fix by re-adding the role assignment and explicitly picking Active -- Eligible and Active assignments are
+> separate schedules, so the fix is a new Active assignment, not editing the Eligible one in place.
+
 Add the test user: `efratsupp@technion.ac.il` using the above procedure (with the same READ role)
   
 
@@ -308,6 +357,24 @@ If not working, try the 'tf state rm ' to bring the state file into order.
 ## Deleting resources temporarily - for debugging
 For resources known to TF: <br>
 `terraform destroy -target=<resource_type.resource_name>`
+
+## "Did not find account group assigned to workspace ... with name group_NN"
+See [Cluster ownership (service principals)](#cluster-ownership-service-principals) above -- a
+`DATA_SECURITY_MODE_DEDICATED` cluster's `single_user_name` must be an account-level identity, not a
+workspace-local group.
+
+## A user has a visible Reader role but still can't see/open the Databricks workspace
+Two independent things can cause this, check both:
+1. The Reader role is scoped to the wrong resource group (not the one containing the workspace). Verify
+   with `az role assignment list --assignee <upn> --all` and compare the `scope` to the workspace's actual
+   resource group.
+2. The role assignment is PIM **Eligible**, not **Active** -- see the pitfall note in
+   [Adding Azure Role Assignments to students](#adding-azure-role-assignments-to-students).
+
+Also double check you (and the user) are looking at the **same Databricks workspace** -- if a user has
+Azure access to more than one Databricks workspace resource (e.g. leftover from a previous course/year),
+it's easy to open the wrong one and see unrelated users/folders. Compare the URL
+(`adb-<id>.<n>.azuredatabricks.net`) against the `host` in the relevant `.databrickscfg` profile.
 
 
 

@@ -11,10 +11,10 @@ from unittest.mock import patch, MagicMock
 from peewee import SqliteDatabase
 
 from dbr_admin.resource_manager.backends.serverless import ServerlessBackend
-from dbr_admin.database.db_operations import GroupQuotaState, GroupDailyUsage, QueryUsage
+from dbr_admin.database.db_operations import GroupQuotaState, GroupDailyUsage, QueryUsage, IngestWatermark
 
 TEST_DB = SqliteDatabase(':memory:')
-MODELS = [GroupQuotaState, GroupDailyUsage, QueryUsage]
+MODELS = [GroupQuotaState, GroupDailyUsage, QueryUsage, IngestWatermark]
 
 MOD = 'dbr_admin.resource_manager.backends.serverless'
 
@@ -173,6 +173,29 @@ def test_second_poll_reasserts_block_but_never_reemails(MockGroups, _map, _inges
     assert state.blocked is True
     assert state.warned is False  # confirms the bug this test caught: never
     # falls through to the warn branch once already blocked
+
+
+@patch(f'{MOD}.backstop_check', return_value=set())
+@patch(f'{MOD}.send_emails')
+@patch(f'{MOD}.block_group')
+@patch(f'{MOD}.group_usage_seconds_for_day')
+@patch(f'{MOD}.ingest_collect')
+@patch(f'{MOD}.build_email_to_group_map', return_value={'a@test.com': 'group_01'})
+@patch(f'{MOD}.DataBricksGroups')
+def test_backstop_skipped_on_rapid_second_poll(MockGroups, _map, _ingest, mock_usage,
+                                                mock_block, mock_send, mock_backstop):
+    # Decoupled cadence (operator request 2026-09-16): the backstop should
+    # not run on every 15-min poll cycle, only once per
+    # SERVERLESS_BACKSTOP_INTERVAL_MINUTES. The primary quota check (mocked
+    # here to do nothing) is unaffected either way.
+    MockGroups.return_value.get_group_members.return_value = [{'user_name': 'a@test.com'}]
+    mock_usage.return_value = 0.0  # primary check: well under quota, does nothing
+
+    backend = ServerlessBackend()
+    backend.collect_and_enforce()
+    backend.collect_and_enforce()  # immediately-following poll cycle
+
+    assert mock_backstop.call_count == 1  # not re-run on the second, rapid poll
 
 
 @patch(f'{MOD}.backstop_check', return_value=set())

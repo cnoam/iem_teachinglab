@@ -24,7 +24,7 @@ from ..dbr_host import normalize_dbr_host
 from ..group_map import build_email_to_group_map, GROUP_NAME_PATTERN
 from ..serverless_usage import collect as ingest_collect, group_usage_seconds_for_day
 from ..serverless_enforcement import block_group, restore_group
-from ..serverless_billing import backstop_check
+from ..serverless_billing import backstop_check, should_run_backstop
 from ..user_mail import send_emails
 from ..cluster_uptime import format_timedelta_to_hhmm
 from ...database.db_operations import GroupQuotaState, GroupDailyUsage, QueryUsage
@@ -34,6 +34,13 @@ from ...database.db_operations import GroupQuotaState, GroupDailyUsage, QueryUsa
 DEFAULT_WARN_MINUTES = 120
 DEFAULT_MAX_MINUTES = 150
 DEFAULT_BACKSTOP_MINUTES = 300
+
+# The backstop runs on its own, slower cadence than the primary poll cycle
+# (operator request 2026-09-16: was previously running every single
+# collect_and_enforce() call, i.e. every 15 min via cron -- cold-starting
+# the billing warehouse each time). See should_run_backstop() in
+# serverless_billing.py.
+DEFAULT_BACKSTOP_INTERVAL_MINUTES = 60
 
 # How long QueryUsage rows are kept before roll_up_and_reset() purges them
 # (plan 2.6: "purge QueryUsage rows older than the retention window").
@@ -49,6 +56,9 @@ class ServerlessBackend(UsageBackend):
         warn_seconds = float(os.getenv('SERVERLESS_WARN_EXEC_MINUTES', DEFAULT_WARN_MINUTES)) * 60
         max_seconds = float(os.getenv('SERVERLESS_MAX_EXEC_MINUTES', DEFAULT_MAX_MINUTES)) * 60
         backstop_seconds = float(os.getenv('SERVERLESS_BACKSTOP_MINUTES', DEFAULT_BACKSTOP_MINUTES)) * 60
+        backstop_interval_seconds = float(
+            os.getenv('SERVERLESS_BACKSTOP_INTERVAL_MINUTES', DEFAULT_BACKSTOP_INTERVAL_MINUTES)
+        ) * 60
         billing_warehouse_id = os.getenv('SERVERLESS_BILLING_WAREHOUSE_ID')
 
         # One SDK client, reused for every call this cycle (query history,
@@ -69,7 +79,11 @@ class ServerlessBackend(UsageBackend):
             )
 
         # Backstop (plan 2.6a): catches what the primary quota structurally
-        # cannot -- pure-Python compute (1a). Best-effort, never raises.
+        # cannot -- pure-Python compute (1a). Best-effort, never raises. On
+        # its own, slower cadence than this poll -- see
+        # SERVERLESS_BACKSTOP_INTERVAL_MINUTES; most cycles skip it here.
+        if not should_run_backstop(backstop_interval_seconds):
+            return
         for group_name in backstop_check(client, billing_warehouse_id,
                                           email_to_group, backstop_seconds, logger):
             state, _ = GroupQuotaState.get_or_create(group_name=group_name, day=today)

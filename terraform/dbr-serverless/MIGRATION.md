@@ -87,6 +87,15 @@ has no equivalent uptime-monitor hook, but it does have its own native safeguard
 interactive execution timeout**, which cancels a query/command once it has run continuously for longer than
 the configured limit (default 2.5 hours / 9000s).
 
+> A serverless-side replacement for the uptime monitor is planned but not yet built --
+> see `../../databricks/serverless_quota_plan.md`. Two live-tested findings there correct
+> the paragraph above: the execution timeout only bounds **Spark Connect queries** -- a
+> confirmed test showed a pure-Python loop with no Spark calls is *not* cancelled by it, no
+> matter how it's set -- and there is currently no known way, at all, to forcibly stop such a
+> loop once it's running (only to block the *next* command). Set the timeout below regardless
+> -- it's still the only backstop for Spark-heavy runaway code -- but don't rely on it for
+> plain-Python runaway code.
+
 This is **workspace-level, one setting for the whole workspace** -- it is not per-group and does not need to
 be set per course/semester the way `group_XX` resources do. There is currently no Terraform resource or
 documented API for it (checked `databricks_workspace_conf`, `databricks_workspace_setting_v2`, and the live

@@ -207,6 +207,15 @@ if __name__ == "__main__":
     #  We must ensure the DB connection is open and the tables exist
     # when running directly. In a production environment, you would ensure the
     # tables are created once at deployment.
+    #
+    # QUOTA_MODE selects the compute-model backend ('classic' default, or
+    # 'serverless' -- see databricks/serverless_quota_plan.md). The classic
+    # branch below calls main() directly, the same local function this file
+    # always called here -- zero behavior change. It deliberately does NOT
+    # go through resource_manager.backends.classic.ClassicBackend, to avoid
+    # `python -m databricks.poll_clusters` importing this module a second
+    # time under its own canonical name.
+    quota_mode = os.getenv('QUOTA_MODE', 'classic').strip().lower()
     try:
         # NOTE: Assumes a create_tables function exists in db_operations
         from databricks.database.db_operations import create_tables, initialize_production_db
@@ -214,7 +223,13 @@ if __name__ == "__main__":
         prod_db = initialize_production_db()
         with prod_db.connection_context():
             create_tables(prod_db)
-            main()
+            if quota_mode == 'classic':
+                main()
+            elif quota_mode == 'serverless':
+                from .resource_manager.backends.serverless import ServerlessBackend
+                ServerlessBackend().collect_and_enforce()
+            else:
+                raise ValueError(f"Unknown QUOTA_MODE: {quota_mode!r}. Expected 'classic' or 'serverless'.")
     except Exception as ex:
         print("Poll clusters crashed! email was sent")
         logging.error(f"Poll clusters crashed! sending email: {ex}")

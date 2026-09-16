@@ -64,12 +64,29 @@ if __name__ == "__main__":
     host = os.getenv('DATABRICKS_HOST')
     token = os.getenv('DATABRICKS_TOKEN')
 
+    # QUOTA_MODE selects the compute-model backend ('classic' default, or
+    # 'serverless' -- see databricks/serverless_quota_plan.md). The classic
+    # branch below calls the same local functions this file always called
+    # here -- zero behavior change. It deliberately does NOT go through
+    # resource_manager.backends.classic.ClassicBackend, to avoid
+    # `python -m databricks.end_of_day_operations` importing this module a
+    # second time under its own canonical name.
+    quota_mode = os.getenv('QUOTA_MODE', 'classic').strip().lower()
+
     # Initialize the production database before creating tables
     prod_db = initialize_production_db()
     with prod_db.connection_context():
         create_tables(prod_db)
-        restore_cluster_permissions(host, token,logger)
-        log_daily_uptime(prod_db, logger) # update the database
-        send_usage_report(os.getenv('REPORT_RECIPIENT_EMAIL'), logger)
+        if quota_mode == 'classic':
+            restore_cluster_permissions(host, token, logger)
+            log_daily_uptime(prod_db, logger)  # update the database
+            send_usage_report(os.getenv('REPORT_RECIPIENT_EMAIL'), logger)
+        elif quota_mode == 'serverless':
+            from .resource_manager.backends.serverless import ServerlessBackend
+            backend = ServerlessBackend()
+            backend.restore(host, token, logger)
+            backend.roll_up_and_reset(prod_db, logger)
+        else:
+            raise ValueError(f"Unknown QUOTA_MODE: {quota_mode!r}. Expected 'classic' or 'serverless'.")
 
     logger.info('Exiting successfully')

@@ -9,10 +9,11 @@ from ..database.db_operations import (
 
 logging.basicConfig(level=logging.INFO)
 
-def get_or_create_cluster_record(cluster_id: str) -> ClusterUptime:
+def get_or_create_cluster_record(cluster_id: str) -> tuple[ClusterUptime, bool]:
     """
-    Directly returns the Peewee record.
-    If it doesn't exist (e.g., after midnight reset), it creates a new one.
+    Returns (record, created).
+    If it doesn't exist (e.g., after midnight reset), it creates a new one
+    and `created` is True.
     """
     record, created = ClusterUptime.get_or_create(
         cluster_id=cluster_id,
@@ -25,7 +26,7 @@ def get_or_create_cluster_record(cluster_id: str) -> ClusterUptime:
             'force_terminated': False
         }
     )
-    return record
+    return record, created
 
 def update_cumulative_uptime(cluster: dict):
     """
@@ -53,7 +54,7 @@ def update_cumulative_uptime(cluster: dict):
     now = datetime.now()
 
     # 1. Retrieve current data (returns fresh record if DB was truncated)
-    record = get_or_create_cluster_record(cluster_id)
+    record, created = get_or_create_cluster_record(cluster_id)
 
     # 2. Parse driver start time
     driver_start_time = datetime.fromtimestamp(driver['start_timestamp'] / 1000)
@@ -70,8 +71,18 @@ def update_cumulative_uptime(cluster: dict):
         record.cumulative_seconds += record.uptime_seconds
         record.uptime_seconds = 0
         record.start_time= driver_start_time
-        # Set bookmark to cluster start to catch the very first delta correctly
-        record.last_poll_time = driver_start_time
+        if created:
+            # Fresh record: either a brand-new cluster, or the row was purged
+            # by the midnight reset while the cluster kept running. Never let
+            # the bookmark reach before today's midnight, otherwise the first
+            # delta re-imports all of yesterday's runtime (the very bug the
+            # docstring above warns about).
+            midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            record.last_poll_time = max(driver_start_time, midnight)
+        else:
+            # Genuine restart of a tracked cluster: the restart happened after
+            # our last poll, so counting from cluster start is correct.
+            record.last_poll_time = driver_start_time
 
     # 4. Calculate Delta (The "Relative" Logic)
     # If last_poll_timestamp is None (DB reset), we use 'now' as the reference

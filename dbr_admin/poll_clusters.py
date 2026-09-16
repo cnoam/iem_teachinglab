@@ -136,7 +136,7 @@ def main():
     for record in all_records:
         # 1. Re-hydrate the ClusterData object from the DB record
         # We use the helper function to convert seconds back to timedelta/bool
-        v = get_or_create_cluster_record(record.cluster_id)
+        v, _ = get_or_create_cluster_record(record.cluster_id)
 
         # 2. Threshold Check Logic (largely unchanged, but using Peewee object)
         total_time = datetime.timedelta(seconds=v.uptime_seconds) + datetime.timedelta(seconds=v.cumulative_seconds)

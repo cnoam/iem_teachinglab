@@ -420,11 +420,29 @@ API call, so don't run that `__main__` path casually against production `.env`.
 `group_usage_seconds_for_day`, `resource_manager/group_map.py` email→group attribution,
 `resource_manager/serverless_enforcement.py` SCIM block/restore, `resource_manager/serverless_billing.py`
 the 2.6a backstop, `resource_manager/backends/serverless.py` wiring it all together with
-warn/block/backstop decisions and re-assert-but-never-re-notify semantics). 65/65 tests pass.
-**Not yet run against the live workspace** — everything above is unit-tested with mocked
-API/SCIM calls; the query-history/SCIM code paths themselves haven't been exercised against
-`94290_2026`. Do that before flipping `enforcement=True` for real, even though the operator
-decision below is to skip a full shadow *week*.
+warn/block/backstop decisions and re-assert-but-never-re-notify semantics). 72/72 tests pass.
+
+**Live-tested end to end, 2026-09-16, against `94290_2026`** (`dbr_admin/scratch_live_test_notebook.py`
+run by `efratsupp` on Serverless, generating real, group-attributed query-history activity):
+
+- `collect()` via the real `databricks-sdk` client correctly pulled 8 real rows: 4 attributed
+  to `efratsupp` → `group_01` (matching her notebook's cells), 4 attributed to `cnoam` (this
+  session's earlier ad-hoc test queries) correctly falling into the ungrouped bucket. Union
+  usage for `group_01` computed as ~69.7s, matching the sum of her (non-overlapping) cell
+  durations.
+- `block_group()`/`restore_group()` via the real SDK client: removed `group_01` from
+  `all_student_groups`, confirmed via a direct read, then restored it — clean round trip,
+  matches the earlier raw-`curl` test exactly, now proven through the actual code path.
+- The full integrated `ServerlessBackend().collect_and_enforce()` ran end to end against
+  production with no errors (real usage was far under both thresholds, so correctly took no
+  action — confirms the "do nothing when under quota" path too, not just the alarming ones).
+
+Not yet exercised live: the billing backstop (`SERVERLESS_BILLING_WAREHOUSE_ID` unset in this
+test — skipped cleanly as designed, but never actually queried `system.billing.usage` for
+real) and an actual block triggering from real usage crossing a threshold (real usage stayed
+under it this time). Both are lower-risk than what was just tested (collector + enforcement
+are the parts that touch every poll cycle; the backstop only matters hours later and on rare
+runaway cases).
 
 **Operator decision (2026-09-16): skip the shadow week, go straight to `enforcement=True` in
 production and retune thresholds reactively from student complaints, rather than

@@ -72,6 +72,11 @@ if __name__ == "__main__":
     # `python -m databricks.end_of_day_operations` importing this module a
     # second time under its own canonical name.
     quota_mode = os.getenv('QUOTA_MODE', 'classic').strip().lower()
+    # Validated up front, before touching the DB: a typo'd QUOTA_MODE is a
+    # configuration error and should fail loudly and immediately, not after
+    # tables have already been created for a run that's about to abort.
+    if quota_mode not in ('classic', 'serverless'):
+        raise ValueError(f"Unknown QUOTA_MODE: {quota_mode!r}. Expected 'classic' or 'serverless'.")
 
     # Initialize the production database before creating tables
     prod_db = initialize_production_db()
@@ -81,12 +86,17 @@ if __name__ == "__main__":
             restore_cluster_permissions(host, token, logger)
             log_daily_uptime(prod_db, logger)  # update the database
             send_usage_report(os.getenv('REPORT_RECIPIENT_EMAIL'), logger)
-        elif quota_mode == 'serverless':
+        else:  # 'serverless' -- validated above
             from .resource_manager.backends.serverless import ServerlessBackend
             backend = ServerlessBackend()
+            # Mirrors the classic sequence above (restore -> roll up -> report)
+            # so the intended shape is visible even though every call here
+            # currently raises NotImplementedError (Step 1 stub). Note there
+            # is no send-and-email step yet, unlike send_usage_report() above
+            # -- report() only generates HTML (see classic.py's docstring);
+            # Step 2 needs to add emailing before this can go live.
             backend.restore(host, token, logger)
             backend.roll_up_and_reset(prod_db, logger)
-        else:
-            raise ValueError(f"Unknown QUOTA_MODE: {quota_mode!r}. Expected 'classic' or 'serverless'.")
+            backend.report(date.today() - timedelta(days=1))
 
     logger.info('Exiting successfully')

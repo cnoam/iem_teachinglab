@@ -16,6 +16,19 @@ script, or from tests) is safe. The two cron entry points' own
 rather than going through this class, specifically to avoid the well-known
 `python -m package.module` double-import gotcha (the module would otherwise
 get imported once as `__main__` and once under its canonical dotted name).
+
+IMPORTANT: because of the above, this class is NOT on the production classic
+path today -- nothing in poll_clusters.py or end_of_day_operations.py's
+`__main__` blocks constructs a ClassicBackend; only this module's own tests
+do. It exists so Step 2's serverless path (and any future shared caller) has
+a stable, symmetric interface to program against, and so the wrapping is
+provably correct by test even though it's not exercised in production.
+Editing a method here has NO effect on the real classic cron jobs -- edit
+the wrapped function itself for that. Also note report() only generates
+HTML; it does not email it (unlike end_of_day_operations.send_usage_report(),
+which does both) -- there is deliberately no send-and-email method on this
+interface yet, so Step 2 will need one before the serverless daily report can
+actually be emailed.
 """
 from .base import UsageBackend
 from ...poll_clusters import main as _poll_clusters_main

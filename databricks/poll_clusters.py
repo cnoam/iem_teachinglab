@@ -216,6 +216,13 @@ if __name__ == "__main__":
     # `python -m databricks.poll_clusters` importing this module a second
     # time under its own canonical name.
     quota_mode = os.getenv('QUOTA_MODE', 'classic').strip().lower()
+    # Validated before the try/except below on purpose: a typo'd QUOTA_MODE in
+    # cron's env is a *configuration* error, not a runtime crash, and should
+    # fail loudly (non-zero exit, no email) rather than being caught by the
+    # crash-email handler below and reported to ADMIN_EMAIL as if a poll had
+    # actually run and failed.
+    if quota_mode not in ('classic', 'serverless'):
+        raise ValueError(f"Unknown QUOTA_MODE: {quota_mode!r}. Expected 'classic' or 'serverless'.")
     try:
         # NOTE: Assumes a create_tables function exists in db_operations
         from databricks.database.db_operations import create_tables, initialize_production_db
@@ -225,11 +232,9 @@ if __name__ == "__main__":
             create_tables(prod_db)
             if quota_mode == 'classic':
                 main()
-            elif quota_mode == 'serverless':
+            else:  # 'serverless' -- validated above
                 from .resource_manager.backends.serverless import ServerlessBackend
                 ServerlessBackend().collect_and_enforce()
-            else:
-                raise ValueError(f"Unknown QUOTA_MODE: {quota_mode!r}. Expected 'classic' or 'serverless'.")
     except Exception as ex:
         print("Poll clusters crashed! email was sent")
         logging.error(f"Poll clusters crashed! sending email: {ex}")

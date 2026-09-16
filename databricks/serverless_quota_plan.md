@@ -365,8 +365,18 @@ numbers exist.
 2026-09-16 (operator confirmed this workspace is free to test against): the pure-Python
 invisibility question (1a) and the enforcement-lever behavior (2.5). Neither needs re-testing.
 
-**Step 1** — refactor to the `UsageBackend` interface; classic backend wraps existing code;
-existing tests stay green. No behavior change, deployable on its own.
+**Step 1 — done** (commits `0b4352b`, `4a1aa16`, and the backend refactor on
+`docs/serverless-quota-plan`). `UsageBackend` ABC + `ClassicBackend` (thin
+delegation, not on the production classic path — see its docstring) +
+`ServerlessBackend` stub + `get_backend()` factory on `QUOTA_MODE`
+(default `classic`). All 5 pre-existing tests pass unchanged; 13 new tests
+added. Both `__main__` entry points smoke-tested live for `QUOTA_MODE=serverless`
+and an invalid mode — behavior confirmed as designed, though the first such
+test surfaced a real side effect worth knowing before Step 2: `poll_clusters.py`'s
+crash-email handler will forward a `ServerlessBackend` `NotImplementedError`
+to `ADMIN_EMAIL` using live `.env` credentials unless `send_emails` is mocked
+or the credentials are overridden — harmless in intent, but a real outbound
+API call, so don't run that `__main__` path casually against production `.env`.
 
 **Step 2** — serverless collector + reporting only. No emails, no blocking. Run it alongside
 the real course for a week and compare its numbers against `system.billing.usage`.

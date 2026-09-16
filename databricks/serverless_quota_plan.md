@@ -11,12 +11,14 @@ operational: `dbr/` (classic clusters, today's code path) and `dbr-serverless/` 
 **Confirmed by live test (2026-09-16, see 2.5): removing a student's group entitlement does
 not stop an already-running pure-Python notebook command** — a heartbeat loop kept running
 untouched throughout a ~4.5-minute block window, while new commands and page loads were
-blocked immediately. Whether an in-flight *Spark* query survives the same block is untested
-and not the same claim — Spark Connect queries run through a control-plane-authorized path,
-and that path was observed breaking during the block (new commands failed against it), so a
-running Spark query may behave differently. What's certain either way: no documented API can
-cancel a notebook-sourced query at all (see 2.5), and the execution timeout only bounds Spark
-Connect queries, not general compute. So "enforce" in this plan means *prevent new work* for
+blocked immediately. Whether an in-flight *Spark* query survives the same block was left
+untested (decided, not investigated further — see 2.5): Spark Connect queries run through a
+control-plane-authorized path, and that path was observed breaking during the block (new
+commands failed against it), so a running Spark query plausibly *is* killable this way — but
+**the design does not rely on that**, and assumes the pure-Python outcome (no termination) for
+both cases, so it degrades gracefully either way. What's certain either way: no documented API
+can cancel a notebook-sourced query at all (see 2.5), and the execution timeout only bounds
+Spark Connect queries, not general compute. So "enforce" in this plan means *prevent new work* for
 the case actually tested (pure-Python), and *at best* the same for Spark — never assume
 "terminate active work" without a further test. Read this before the rest of the doc.
 
@@ -248,9 +250,13 @@ cron wrapper scripts. Add tables; do not rename or alter `cluster_uptimes`,
 lever for the pure-Python case — it blocked new command dispatch and all page access, while
 the already-running loop kept going untouched for the whole window. It does **not**
 terminate a pure-Python command already in flight. Whether it terminates an in-flight *Spark*
-query is untested (see the callout above) — plausible either way, since the control-plane
-path that Spark Connect queries run through was observed breaking for new work during the
-block. Combined with 1a (no real-time detection for pure-Python compute) and the earlier
+query is untested — plausible either way, since the control-plane path that Spark Connect
+queries run through was observed breaking for new work during the block — and **resolved by
+decision rather than a further test**: the design treats Spark the same as pure-Python
+(assume no termination) so it never depends on the untested, more favorable outcome. If it
+turns out Spark queries *are* killed this way, that's a pleasant bonus, not something to
+plan around; running the extra live test to find out is optional and non-blocking (§6).
+Combined with 1a (no real-time detection for pure-Python compute) and the earlier
 finding that no cancel API exists for notebook-sourced queries: **for pure-Python compute,
 nothing in this design, or apparently available at all, can forcibly stop an in-flight
 command.** For Spark-based compute, the same is true unless a further test shows otherwise.
@@ -323,6 +329,34 @@ Skip both silently (log, don't crash) if the account lacks read access to
 `system.billing.usage` — but flag this loudly in the daily report if so, since it means the
 1a gap is completely uncovered, not just delayed.
 
+### 2.7 Threshold values — provisional, not derived from data
+
+No usage data exists yet for the new metric (union of Spark/SQL execution intervals), so
+there is nothing to derive real numbers from. Rather than block on that, set explicit
+placeholder defaults now, in the same env-var pattern the classic code already uses, and
+recalibrate for real once Step 2's shadow-collection week and the first billing
+reconciliation (2.6a) produce actual data. **Treat every number below as a starting guess,
+not a considered decision** — the plan's calibration steps are the actual decision process.
+
+- `SERVERLESS_WARN_EXEC_MINUTES` (soft threshold) — provisional default **120** (2h).
+- `SERVERLESS_MAX_EXEC_MINUTES` (hard threshold, blocks new work) — provisional default
+  **150** (2.5h).
+- Reused the classic ratio (`WARN`/`MAX` ≈ 0.86) rather than the classic absolute values
+  (180/210 min), because the two metrics measure different things and copying the numbers
+  verbatim would misleadingly imply calibration that doesn't exist. Execution-time (active
+  Spark/SQL work only) is a strictly narrower quantity than the old wall-clock uptime (which
+  included idle-attached time up to the 20-min autotermination window), so the true
+  appropriate value is likely *lower* than the old 180/210 — these provisional numbers are a
+  guess in that direction, nothing more.
+- **Backstop threshold** (`SERVERLESS_BACKSTOP_MINUTES`, 2.6a, billed minutes from
+  `system.billing.usage`) — provisional default **300** (2x the hard threshold), sized to
+  only fire on something that looks like a runaway process, not normal variance between the
+  proxy metric and true billed time. Also unvalidated against real data.
+
+All four are read from env vars with these defaults, exactly like `DATABRICKS_MAX_UPTIME` /
+`DATABRICKS_WARN_UPTIME` today, so the operator can override without a code change once real
+numbers exist.
+
 ---
 
 ## 3. Rollout
@@ -369,25 +403,24 @@ unknown email.
   see section 1. No documented/configurable idle-detach timeout exists.
 - **Enforcement lever confirmed (live test, 2026-09-16) for pure-Python compute: group
   removal blocks new work (new commands, new page loads) reliably, at an unmeasured but
-  bounded latency, but does not terminate work already running.** Not established for
-  in-flight Spark queries — see 2.5. No fallback lever needed; SCIM `active=false` was never
-  tried because it would not have changed this conclusion (same class of "revoke entitlement"
-  mechanism).
+  bounded latency, but does not terminate work already running.** Not live-tested for
+  in-flight Spark queries — **decided, not further tested (see 2.5): treat Spark the same as
+  pure-Python (assume no termination) so the design never depends on the untested, more
+  favorable outcome.** No fallback lever needed; SCIM `active=false` was never tried because
+  it would not have changed this conclusion (same class of "revoke entitlement" mechanism).
 - **`duration` on RUNNING query-history rows is `null`; use `query_start_time_ms` to compute
   elapsed time instead** — live-tested and confirmed, see 2.2.
 - **Quota unit: per group** (operator confirmed) — matches the old per-cluster quota, and the
   only available block lever is per-group anyway (workspace access is inherited via group
   membership, not held individually — see 2.5).
+- **Threshold values: provisional defaults set** (120/150/300 min warn/max/backstop) — see
+  2.7. Not derived from real data; explicitly placeholders pending Step 2's shadow-collection
+  week and the first billing reconciliation (2.6a).
 
 ## 6. Open questions for the operator
 
-- Threshold values for serverless. The classic defaults (`DATABRICKS_MAX_UPTIME` 210 min,
-  `DATABRICKS_WARN_UPTIME` 180 min) measured uptime; execution-time minutes (union of
-  intervals) are a related but not identical quantity — expect to retune after a week of
-  step-2 data, and again after the first billing reconciliation (2.6) shows the real gap.
 - Whether `system.billing.usage` and `system.query.history` (not just metadata) are readable
   by this operator — only matters for the reconciliation report, not for enforcement.
-- Whether it's worth a follow-up live test of an in-flight *Spark* query against the same
-  block (2.5's open question) before Step 4, or whether treating it the same as the
-  pure-Python case (assume no termination, plan around prevention only) is good enough. The
-  plan currently assumes the latter and doesn't block on running that test.
+- Optional, non-blocking: a follow-up live test of an in-flight *Spark* query against the
+  group-removal block, if extra confidence is ever wanted. The plan doesn't depend on the
+  answer (2.5), so there's no urgency to run it.

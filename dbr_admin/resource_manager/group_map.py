@@ -3,22 +3,20 @@ Resolves Databricks user_name (email) -> student group_name ('group_NN'),
 for attributing Query History rows to a quota group (plan 2.3).
 
 Reuses DataBricksGroups.list_groups() / get_group_members() rather than the
-databricks-sdk package, or raw SCIM parsing. Two reasons:
+databricks-sdk package, or raw SCIM parsing:
+DataBricksGroups.get_group_members() already returns members as
+{'user_name': email} (it's what poll_clusters.py's get_emails_address()
+already relies on) -- reusing it avoids re-deriving that mapping from raw
+SCIM member entries, where 'display' is not guaranteed to be the email
+address.
 
-1. This project's own top-level package is itself named `databricks`,
-   which fully shadows the pip-installed `databricks-sdk` package's
-   `databricks.sdk` namespace whenever this project's root is on sys.path
-   -- which it always is here (pytest.ini's pythonpath=., the cron
-   entrypoints). `from databricks.sdk import WorkspaceClient` is therefore
-   unimportable from inside this codebase. Verified 2026-09-16 (pip show
-   confirms the package is installed; `import databricks.sdk` still
-   raises ModuleNotFoundError). serverless_usage.py and
-   serverless_enforcement.py use `requests` directly for the same reason.
-2. DataBricksGroups.get_group_members() already returns members as
-   {'user_name': email} (it's what poll_clusters.py's get_emails_address()
-   already relies on) -- reusing it avoids re-deriving that mapping from
-   raw SCIM member entries, where 'display' is not guaranteed to be the
-   email address.
+(Historical note: this project's top-level package used to be named
+`databricks`, which shadowed the pip-installed `databricks-sdk` package's
+own `databricks.sdk` namespace and made it unimportable from inside this
+codebase -- see serverless_usage.py and serverless_enforcement.py, which
+use `requests` directly for that now-resolved reason. Renamed to
+`dbr_admin` on 2026-09-16 specifically to fix this; new code can use
+`databricks.sdk` normally going forward.)
 """
 import re
 import logging

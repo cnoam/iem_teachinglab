@@ -9,9 +9,9 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from databricks.resource_manager.backends.factory import get_backend
-from databricks.resource_manager.backends.classic import ClassicBackend
-from databricks.resource_manager.backends.serverless import ServerlessBackend
+from dbr_admin.resource_manager.backends.factory import get_backend
+from dbr_admin.resource_manager.backends.classic import ClassicBackend
+from dbr_admin.resource_manager.backends.serverless import ServerlessBackend
 
 
 # --- Factory: QUOTA_MODE selection ---
@@ -44,20 +44,20 @@ def test_get_backend_unknown_mode_raises(monkeypatch):
 
 # --- ClassicBackend: proves it delegates, doesn't reimplement ---
 
-@patch('databricks.resource_manager.backends.classic._poll_clusters_main')
+@patch('dbr_admin.resource_manager.backends.classic._poll_clusters_main')
 def test_classic_backend_collect_and_enforce_delegates(mock_main):
     ClassicBackend().collect_and_enforce()
     mock_main.assert_called_once_with()
 
 
-@patch('databricks.resource_manager.backends.classic._restore_cluster_permissions')
+@patch('dbr_admin.resource_manager.backends.classic._restore_cluster_permissions')
 def test_classic_backend_restore_delegates(mock_restore):
     logger = MagicMock()
     ClassicBackend().restore('host', 'token', logger)
     mock_restore.assert_called_once_with('host', 'token', logger)
 
 
-@patch('databricks.resource_manager.backends.classic._log_daily_uptime')
+@patch('dbr_admin.resource_manager.backends.classic._log_daily_uptime')
 def test_classic_backend_roll_up_and_reset_delegates(mock_log):
     prod_db = MagicMock()
     logger = MagicMock()
@@ -65,7 +65,7 @@ def test_classic_backend_roll_up_and_reset_delegates(mock_log):
     mock_log.assert_called_once_with(prod_db, logger)
 
 
-@patch('databricks.resource_manager.backends.classic._create_usage_report_daily')
+@patch('dbr_admin.resource_manager.backends.classic._create_usage_report_daily')
 def test_classic_backend_report_delegates(mock_report):
     mock_report.return_value = '<html/>'
     result = ClassicBackend().report('2026-09-16')

@@ -4,9 +4,9 @@
 
 from unittest.mock import patch, MagicMock
 
-from databricks.resource_manager.serverless_billing import backstop_check, fetch_billed_seconds_per_user
+from dbr_admin.resource_manager.serverless_billing import backstop_check, fetch_billed_seconds_per_user
 
-MOD = 'databricks.resource_manager.serverless_billing'
+MOD = 'dbr_admin.resource_manager.serverless_billing'
 
 
 def test_backstop_check_skips_when_no_warehouse_configured():

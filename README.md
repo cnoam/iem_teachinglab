@@ -12,7 +12,7 @@ I created a new storage account in subscription 96224 and copied the folder "fwm
 # Connecting Storage Account to Jupyter Notebooks
 1. generate SAS token with ReadOnly, for the container needed.
 2. create a new notebook and connect to a cluster (you need to turn it on)
-3. run the cell from ".../databricks/mounting and reading.ipynb"
+3. run the cell from ".../dbr_admin/mounting and reading.ipynb"
 4. verify reading is ok.
 5. verify writing is denied.
 

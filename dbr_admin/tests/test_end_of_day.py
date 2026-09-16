@@ -4,8 +4,8 @@ from datetime import date, timedelta
 from peewee import SqliteDatabase
 
 # Imports from your application
-from databricks.end_of_day_operations import send_usage_report
-from databricks.database.db_operations import ClusterUptime, ClusterCumulativeUptime, ClusterInfo
+from dbr_admin.end_of_day_operations import send_usage_report
+from dbr_admin.database.db_operations import ClusterUptime, ClusterCumulativeUptime, ClusterInfo
 from peewee import SqliteDatabase, DoesNotExist
 
 from ..end_of_day_operations import log_daily_uptime
@@ -31,7 +31,7 @@ def setup_teardown_db():
 
 # --- The Unit Test ---
 
-@patch('databricks.end_of_day_operations.send_emails')
+@patch('dbr_admin.end_of_day_operations.send_emails')
 def test_send_usage_report_correctness(mock_send_emails):
     """
     Verifies that send_usage_report:

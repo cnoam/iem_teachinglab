@@ -52,7 +52,7 @@ def main():
             from restore_cluster_permissions import restore_cluster_permissions
         except ImportError as e:
             logger.error(f"Failed to import restore_cluster_permissions: {e}")
-            logger.info("Try running as module from parent directory: python -m databricks.run_restore_permissions")
+            logger.info("Try running as module from parent directory: python -m dbr_admin.run_restore_permissions")
             return
 
     logger.info(f"Starting restore_cluster_permissions on host: {host}")

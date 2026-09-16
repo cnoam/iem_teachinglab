@@ -10,13 +10,13 @@ from datetime import date, timedelta
 from unittest.mock import patch, MagicMock
 from peewee import SqliteDatabase
 
-from databricks.resource_manager.backends.serverless import ServerlessBackend
-from databricks.database.db_operations import GroupQuotaState, GroupDailyUsage, QueryUsage
+from dbr_admin.resource_manager.backends.serverless import ServerlessBackend
+from dbr_admin.database.db_operations import GroupQuotaState, GroupDailyUsage, QueryUsage
 
 TEST_DB = SqliteDatabase(':memory:')
 MODELS = [GroupQuotaState, GroupDailyUsage, QueryUsage]
 
-MOD = 'databricks.resource_manager.backends.serverless'
+MOD = 'dbr_admin.resource_manager.backends.serverless'
 
 
 @pytest.fixture(scope='function', autouse=True)

@@ -8,7 +8,7 @@ resource_manager/cluster_uptime.py. Nothing is reimplemented, so this backend
 has zero behavior change from before this refactor.
 
 Imported here at module level using the canonical absolute dotted path
-(databricks.poll_clusters, not a relative "self" import), and this module is
+(dbr_admin.poll_clusters, not a relative "self" import), and this module is
 never itself run as a script -- so instantiating ClassicBackend from outside
 poll_clusters.py / end_of_day_operations.py (e.g. from a future shared
 script, or from tests) is safe. The two cron entry points' own

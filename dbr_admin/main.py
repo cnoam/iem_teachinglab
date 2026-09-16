@@ -12,7 +12,7 @@ try:
 except ImportError:
     # gemini 2025-11-26 13:30
     print("Error: This script should be run as a module.")
-    print("Please use: python -m databricks.main [arguments]")
+    print("Please use: python -m dbr_admin.main [arguments]")
     sys.exit(1)
 
 dry_run = False

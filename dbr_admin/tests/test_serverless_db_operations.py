@@ -11,7 +11,7 @@ import pytest
 from datetime import date, datetime
 from peewee import SqliteDatabase, IntegrityError
 
-from databricks.database.db_operations import (
+from dbr_admin.database.db_operations import (
     QueryUsage, GroupQuotaState, GroupDailyUsage, IngestWatermark,
 )
 

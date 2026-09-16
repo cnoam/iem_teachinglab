@@ -44,7 +44,7 @@ Then, create a token if you didn't so far, and save it. You will need it in the 
 # The old way, using python scripts
 
 ```
-cd databricks 
+cd dbr_admin 
 source venv/bin/activate
 pip install -r requirements.txt
 ``` 
@@ -103,16 +103,26 @@ add these lines:
 7 0 * * * /home/azureuser/end_of_day_ops.sh 2>&1 | systemd-cat -t dbr_scripts
 ```
 In `/home/azureuser`, create the files:
+
+> **If `periodic_poll.sh` / `end_of_day_ops.sh` already exist on the quota-checker VM from
+> before 2026-09-16**, they were written against the old package name (`databricks`, not
+> `dbr_admin`) and must be updated to match the templates below (`cd dbr_admin`,
+> `source dbr_admin/venv/bin/activate`, `python -m dbr_admin.poll_clusters` /
+> `python -m dbr_admin.end_of_day_operations`) the next time this repo is deployed there --
+> these scripts live only on the server (see the `quota-server-setup` memory note), not in
+> this repo, so this rename does not update them automatically. Until they're updated, cron
+> will fail with `ModuleNotFoundError: No module named 'databricks'`.
+
 ```
 ~$ cat periodic_poll.sh 
 #!/bin/bash -eu
 logger -t dbr_scripts Periodic Poll starting
 cd /home/azureuser/iem_teachinglab
-source databricks/venv/bin/activate
+source dbr_admin/venv/bin/activate
 
 # if you don't specify the DB absolute path, a default will be used.
 export CLUSTER_UPTIMES_DB="/home/azureuser/iem_teachinglab/cluster_uptimes.db"
-timeout 30 python -m databricks.poll_clusters
+timeout 30 python -m dbr_admin.poll_clusters
 deactivate
 logger -t dbr_scripts Periodic Poll finished
 
@@ -121,8 +131,8 @@ logger -t dbr_scripts Periodic Poll finished
 #!/bin/bash -eu
 logger -t dbr_scripts EndOfDay starting
 cd /home/azureuser/iem_teachinglab
-source databricks/venv/bin/activate
-python -m databricks.end_of_day_operations
+source dbr_admin/venv/bin/activate
+python -m dbr_admin.end_of_day_operations
 deactivate
 logger -t dbr_scripts EndOfDay finished
 ```

@@ -8,11 +8,11 @@ import pytest
 from unittest.mock import patch
 from datetime import datetime, timedelta
 from peewee import SqliteDatabase
-from databricks.poll_clusters import main, check_update_running_clusters, get_emails_address
+from dbr_admin.poll_clusters import main, check_update_running_clusters, get_emails_address
 
 # Import models and ORM helpers
-from databricks.database.db_operations import ClusterUptime, ClusterCumulativeUptime, ClusterInfo
-from databricks.resource_manager.cluster_uptime import get_or_create_cluster_record
+from dbr_admin.database.db_operations import ClusterUptime, ClusterCumulativeUptime, ClusterInfo
+from dbr_admin.resource_manager.cluster_uptime import get_or_create_cluster_record
 
 
 # --- Fixture for In-Memory DB Setup ---
@@ -73,15 +73,15 @@ def get_mock_databricks_clusters(cluster_data):
 # --- The Complex Scenario Test ---
 
 
-@patch('databricks.poll_clusters.send_emails')
-@patch('databricks.poll_clusters.os')
-@patch('databricks.poll_clusters.DataBricksGroups')
-@patch('databricks.poll_clusters.DataBricksClusterOps')
+@patch('dbr_admin.poll_clusters.send_emails')
+@patch('dbr_admin.poll_clusters.os')
+@patch('dbr_admin.poll_clusters.DataBricksGroups')
+@patch('dbr_admin.poll_clusters.DataBricksClusterOps')
 #@patch('poll_clusters.update_cumulative_uptime')
 
 # Mock datetime for time travel
 # but keep the time_delta unchanged
-@patch('databricks.poll_clusters.datetime')
+@patch('dbr_admin.poll_clusters.datetime')
 def test_cluster_monitoring_scenario(mock_dt, #update_cumulative_uptime,
                                      MockClusterOps, MockGroups, mock_os,
                                      mock_send_emails):

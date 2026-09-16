@@ -7,11 +7,11 @@ from datetime import date, datetime
 from unittest.mock import patch, MagicMock
 from peewee import SqliteDatabase
 
-from databricks.resource_manager.serverless_usage import (
+from dbr_admin.resource_manager.serverless_usage import (
     ingest_rows, collect, group_usage_seconds_for_day, _epoch_ms_to_local_date,
     fetch_query_history_rows,
 )
-from databricks.database.db_operations import QueryUsage, IngestWatermark
+from dbr_admin.database.db_operations import QueryUsage, IngestWatermark
 
 TEST_DB = SqliteDatabase(':memory:')
 MODELS = [QueryUsage, IngestWatermark]
@@ -82,7 +82,7 @@ def test_ingest_rows_ungrouped_user_gets_null_group():
 
 # --- collect(): watermark handling, via a mocked fetch ---
 
-@patch('databricks.resource_manager.serverless_usage.fetch_query_history_rows')
+@patch('dbr_admin.resource_manager.serverless_usage.fetch_query_history_rows')
 def test_collect_advances_watermark_and_ingests(mock_fetch):
     mock_fetch.return_value = [
         {'query_id': 'q1', 'user_name': 'a@test.com', 'query_start_time_ms': 1, 'status': 'FINISHED', 'duration': 10},
@@ -94,7 +94,7 @@ def test_collect_advances_watermark_and_ingests(mock_fetch):
     assert wm.last_seen_ms > 0
 
 
-@patch('databricks.resource_manager.serverless_usage.fetch_query_history_rows')
+@patch('dbr_admin.resource_manager.serverless_usage.fetch_query_history_rows')
 def test_collect_uses_watermark_minus_slack_as_since(mock_fetch):
     # Watermark set realistically close to "now" (an hour ago) so the
     # start-of-today clamp (see test below) doesn't dominate the result --
@@ -109,7 +109,7 @@ def test_collect_uses_watermark_minus_slack_as_since(mock_fetch):
     assert called_since == watermark_ms - 15 * 60 * 1000  # POLL_LOOKBACK_SLACK_MS
 
 
-@patch('databricks.resource_manager.serverless_usage.fetch_query_history_rows')
+@patch('dbr_admin.resource_manager.serverless_usage.fetch_query_history_rows')
 def test_collect_clamps_since_to_start_of_today(mock_fetch):
     # A stale watermark (e.g. left over from a much earlier run) must not
     # cause collect() to re-fetch unbounded history -- it's clamped to the
@@ -124,7 +124,7 @@ def test_collect_clamps_since_to_start_of_today(mock_fetch):
     assert called_since == start_of_today_ms
 
 
-@patch('databricks.resource_manager.serverless_usage.fetch_query_history_rows')
+@patch('dbr_admin.resource_manager.serverless_usage.fetch_query_history_rows')
 def test_collect_widens_window_for_an_open_row_from_earlier_today(mock_fetch):
     # The bug this guards against: a query still RUNNING from before
     # watermark - slack must keep being re-fetched every poll until it goes

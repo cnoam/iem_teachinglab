@@ -1,7 +1,7 @@
 # test_group_map.py
 from unittest.mock import MagicMock
 
-from databricks.resource_manager.group_map import build_email_to_group_map, GROUP_NAME_PATTERN
+from dbr_admin.resource_manager.group_map import build_email_to_group_map, GROUP_NAME_PATTERN
 
 
 def _stub_groups_api(groups: dict):

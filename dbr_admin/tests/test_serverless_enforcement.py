@@ -4,11 +4,11 @@
 
 from unittest.mock import patch, MagicMock
 
-from databricks.resource_manager.serverless_enforcement import (
+from dbr_admin.resource_manager.serverless_enforcement import (
     find_group_id, block_group, restore_group, ALL_STUDENT_GROUPS_NAME,
 )
 
-MOD = 'databricks.resource_manager.serverless_enforcement'
+MOD = 'dbr_admin.resource_manager.serverless_enforcement'
 
 
 def _groups_get_response(group_id):

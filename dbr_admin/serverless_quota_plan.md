@@ -112,7 +112,7 @@ coverage; say "execution time," not "usage" or "uptime."
 ### 2.1 Pluggable backend, classic path untouched
 
 ```
-databricks/resource_manager/
+dbr_admin/resource_manager/
     backends/base.py        UsageBackend ABC: collect() / enforce() / restore() / report(day)
     backends/classic.py     thin wrapper over today's cluster code — behavior unchanged
     backends/serverless.py  new
@@ -124,23 +124,35 @@ databricks/resource_manager/
 thin dispatchers on `QUOTA_MODE` (`classic` | `serverless`, default `classic`). Deployments
 that set nothing keep today's behavior exactly.
 
-~~New code uses the `databricks-sdk` package.~~ **Superseded (discovered during Step 2
-implementation): the `databricks-sdk` package is unimportable from inside this codebase.**
-This project's own top-level package is itself named `databricks` (this whole codebase lives
-under `databricks/`), which fully shadows the pip-installed `databricks-sdk` package's
-`databricks.sdk` namespace whenever this project's root is on `sys.path` — which it always is
-here (`pytest.ini`'s `pythonpath = .`, the cron entrypoints). `from databricks.sdk import
-WorkspaceClient` raises `ModuleNotFoundError` from inside this repo even though the package is
-correctly `pip install`ed (verified: `pip show databricks-sdk` succeeds, the import doesn't).
-New serverless code (`resource_manager/serverless_usage.py`,
-`resource_manager/serverless_enforcement.py`, `resource_manager/serverless_billing.py`) uses
-`requests` directly against the REST/SCIM APIs instead — the same approach already used live
-in this session's manual testing. `DataBricksGroups` is reused (not extended) for group
-membership listing, since it already solves that problem correctly
-(`resource_manager/group_map.py`) and isn't affected by the naming collision (it's built on
+~~New code uses the `databricks-sdk` package.~~ **Superseded during Step 2, then resolved:**
+the `databricks-sdk` package was unimportable from inside this codebase because this
+project's own top-level package was *also* named `databricks` (the whole codebase lived under
+`databricks/`), which fully shadowed the pip-installed `databricks-sdk` package's
+`databricks.sdk` namespace whenever this project's root was on `sys.path` — which it always
+is here (`pytest.ini`'s `pythonpath = .`, the cron entrypoints). `from databricks.sdk import
+WorkspaceClient` raised `ModuleNotFoundError` even though the package was correctly
+`pip install`ed (verified: `pip show databricks-sdk` succeeded, the import didn't).
+
+**Fixed 2026-09-16 by renaming the package: `databricks/` → `dbr_admin/`.** Verified after the
+rename: `from databricks.sdk import WorkspaceClient` now imports cleanly alongside
+`import dbr_admin`. The code written during the collision window
+(`resource_manager/serverless_usage.py`, `resource_manager/serverless_enforcement.py`,
+`resource_manager/serverless_billing.py`) still uses `requests` directly against the
+REST/SCIM APIs rather than the SDK client — that was a necessity at the time, not a
+preference, and migrating those three modules to `databricks-sdk` is now possible but not yet
+done (tracked as follow-up work, not required before `enforcement=True`). `DataBricksGroups`
+is reused (not extended) for group membership listing in `group_map.py` since it already
+solves that problem correctly and was never affected by the naming collision (it's built on
 `databricks_cli`, a differently-named package). Do **not** extend `DataBricksClusterOps` /
 `DataBricksGroups` beyond that reuse — they still sit on the deprecated `databricks_cli`
 package.
+
+**Deployment note:** the quota-checker VM's cron wrapper scripts
+(`~/periodic_poll.sh`, `~/end_of_day_ops.sh`) invoke this code by module path and live only on
+that server, not in this repo (see the `quota-server-setup` memory note) — they must be
+updated to `python -m dbr_admin.poll_clusters` / `python -m dbr_admin.end_of_day_operations`
+the next time this rename is deployed there, or cron will start failing with
+`ModuleNotFoundError: No module named 'databricks'`.
 
 ### 2.2 Ingest: idempotent, keyed by `query_id`
 

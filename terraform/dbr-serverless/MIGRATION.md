@@ -87,8 +87,8 @@ has no equivalent uptime-monitor hook, but it does have its own native safeguard
 interactive execution timeout**, which cancels a query/command once it has run continuously for longer than
 the configured limit (default 2.5 hours / 9000s).
 
-> A serverless-side replacement for the uptime monitor is planned but not yet built --
-> see `../../databricks/serverless_quota_plan.md`. Two live-tested findings there correct
+> A serverless-side replacement for the uptime monitor exists as a first cut (not yet run
+> against production) -- see `../../dbr_admin/serverless_quota_plan.md`. Two live-tested findings there correct
 > the paragraph above: the execution timeout only bounds **Spark Connect queries** -- a
 > confirmed test showed a pure-Python loop with no Spark calls is *not* cancelled by it, no
 > matter how it's set -- and there is currently no known way, at all, to forcibly stop such a

@@ -49,7 +49,7 @@ def log_daily_uptime(prod_db, logger):
 if __name__ == "__main__":
     import os
     from dotenv import load_dotenv
-    from databricks.database.db_operations import create_tables, initialize_production_db
+    from dbr_admin.database.db_operations import create_tables, initialize_production_db
 
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     # branch below calls the same local functions this file always called
     # here -- zero behavior change. It deliberately does NOT go through
     # resource_manager.backends.classic.ClassicBackend, to avoid
-    # `python -m databricks.end_of_day_operations` importing this module a
+    # `python -m dbr_admin.end_of_day_operations` importing this module a
     # second time under its own canonical name.
     quota_mode = os.getenv('QUOTA_MODE', 'classic').strip().lower()
     # Validated up front, before touching the DB: a typo'd QUOTA_MODE is a

@@ -14,7 +14,7 @@
 # simulate_two_runs() models: the quota is checked before each cell
 # dispatch, never mid-cell.
 
-from databricks.resource_manager.serverless_quota import union_seconds, is_over_quota
+from dbr_admin.resource_manager.serverless_quota import union_seconds, is_over_quota
 
 NUM_CELLS = 5
 CELL_SECONDS = 120  # 2 minutes/cell -- comfortably under any execution timeout

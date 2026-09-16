@@ -213,7 +213,7 @@ if __name__ == "__main__":
     # branch below calls main() directly, the same local function this file
     # always called here -- zero behavior change. It deliberately does NOT
     # go through resource_manager.backends.classic.ClassicBackend, to avoid
-    # `python -m databricks.poll_clusters` importing this module a second
+    # `python -m dbr_admin.poll_clusters` importing this module a second
     # time under its own canonical name.
     quota_mode = os.getenv('QUOTA_MODE', 'classic').strip().lower()
     # Validated before the try/except below on purpose: a typo'd QUOTA_MODE in
@@ -225,7 +225,7 @@ if __name__ == "__main__":
         raise ValueError(f"Unknown QUOTA_MODE: {quota_mode!r}. Expected 'classic' or 'serverless'.")
     try:
         # NOTE: Assumes a create_tables function exists in db_operations
-        from databricks.database.db_operations import create_tables, initialize_production_db
+        from dbr_admin.database.db_operations import create_tables, initialize_production_db
         # Initialize the production database before creating tables
         prod_db = initialize_production_db()
         with prod_db.connection_context():

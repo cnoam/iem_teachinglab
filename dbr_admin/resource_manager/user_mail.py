@@ -16,6 +16,16 @@ def send_emails_azure(subject:str, body_html: str, recipients: list[str], logger
     """
     from azure.communication.email import EmailClient
 
+    # azure-core's pipeline HTTP-tracing loggers (e.g.
+    # azure.core.pipeline.policies.http_logging_policy) have no level of
+    # their own, so they inherit whatever the caller's root logger is set
+    # to. Both poll_clusters.py and end_of_day_operations.py configure the
+    # root logger at INFO with a StreamHandler, so without this, every
+    # email send dumps full (redacted but still very verbose) HTTP
+    # request/response logging into cron's output. Silence azure-core's
+    # own logging regardless of the caller's root logger configuration.
+    logging.getLogger('azure').setLevel(logging.WARNING)
+
     key = os.getenv('AZURE_EMAIL_ACCESS_KEY')
     if not key:
         raise EnvironmentError("env var AZURE_EMAIL_ACCESS_KEY must be defined")

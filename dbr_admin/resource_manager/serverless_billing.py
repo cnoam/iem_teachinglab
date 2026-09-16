@@ -14,13 +14,16 @@ queryable from the Statement Execution API without one) -- set
 SERVERLESS_BILLING_WAREHOUSE_ID. If unset, this backstop is skipped
 entirely; the primary Query History-based quota (serverless_usage.py) is
 unaffected either way.
+
+Uses the `databricks-sdk` package (databricks.sdk.WorkspaceClient) --
+migrated 2026-09-16 from `requests` (see serverless_enforcement.py's
+docstring for why the requests version existed in the first place).
 """
 import logging
 from datetime import date
 
-import requests
-
-from .dbr_host import normalize_dbr_host
+from databricks.sdk import WorkspaceClient
+from databricks.sdk.service.sql import StatementState
 
 
 def _billing_query(usage_date: str) -> str:
@@ -41,19 +44,8 @@ GROUP BY identity_metadata.run_as
 """
 
 
-def _submit_and_wait(host, token, warehouse_id, statement, wait_timeout="30s"):
-    host = normalize_dbr_host(host)
-    resp = requests.post(
-        f"{host}/api/2.0/sql/statements",
-        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-        json={"warehouse_id": warehouse_id, "statement": statement, "wait_timeout": wait_timeout},
-        timeout=45,
-    )
-    resp.raise_for_status()
-    return resp.json()
-
-
-def fetch_billed_seconds_per_user(host: str, token: str, warehouse_id: str, usage_date: str = None) -> dict:
+def fetch_billed_seconds_per_user(client: WorkspaceClient, warehouse_id: str,
+                                   usage_date: str = None) -> dict:
     """
     Returns {user_name: attached_seconds} for usage_date (local date,
     default today). Raises on any failure (permission, missing table, query
@@ -61,19 +53,22 @@ def fetch_billed_seconds_per_user(host: str, token: str, warehouse_id: str, usag
     wrapper actually used by the backend.
     """
     usage_date = usage_date or date.today().isoformat()
-    result = _submit_and_wait(host, token, warehouse_id, _billing_query(usage_date))
-    status = result.get('status', {}).get('state')
-    if status != 'SUCCEEDED':
-        raise RuntimeError(f"system.billing.usage query did not succeed: {result.get('status')}")
-    rows = (result.get('result') or {}).get('data_array') or []
+    result = client.statement_execution.execute_statement(
+        statement=_billing_query(usage_date),
+        warehouse_id=warehouse_id,
+        wait_timeout="30s",
+    )
+    if result.status.state != StatementState.SUCCEEDED:
+        raise RuntimeError(f"system.billing.usage query did not succeed: {result.status}")
+    rows = (result.result.data_array if result.result else None) or []
     out = {}
     for run_as, seconds in rows:
         if run_as:
-            out[run_as] = float(seconds or 0)
+            out[run_as] = float(seconds) if seconds is not None else 0.0
     return out
 
 
-def backstop_check(host, token, warehouse_id, email_to_group, backstop_seconds,
+def backstop_check(client, warehouse_id, email_to_group, backstop_seconds,
                     logger: logging.Logger = None) -> set:
     """
     Returns the set of group_names whose billed attached time today meets
@@ -85,7 +80,7 @@ def backstop_check(host, token, warehouse_id, email_to_group, backstop_seconds,
         logger.info("SERVERLESS_BILLING_WAREHOUSE_ID not set -- skipping billing backstop.")
         return set()
     try:
-        billed = fetch_billed_seconds_per_user(host, token, warehouse_id)
+        billed = fetch_billed_seconds_per_user(client, warehouse_id)
     except Exception as ex:
         logger.warning(f"Billing backstop check failed (skipping, non-fatal): {ex}")
         return set()

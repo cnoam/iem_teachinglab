@@ -2,9 +2,11 @@
 Query History API ingest + aggregation for the serverless quota backend
 (plan 2.2, 2.3a, 2.4).
 
-Uses `requests` directly against the REST API rather than the
-databricks-sdk package -- see group_map.py's docstring for why the SDK is
-unimportable from inside this codebase.
+Uses the `databricks-sdk` package (databricks.sdk.WorkspaceClient). Earlier
+versions of this module used `requests` directly, because this project's
+own top-level package used to be named `databricks`, shadowing the real
+`databricks-sdk` package -- fixed 2026-09-16 by renaming the package to
+`dbr_admin` (see serverless_quota_plan.md). Migrated to the SDK 2026-09-16.
 
 SCOPE NOTE (first cut, operator decision): this module only ever sees
 Spark/SQL execution (what the Query History API reports). A pure-Python
@@ -16,13 +18,12 @@ import os
 import time
 from datetime import date, datetime
 
-import requests
+from databricks.sdk import WorkspaceClient
+from databricks.sdk.service.sql import QueryFilter, TimeRange
 
 from .serverless_quota import union_seconds
-from .dbr_host import normalize_dbr_host
 from ..database.db_operations import QueryUsage, IngestWatermark
 
-QUERY_HISTORY_PATH = "/api/2.0/sql/history/queries"
 POLL_LOOKBACK_SLACK_MS = 15 * 60 * 1000  # 15 min slack for late-arriving records (plan 2.2)
 BACKEND_NAME = "serverless_query_history"
 NON_TERMINAL_STATUSES = ('RUNNING', 'QUEUED')
@@ -48,33 +49,28 @@ def _epoch_ms_to_local_date(ms: int) -> date:
     return datetime.fromtimestamp(ms / 1000).date()
 
 
-def _fetch_page(host, token, start_time_ms, page_token=None, max_results=200):
-    host = normalize_dbr_host(host)
-    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-    body = {
-        "max_results": max_results,
-        "filter_by": {"query_start_time_range": {"start_time_ms": start_time_ms}},
-    }
-    if page_token:
-        body["page_token"] = page_token
-    resp = requests.get(f"{host}{QUERY_HISTORY_PATH}", headers=headers, json=body, timeout=30)
-    resp.raise_for_status()
-    return resp.json()
-
-
-def fetch_query_history_rows(host: str, token: str, since_ms: int) -> list:
+def fetch_query_history_rows(client: WorkspaceClient, since_ms: int) -> list:
     """
     Fetches every Query History row with query_start_time_ms >= since_ms,
-    following pagination (plan 2.2: `next_page_token`).
+    following pagination (plan 2.2: `next_page_token`). QueryHistoryAPI.list()
+    is a single-page call -- the SDK does not auto-paginate this endpoint --
+    so the loop below is unavoidable either way (requests or SDK).
+
+    Returns a list of QueryInfo objects (typed: .query_id, .user_name,
+    .query_start_time_ms, .duration, .status, ...).
     """
     rows = []
     page_token = None
     while True:
-        page = _fetch_page(host, token, since_ms, page_token)
-        rows.extend(page.get('res', []) or [])
-        if not page.get('has_next_page'):
+        page = client.query_history.list(
+            filter_by=QueryFilter(query_start_time_range=TimeRange(start_time_ms=since_ms)),
+            max_results=200,
+            page_token=page_token,
+        )
+        rows.extend(page.res or [])
+        if not page.has_next_page:
             break
-        page_token = page.get('next_page_token')
+        page_token = page.next_page_token
         if not page_token:
             break
     return rows
@@ -82,11 +78,11 @@ def fetch_query_history_rows(host: str, token: str, since_ms: int) -> list:
 
 def ingest_rows(rows: list, email_to_group: dict) -> int:
     """
-    Upserts Query History rows into QueryUsage, keyed by query_id (plan
-    2.2): a RUNNING row polled earlier is safely overwritten by its later
-    FINISHED version, never double-counted. Rows with no query_id or start
-    time are skipped (shouldn't happen per the API, but ingest must not
-    crash on a malformed record).
+    Upserts Query History rows (QueryInfo objects) into QueryUsage, keyed by
+    query_id (plan 2.2): a RUNNING row polled earlier is safely overwritten
+    by its later FINISHED version, never double-counted. Rows with no
+    query_id or start time are skipped (shouldn't happen per the API, but
+    ingest must not crash on a malformed record).
 
     `duration` is intentionally stored as the API gives it -- null for
     RUNNING/QUEUED rows (confirmed live, plan 2.2). Elapsed time for a
@@ -95,19 +91,20 @@ def ingest_rows(rows: list, email_to_group: dict) -> int:
     """
     written = 0
     for row in rows:
-        query_id = row.get('query_id')
-        start_ms = row.get('query_start_time_ms')
+        query_id = row.query_id
+        start_ms = row.query_start_time_ms
         if not query_id or start_ms is None:
             continue
-        user_name = row.get('user_name') or row.get('executed_as_user_name') or ''
+        user_name = row.user_name or row.executed_as_user_name or ''
+        status = row.status.value if row.status is not None else 'UNKNOWN'
         QueryUsage.replace(
             query_id=query_id,
             user_name=user_name,
             group_name=email_to_group.get(user_name),
             day=_epoch_ms_to_local_date(start_ms),
             start_time_ms=start_ms,
-            duration_ms=row.get('duration'),
-            status=row.get('status', 'UNKNOWN'),
+            duration_ms=row.duration,
+            status=status,
         ).execute()
         written += 1
     return written
@@ -128,7 +125,7 @@ def _earliest_open_row_start_ms_today():
             .scalar())
 
 
-def collect(host: str, token: str, email_to_group: dict, logger: logging.Logger = None) -> int:
+def collect(client: WorkspaceClient, email_to_group: dict, logger: logging.Logger = None) -> int:
     """
     One ingest cycle: read the watermark, fetch rows since
     watermark - slack (widened to also cover any row still open from an
@@ -151,7 +148,7 @@ def collect(host: str, token: str, email_to_group: dict, logger: logging.Logger 
     start_of_today_ms = int(datetime.combine(date.today(), datetime.min.time()).timestamp() * 1000)
     since_ms = max(since_ms, start_of_today_ms)
 
-    rows = fetch_query_history_rows(host, token, since_ms)
+    rows = fetch_query_history_rows(client, since_ms)
     written = ingest_rows(rows, email_to_group)
 
     watermark.last_seen_ms = now_ms

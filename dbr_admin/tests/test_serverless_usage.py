@@ -7,6 +7,8 @@ from datetime import date, datetime
 from unittest.mock import patch, MagicMock
 from peewee import SqliteDatabase
 
+from databricks.sdk.service.sql import QueryInfo, QueryStatus, ListQueriesResponse
+
 from dbr_admin.resource_manager.serverless_usage import (
     ingest_rows, collect, group_usage_seconds_for_day, _epoch_ms_to_local_date,
     fetch_query_history_rows,
@@ -29,14 +31,25 @@ def setup_teardown_db():
         m.bind(None)
 
 
+def _row(query_id, user_name=None, query_start_time_ms=None, status=None,
+         duration=None, executed_as_user_name=None):
+    """Builds a QueryInfo row the way the real SDK returns one."""
+    return QueryInfo(
+        query_id=query_id,
+        user_name=user_name,
+        executed_as_user_name=executed_as_user_name,
+        query_start_time_ms=query_start_time_ms,
+        status=status,
+        duration=duration,
+    )
+
+
 # --- ingest_rows(): the upsert-by-query_id contract ---
 
 def test_ingest_rows_writes_running_row_with_null_duration():
-    # Real API shape observed live: no 'duration' key at all while RUNNING.
-    rows = [{
-        'query_id': 'q1', 'user_name': 'a@test.com',
-        'query_start_time_ms': 1_789_544_737_861, 'status': 'RUNNING',
-    }]
+    # Real API shape observed live: duration is absent/None while RUNNING.
+    rows = [_row('q1', user_name='a@test.com', query_start_time_ms=1_789_544_737_861,
+                 status=QueryStatus.RUNNING)]
     written = ingest_rows(rows, email_to_group={'a@test.com': 'group_01'})
 
     assert written == 1
@@ -47,10 +60,10 @@ def test_ingest_rows_writes_running_row_with_null_duration():
 
 
 def test_ingest_rows_upserts_running_to_finished_no_duplicate():
-    running = [{'query_id': 'q1', 'user_name': 'a@test.com',
-                'query_start_time_ms': 1_000_000, 'status': 'RUNNING'}]
-    finished = [{'query_id': 'q1', 'user_name': 'a@test.com',
-                 'query_start_time_ms': 1_000_000, 'status': 'FINISHED', 'duration': 47903}]
+    running = [_row('q1', user_name='a@test.com', query_start_time_ms=1_000_000,
+                     status=QueryStatus.RUNNING)]
+    finished = [_row('q1', user_name='a@test.com', query_start_time_ms=1_000_000,
+                      status=QueryStatus.FINISHED, duration=47903)]
 
     ingest_rows(running, {})
     ingest_rows(finished, {})
@@ -63,9 +76,9 @@ def test_ingest_rows_upserts_running_to_finished_no_duplicate():
 
 def test_ingest_rows_skips_malformed_records():
     rows = [
-        {'user_name': 'a@test.com', 'query_start_time_ms': 1, 'status': 'FINISHED'},  # no query_id
-        {'query_id': 'q2', 'user_name': 'a@test.com', 'status': 'FINISHED'},  # no start time
-        {'query_id': 'q3', 'user_name': 'a@test.com', 'query_start_time_ms': 1, 'status': 'FINISHED'},
+        _row(None, user_name='a@test.com', query_start_time_ms=1, status=QueryStatus.FINISHED),  # no query_id
+        _row('q2', user_name='a@test.com', query_start_time_ms=None, status=QueryStatus.FINISHED),  # no start time
+        _row('q3', user_name='a@test.com', query_start_time_ms=1, status=QueryStatus.FINISHED),
     ]
     written = ingest_rows(rows, {})
     assert written == 1
@@ -73,11 +86,20 @@ def test_ingest_rows_skips_malformed_records():
 
 
 def test_ingest_rows_ungrouped_user_gets_null_group():
-    rows = [{'query_id': 'q1', 'user_name': 'staff@test.com',
-             'query_start_time_ms': 1, 'status': 'FINISHED', 'duration': 500}]
+    rows = [_row('q1', user_name='staff@test.com', query_start_time_ms=1,
+                 status=QueryStatus.FINISHED, duration=500)]
     ingest_rows(rows, email_to_group={})  # staff@test.com not in the map
     row = QueryUsage.get(QueryUsage.query_id == 'q1')
     assert row.group_name is None
+
+
+def test_ingest_rows_falls_back_to_executed_as_user_name():
+    rows = [_row('q1', user_name=None, executed_as_user_name='sp@test.com',
+                 query_start_time_ms=1, status=QueryStatus.FINISHED, duration=10)]
+    ingest_rows(rows, email_to_group={'sp@test.com': 'group_01'})
+    row = QueryUsage.get(QueryUsage.query_id == 'q1')
+    assert row.user_name == 'sp@test.com'
+    assert row.group_name == 'group_01'
 
 
 # --- collect(): watermark handling, via a mocked fetch ---
@@ -85,9 +107,9 @@ def test_ingest_rows_ungrouped_user_gets_null_group():
 @patch('dbr_admin.resource_manager.serverless_usage.fetch_query_history_rows')
 def test_collect_advances_watermark_and_ingests(mock_fetch):
     mock_fetch.return_value = [
-        {'query_id': 'q1', 'user_name': 'a@test.com', 'query_start_time_ms': 1, 'status': 'FINISHED', 'duration': 10},
+        _row('q1', user_name='a@test.com', query_start_time_ms=1, status=QueryStatus.FINISHED, duration=10),
     ]
-    written = collect('host', 'token', {'a@test.com': 'group_01'}, logger=MagicMock())
+    written = collect(MagicMock(), {'a@test.com': 'group_01'}, logger=MagicMock())
 
     assert written == 1
     wm = IngestWatermark.get(IngestWatermark.backend == 'serverless_query_history')
@@ -103,9 +125,9 @@ def test_collect_uses_watermark_minus_slack_as_since(mock_fetch):
     watermark_ms = int(time.time() * 1000) - 60 * 60 * 1000  # 1h ago
     IngestWatermark.create(backend='serverless_query_history', last_seen_ms=watermark_ms)
 
-    collect('host', 'token', {}, logger=MagicMock())
+    collect(MagicMock(), {}, logger=MagicMock())
 
-    called_since = mock_fetch.call_args.args[2]
+    called_since = mock_fetch.call_args.args[1]  # fetch_query_history_rows(client, since_ms)
     assert called_since == watermark_ms - 15 * 60 * 1000  # POLL_LOOKBACK_SLACK_MS
 
 
@@ -117,9 +139,9 @@ def test_collect_clamps_since_to_start_of_today(mock_fetch):
     mock_fetch.return_value = []
     IngestWatermark.create(backend='serverless_query_history', last_seen_ms=1_000_000_000)  # 1970
 
-    collect('host', 'token', {}, logger=MagicMock())
+    collect(MagicMock(), {}, logger=MagicMock())
 
-    called_since = mock_fetch.call_args.args[2]
+    called_since = mock_fetch.call_args.args[1]
     start_of_today_ms = int(datetime.combine(date.today(), datetime.min.time()).timestamp() * 1000)
     assert called_since == start_of_today_ms
 
@@ -139,10 +161,30 @@ def test_collect_widens_window_for_an_open_row_from_earlier_today(mock_fetch):
     # much later than open_row_start_ms and the open row would be missed.
     IngestWatermark.create(backend='serverless_query_history', last_seen_ms=now_ms - 60_000)
 
-    collect('host', 'token', {}, logger=MagicMock())
+    collect(MagicMock(), {}, logger=MagicMock())
 
-    called_since = mock_fetch.call_args.args[2]
+    called_since = mock_fetch.call_args.args[1]
     assert called_since <= open_row_start_ms
+
+
+# --- fetch_query_history_rows(): pagination, against a mocked SDK client ---
+
+def test_fetch_query_history_rows_follows_pagination():
+    # Real ListQueriesResponse objects, not MagicMock -- a MagicMock would
+    # silently auto-vivify any attribute (e.g. a typo'd `.next_token`
+    # instead of `.next_page_token`) instead of failing, defeating the
+    # point of this test.
+    page1 = ListQueriesResponse(res=[_row('q1')], has_next_page=True, next_page_token='tok2')
+    page2 = ListQueriesResponse(res=[_row('q2')], has_next_page=False, next_page_token=None)
+    client = MagicMock()
+    client.query_history.list.side_effect = [page1, page2]
+
+    rows = fetch_query_history_rows(client, since_ms=1000)
+
+    assert [r.query_id for r in rows] == ['q1', 'q2']
+    assert client.query_history.list.call_count == 2
+    # second call passes the page token forward
+    assert client.query_history.list.call_args_list[1].kwargs['page_token'] == 'tok2'
 
 
 # --- group_usage_seconds_for_day(): union computed at read time ---

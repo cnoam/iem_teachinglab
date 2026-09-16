@@ -16,6 +16,8 @@ import logging
 import os
 from datetime import date, datetime, timedelta
 
+from databricks.sdk import WorkspaceClient
+
 from .base import UsageBackend
 from ...DataBricksGroups import DataBricksGroups
 from ..dbr_host import normalize_dbr_host
@@ -49,21 +51,26 @@ class ServerlessBackend(UsageBackend):
         backstop_seconds = float(os.getenv('SERVERLESS_BACKSTOP_MINUTES', DEFAULT_BACKSTOP_MINUTES)) * 60
         billing_warehouse_id = os.getenv('SERVERLESS_BILLING_WAREHOUSE_ID')
 
+        # One SDK client, reused for every call this cycle (query history,
+        # SCIM block/restore, the billing backstop). group_map.py still
+        # goes through DataBricksGroups -- a deliberate reuse (see its
+        # docstring), not a naming-collision workaround.
+        client = WorkspaceClient(host=host, token=token)
         groups_api = DataBricksGroups(host=host, token=token)
         email_to_group = build_email_to_group_map(groups_api, logger)
 
-        ingest_collect(host, token, email_to_group, logger)
+        ingest_collect(client, email_to_group, logger)
 
         today = date.today()
         for group_name in sorted(set(email_to_group.values())):
             self._check_and_enforce_group(
-                group_name, today, host, token, groups_api,
+                group_name, today, client, groups_api,
                 warn_seconds, max_seconds, logger,
             )
 
         # Backstop (plan 2.6a): catches what the primary quota structurally
         # cannot -- pure-Python compute (1a). Best-effort, never raises.
-        for group_name in backstop_check(host, token, billing_warehouse_id,
+        for group_name in backstop_check(client, billing_warehouse_id,
                                           email_to_group, backstop_seconds, logger):
             state, _ = GroupQuotaState.get_or_create(group_name=group_name, day=today)
             if state.blocked:
@@ -71,12 +78,12 @@ class ServerlessBackend(UsageBackend):
                 # check (this may well be the group the primary check just
                 # blocked, or a repeat backstop trip -- either way, no
                 # second email for the same day).
-                block_group(host, token, group_name, logger)
+                block_group(client, group_name, logger)
                 continue
             state.blocked = True
             state.blocked_at = datetime.now()
             state.save()
-            if block_group(host, token, group_name, logger):
+            if block_group(client, group_name, logger):
                 self._notify_group(
                     groups_api, group_name,
                     subject=f"'{group_name}' blocked (billing backstop)",
@@ -90,7 +97,7 @@ class ServerlessBackend(UsageBackend):
                     logger=logger,
                 )
 
-    def _check_and_enforce_group(self, group_name, today, host, token, groups_api,
+    def _check_and_enforce_group(self, group_name, today, client, groups_api,
                                   warn_seconds, max_seconds, logger):
         usage_seconds = group_usage_seconds_for_day(group_name, today)
         state, _ = GroupQuotaState.get_or_create(group_name=group_name, day=today)
@@ -100,14 +107,14 @@ class ServerlessBackend(UsageBackend):
             # 2.5 (self-healing against a mid-day terraform apply lifting
             # the block), but never re-notified and never falls through to
             # the warn branch below.
-            block_group(host, token, group_name, logger)
+            block_group(client, group_name, logger)
             return
 
         if usage_seconds >= max_seconds:
             state.blocked = True
             state.blocked_at = datetime.now()
             state.save()
-            if block_group(host, token, group_name, logger):
+            if block_group(client, group_name, logger):
                 self._notify_group(
                     groups_api, group_name,
                     subject=f"'{group_name}' has used its daily compute quota",
@@ -145,13 +152,16 @@ class ServerlessBackend(UsageBackend):
 
     def restore(self, host, token, logger):
         # end_of_day_operations.py passes the raw DATABRICKS_HOST env var
-        # (no scheme) -- normalize here rather than trust the caller, same
-        # as every serverless_* module does for its own `host` argument.
+        # (no scheme) -- normalize here rather than trust the caller.
+        # DataBricksGroups still requires an explicit scheme; WorkspaceClient
+        # would normalize it itself, but there's no harm doing it once up
+        # front for both.
         host = normalize_dbr_host(host)
+        client = WorkspaceClient(host=host, token=token)
         groups_api = DataBricksGroups(host=host, token=token)
         for group_name in groups_api.list_groups():
             if GROUP_NAME_PATTERN.match(group_name):
-                restore_group(host, token, group_name, logger)
+                restore_group(client, group_name, logger)
 
     def roll_up_and_reset(self, prod_db, logger):
         yesterday = date.today() - timedelta(days=1)

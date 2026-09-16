@@ -135,17 +135,25 @@ WorkspaceClient` raised `ModuleNotFoundError` even though the package was correc
 
 **Fixed 2026-09-16 by renaming the package: `databricks/` → `dbr_admin/`.** Verified after the
 rename: `from databricks.sdk import WorkspaceClient` now imports cleanly alongside
-`import dbr_admin`. The code written during the collision window
+`import dbr_admin`. The three modules written during the collision window
 (`resource_manager/serverless_usage.py`, `resource_manager/serverless_enforcement.py`,
-`resource_manager/serverless_billing.py`) still uses `requests` directly against the
-REST/SCIM APIs rather than the SDK client — that was a necessity at the time, not a
-preference, and migrating those three modules to `databricks-sdk` is now possible but not yet
-done (tracked as follow-up work, not required before `enforcement=True`). `DataBricksGroups`
-is reused (not extended) for group membership listing in `group_map.py` since it already
+`resource_manager/serverless_billing.py`) were migrated from `requests` to
+`databricks.sdk.WorkspaceClient` the same day, once the collision was fixed — that `requests`
+usage was a necessity at the time, not a preference. `backends/serverless.py` now constructs
+one `WorkspaceClient` per `collect_and_enforce()`/`restore()` call and threads it through to
+all three. Net effect of the swap, checked against the actual SDK rather than assumed: typed
+`QueryInfo`/`Group`/`StatementResponse` objects instead of raw dicts (fewer silent-`None`
+bugs from a typo'd `.get()` key), no more manual header/JSON/`raise_for_status()`
+boilerplate — but Query History pagination is still a hand-written loop either way (the SDK's
+`query_history.list()` doesn't auto-paginate), and the SCIM patch payload is still built by
+hand (`Patch(op=..., path=...)` mirrors the raw JSON shape almost exactly). 70/70 tests pass,
+rewritten to mock the SDK client instead of `requests`. `DataBricksGroups` is still reused
+(not extended, not migrated) for group membership listing in `group_map.py` since it already
 solves that problem correctly and was never affected by the naming collision (it's built on
-`databricks_cli`, a differently-named package). Do **not** extend `DataBricksClusterOps` /
-`DataBricksGroups` beyond that reuse — they still sit on the deprecated `databricks_cli`
-package.
+`databricks_cli`, a differently-named package) — that was a deliberate design choice
+independent of the SDK question, not something left over from the collision. Do **not**
+extend `DataBricksClusterOps` / `DataBricksGroups` beyond that reuse — they still sit on the
+deprecated `databricks_cli` package.
 
 **Deployment note:** the quota-checker VM's cron wrapper scripts
 (`~/periodic_poll.sh`, `~/end_of_day_ops.sh`) invoke this code by module path and live only on

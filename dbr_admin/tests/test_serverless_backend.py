@@ -58,7 +58,7 @@ def test_blocks_group_over_max_quota(MockGroups, _map, _ingest, mock_usage,
     ServerlessBackend().collect_and_enforce()
 
     mock_block.assert_called_once()
-    assert mock_block.call_args.args[2] == 'group_01'
+    assert mock_block.call_args.args[1] == 'group_01'  # block_group(client, group_name, logger)
     mock_send.assert_called_once()
     assert 'quota' in mock_send.call_args.kwargs['subject'].lower()
 
@@ -203,7 +203,7 @@ def test_restore_only_matches_group_name_pattern(MockGroups, mock_restore):
     ]
     ServerlessBackend().restore('host', 'token', MagicMock())
 
-    restored = {call.args[2] for call in mock_restore.call_args_list}
+    restored = {call.args[1] for call in mock_restore.call_args_list}  # restore_group(client, group_name, logger)
     assert restored == {'group_01', 'group_02'}
 
 

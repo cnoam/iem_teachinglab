@@ -378,24 +378,32 @@ to `ADMIN_EMAIL` using live `.env` credentials unless `send_emails` is mocked
 or the credentials are overridden — harmless in intent, but a real outbound
 API call, so don't run that `__main__` path casually against production `.env`.
 
-**Step 2** — serverless collector + reporting only. No emails, no blocking. Run it alongside
-the real course for a week and compare its numbers against `system.billing.usage`.
+**Steps 2-4 — operator decision (2026-09-16): skip the shadow week, go straight to
+`enforcement=True` in production and retune thresholds reactively from student complaints,
+rather than pre-calibrating from a week of shadow data.** Deliberate trade, not an oversight:
+faster feedback loop, at the cost of the 2.7 placeholder thresholds (120/150/300 min) being
+what actually gates real students on day one, unvalidated against real usage. Consequence:
+the collector, warning emails, and blocking all go live together, so there's no clean window
+to sanity-check the collector's numbers (2.2, 2.3a) against `system.billing.usage` before
+they start having real effect — do that reconciliation (2.6a) from day one specifically to
+catch a collector bug fast, not just to recalibrate thresholds.
 
-**Step 3** — enable warning emails.
+The lever is confirmed working as a **prevent-new-work** control for pure-Python compute
+(2.5) — reliable, and in effect somewhere within the ~4.5-minute test window (not measured
+precisely). **This is the thing to actually communicate to students, and to yourself when the
+complaints arrive**: a threshold breach does not stop a job that's already running — it blocks
+the *next* command or login. So "my job got cut short" complaints are, per the confirmed
+test, more likely to mean "I couldn't start my next cell / reopen the notebook" than "my
+running job was killed" — worth knowing which one you're debugging before assuming the lever
+is misbehaving. Any warning email and operator-facing docs should say "you will be blocked
+from *starting new* work," not "your session will be stopped" — the latter is verified false
+for pure-Python work and unverified either way for Spark work.
 
-**Step 4** — enable blocking. The lever is confirmed working as a **prevent-new-work**
-control for pure-Python compute (2.5) — reliable, and in effect somewhere within the
-~4.5-minute test window (not measured precisely; do a timed test before relying on a specific
-poll cadence to bound exposure). Before enabling, make sure the warning email and any
-operator-facing docs say "you will be blocked from *starting new* work," not "your session
-will be stopped" — the latter is verified false for pure-Python work and unverified either
-way for Spark work.
-
-**Step 5** — enable the `system.billing.usage` backstop poll (2.6a), once step 4 is stable.
-This is the only thing standing between a pure-Python runaway loop and a few hours of
-unbounded compute (1a) — treat it as required, not optional, before calling the migration
-done. Remember it inherits the same limitation as step 4: it can only prevent *further*
-new work once it fires, not stop what's already running.
+**Step 5** — enable the `system.billing.usage` backstop poll (2.6a), once steps 2-4 are
+stable in production. This is the only thing standing between a pure-Python runaway loop and
+a few hours of unbounded compute (1a) — treat it as required, not optional, before calling
+the migration done. Remember it inherits the same limitation as steps 2-4: it can only
+prevent *further* new work once it fires, not stop what's already running.
 
 ## 4. Tests
 

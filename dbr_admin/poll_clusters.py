@@ -9,7 +9,6 @@ To reset the total uptime, you would run a dedicated job (like the
 log_daily_uptime function) that resets the `uptime_seconds` field.
 The database file itself (cluster_uptimes.db) persists across runs.
 """
-import json
 import logging, os
 import datetime
 from peewee import IntegrityError
@@ -118,7 +117,6 @@ def main():
 
     clusters = client.get_clusters()
     update_cluster_info(clusters)
-    json.dump(clusters, open('clusters.json', 'w'), indent=2)
     check_update_running_clusters(client, clusters)
 
     # now that we have the updated times, run a check and act accordingly

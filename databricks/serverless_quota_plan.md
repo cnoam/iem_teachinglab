@@ -124,8 +124,23 @@ databricks/resource_manager/
 thin dispatchers on `QUOTA_MODE` (`classic` | `serverless`, default `classic`). Deployments
 that set nothing keep today's behavior exactly.
 
-New code uses the `databricks-sdk` package. Do **not** extend `DataBricksClusterOps` /
-`DataBricksGroups` — they sit on the deprecated `databricks_cli` package.
+~~New code uses the `databricks-sdk` package.~~ **Superseded (discovered during Step 2
+implementation): the `databricks-sdk` package is unimportable from inside this codebase.**
+This project's own top-level package is itself named `databricks` (this whole codebase lives
+under `databricks/`), which fully shadows the pip-installed `databricks-sdk` package's
+`databricks.sdk` namespace whenever this project's root is on `sys.path` — which it always is
+here (`pytest.ini`'s `pythonpath = .`, the cron entrypoints). `from databricks.sdk import
+WorkspaceClient` raises `ModuleNotFoundError` from inside this repo even though the package is
+correctly `pip install`ed (verified: `pip show databricks-sdk` succeeds, the import doesn't).
+New serverless code (`resource_manager/serverless_usage.py`,
+`resource_manager/serverless_enforcement.py`, `resource_manager/serverless_billing.py`) uses
+`requests` directly against the REST/SCIM APIs instead — the same approach already used live
+in this session's manual testing. `DataBricksGroups` is reused (not extended) for group
+membership listing, since it already solves that problem correctly
+(`resource_manager/group_map.py`) and isn't affected by the naming collision (it's built on
+`databricks_cli`, a differently-named package). Do **not** extend `DataBricksClusterOps` /
+`DataBricksGroups` beyond that reuse — they still sit on the deprecated `databricks_cli`
+package.
 
 ### 2.2 Ingest: idempotent, keyed by `query_id`
 
@@ -352,6 +367,9 @@ not a considered decision** — the plan's calibration steps are the actual deci
   `system.billing.usage`) — provisional default **300** (2x the hard threshold), sized to
   only fire on something that looks like a runaway process, not normal variance between the
   proxy metric and true billed time. Also unvalidated against real data.
+- **`SERVERLESS_BILLING_WAREHOUSE_ID`** — no default; if unset, the 2.6a backstop is skipped
+  entirely (logged, not fatal) since querying `system.billing.usage` needs a SQL warehouse to
+  run against. Must be set explicitly before the backstop does anything.
 
 All four are read from env vars with these defaults, exactly like `DATABRICKS_MAX_UPTIME` /
 `DATABRICKS_WARN_UPTIME` today, so the operator can override without a code change once real
@@ -378,9 +396,19 @@ to `ADMIN_EMAIL` using live `.env` credentials unless `send_emails` is mocked
 or the credentials are overridden — harmless in intent, but a real outbound
 API call, so don't run that `__main__` path casually against production `.env`.
 
-**Steps 2-4 — operator decision (2026-09-16): skip the shadow week, go straight to
-`enforcement=True` in production and retune thresholds reactively from student complaints,
-rather than pre-calibrating from a week of shadow data.** Deliberate trade, not an oversight:
+**Steps 2-4 — code written** (this branch: `resource_manager/serverless_usage.py` ingest +
+`group_usage_seconds_for_day`, `resource_manager/group_map.py` email→group attribution,
+`resource_manager/serverless_enforcement.py` SCIM block/restore, `resource_manager/serverless_billing.py`
+the 2.6a backstop, `resource_manager/backends/serverless.py` wiring it all together with
+warn/block/backstop decisions and re-assert-but-never-re-notify semantics). 65/65 tests pass.
+**Not yet run against the live workspace** — everything above is unit-tested with mocked
+API/SCIM calls; the query-history/SCIM code paths themselves haven't been exercised against
+`94290_2026`. Do that before flipping `enforcement=True` for real, even though the operator
+decision below is to skip a full shadow *week*.
+
+**Operator decision (2026-09-16): skip the shadow week, go straight to `enforcement=True` in
+production and retune thresholds reactively from student complaints, rather than
+pre-calibrating from a week of shadow data.** Deliberate trade, not an oversight:
 faster feedback loop, at the cost of the 2.7 placeholder thresholds (120/150/300 min) being
 what actually gates real students on day one, unvalidated against real usage. Consequence:
 the collector, warning emails, and blocking all go live together, so there's no clean window

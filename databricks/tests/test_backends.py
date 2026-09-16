@@ -1,7 +1,10 @@
 # test_backends.py
 # Step 1 of databricks/serverless_quota_plan.md: the UsageBackend interface,
 # ClassicBackend (thin wrapper -- delegates to the existing classic
-# functions, no reimplementation) and the ServerlessBackend stub.
+# functions, no reimplementation), and the get_backend() factory.
+#
+# ServerlessBackend's own behavior (real implementation as of Step 2) is
+# covered in test_serverless_backend.py, not here.
 
 import pytest
 from unittest.mock import patch, MagicMock
@@ -70,14 +73,3 @@ def test_classic_backend_report_delegates(mock_report):
     assert result == '<html/>'
 
 
-# --- ServerlessBackend: Step 1 stub, every method raises NotImplementedError ---
-
-@pytest.mark.parametrize('call', [
-    lambda b: b.collect_and_enforce(),
-    lambda b: b.restore('host', 'token', MagicMock()),
-    lambda b: b.roll_up_and_reset(MagicMock(), MagicMock()),
-    lambda b: b.report('2026-09-16'),
-])
-def test_serverless_backend_not_implemented(call):
-    with pytest.raises(NotImplementedError, match='serverless_quota_plan.md'):
-        call(ServerlessBackend())

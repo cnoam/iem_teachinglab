@@ -89,14 +89,16 @@ if __name__ == "__main__":
         else:  # 'serverless' -- validated above
             from .resource_manager.backends.serverless import ServerlessBackend
             backend = ServerlessBackend()
-            # Mirrors the classic sequence above (restore -> roll up -> report)
-            # so the intended shape is visible even though every call here
-            # currently raises NotImplementedError (Step 1 stub). Note there
-            # is no send-and-email step yet, unlike send_usage_report() above
-            # -- report() only generates HTML (see classic.py's docstring);
-            # Step 2 needs to add emailing before this can go live.
+            # Mirrors the classic sequence above: restore -> roll up -> report,
+            # with the report emailed exactly like send_usage_report() does
+            # for classic (classic.py's backend.report() only generates the
+            # HTML; the email step belongs here, at the call site).
             backend.restore(host, token, logger)
             backend.roll_up_and_reset(prod_db, logger)
+            yesterday = date.today() - timedelta(days=1)
+            report_html = backend.report(yesterday)
+            send_emails(subject="Daily serverless usage report", body=report_html,
+                        recipients=[os.getenv('REPORT_RECIPIENT_EMAIL')], logger=logger)
             backend.report(date.today() - timedelta(days=1))
 
     logger.info('Exiting successfully')

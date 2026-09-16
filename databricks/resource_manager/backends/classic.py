@@ -27,8 +27,9 @@ Editing a method here has NO effect on the real classic cron jobs -- edit
 the wrapped function itself for that. Also note report() only generates
 HTML; it does not email it (unlike end_of_day_operations.send_usage_report(),
 which does both) -- there is deliberately no send-and-email method on this
-interface yet, so Step 2 will need one before the serverless daily report can
-actually be emailed.
+interface. end_of_day_operations.py's __main__ handles emailing at the call
+site for both modes (classic via send_usage_report(), serverless via a
+direct send_emails() call around backend.report()'s return value).
 """
 from .base import UsageBackend
 from ...poll_clusters import main as _poll_clusters_main

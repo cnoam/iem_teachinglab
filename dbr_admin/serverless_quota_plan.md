@@ -399,6 +399,29 @@ numbers exist.
 
 ## 3. Rollout
 
+**Status as of 2026-09-17: deployed and live-tested end to end on the production quota
+server, but deliberately not yet running unattended.** `avi-lab` (this server's previous
+classic-quota target) was declared defunct; the server was switched to this branch,
+`QUOTA_MODE=serverless`, and `94290_2026` directly (not a gradual rollout) — see the
+`quota-server-setup` memory note for the full migration (fresh venv, new PAT, ported the
+unpublished `f39936f` production fix forward so it wasn't lost in the switch). Both
+`periodic_poll.sh` and `end_of_day_ops.sh` have been run for real against production and
+verified clean. **Crontab is commented out on the operator's own instruction** — the whole
+system is proven working but nothing fires on a schedule yet; that's a deliberate, separate
+decision from "is it ready," not an oversight.
+
+Since this doc was last substantially updated, two more things happened: (1) the billing
+backstop (2.6a) gained a decoupled cadence (`SERVERLESS_BACKSTOP_INTERVAL_MINUTES`, separate
+from the primary poll) and now actively stops its warehouse after each check rather than
+waiting for auto_stop_mins — but it's currently **inactive** (`SERVERLESS_BILLING_WAREHOUSE_ID`
+unset): the obvious candidate warehouse (`Serverless Starter Warehouse`) turned out to have
+real, substantial student usage, not be the assumed-unused default, so its ACL was reverted
+and a genuinely dedicated warehouse (e.g. via Terraform) is still needed before this can be
+safely turned on. (2) "Serverless GPU Compute" was disabled workspace-wide via the Previews
+admin page (no API for it) — unrelated to this quota system directly, but a real cost-control
+action taken in the same workspace this week; documented in both `Preparing DBR environment
+for students.md` files so it's remembered next semester.
+
 **Step 0 — done.** Both open questions resolved by live test against `94290_2026`,
 2026-09-16 (operator confirmed this workspace is free to test against): the pure-Python
 invisibility question (1a) and the enforcement-lever behavior (2.5). Neither needs re-testing.

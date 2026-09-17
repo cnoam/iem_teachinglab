@@ -1,0 +1,435 @@
+<!doctype html>
+<title>Databricks Notebook Guide</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    color-scheme: light dark;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+
+    /* light (default) */
+    --paper: #F5F7FA;
+    --paper-raised: #FFFFFF;
+    --ink: #1B2430;
+    --muted: #5B6673;
+    --line: #D8DEE3;
+    --accent: #B5651D;       /* idle / attention — warm copper */
+    --accent-soft: #F1E2D2;
+    --active: #2F6F6B;       /* attached / good — deep teal */
+    --active-soft: #DCEBE9;
+    --danger: #A5432E;
+    --danger-soft: #F3E0DA;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #10151C;
+      --paper-raised: #171E27;
+      --ink: #E7ECF2;
+      --muted: #96A2B0;
+      --line: #2A3440;
+      --accent: #E0A356;
+      --accent-soft: #3A2E1E;
+      --active: #5FB3AC;
+      --active-soft: #1B3230;
+      --danger: #E08A76;
+      --danger-soft: #3A211C;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #10151C;
+    --paper-raised: #171E27;
+    --ink: #E7ECF2;
+    --muted: #96A2B0;
+    --line: #2A3440;
+    --accent: #E0A356;
+    --accent-soft: #3A2E1E;
+    --active: #5FB3AC;
+    --active-soft: #1B3230;
+    --danger: #E08A76;
+    --danger-soft: #3A211C;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    padding-inline: max(20px, calc((100% - 720px) / 2));
+    padding-block: 48px 64px;
+  }
+
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+
+  .mono {
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  /* ---------- header ---------- */
+
+  header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 40px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--active);
+  }
+
+  h1 {
+    margin: 0;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-weight: 700;
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .subhead {
+    color: var(--muted);
+    font-size: 0.95rem;
+    max-width: 60ch;
+  }
+
+  /* ---------- notebook "cell" sections ---------- */
+
+  .cell {
+    display: grid;
+    grid-template-columns: 84px 1fr;
+    gap: 4px 20px;
+    margin-block: 34px;
+  }
+
+  .cell-tag {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    padding-top: 3px;
+    white-space: nowrap;
+  }
+
+  .cell-body h2 {
+    margin: 0 0 10px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 1.05rem;
+    font-weight: 600;
+    text-wrap: balance;
+  }
+
+  .cell-body p { margin: 0 0 12px; max-width: 62ch; }
+  .cell-body p:last-child { margin-bottom: 0; }
+
+  @media (max-width: 480px) {
+    .cell { grid-template-columns: 1fr; gap: 2px; }
+    .cell-tag { padding-top: 0; }
+  }
+
+  /* ---------- connection-state diagram (Cmd 2) ---------- */
+
+  .state-diagram {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    margin: 20px 0 22px;
+    padding: 20px 16px 14px;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow-x: auto;
+  }
+
+  .state-node {
+    flex: 1 1 0;
+    min-width: 128px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    position: relative;
+  }
+
+  .state-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+  }
+  .state-node.is-active .state-dot { background: var(--active); }
+  .state-node.is-idle .state-dot { background: var(--accent); }
+  .state-node.is-detached .state-dot { background: transparent; border-color: var(--muted); }
+
+  .state-label {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .state-node.is-active .state-label { color: var(--active); }
+  .state-node.is-idle .state-label { color: var(--accent); }
+  .state-node.is-detached .state-label { color: var(--muted); }
+
+  .state-caption {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .state-connector {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 2px;
+    background: var(--line);
+    margin-top: 6px;
+    align-self: flex-start;
+  }
+
+  .state-warn {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+
+  /* ---------- budget bar (Cmd 3) ---------- */
+
+  .budget {
+    margin: 18px 0 8px;
+    padding: 18px 18px 16px;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+
+  .budget-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+
+  .budget-title { font-size: 0.85rem; font-weight: 600; }
+  .budget-example {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+
+  .budget-track {
+    position: relative;
+    height: 14px;
+    border-radius: 7px;
+    background: var(--line);
+    overflow: visible;
+  }
+
+  .budget-fill {
+    position: absolute;
+    inset: 0;
+    width: 42%;
+    border-radius: 7px;
+    background: linear-gradient(90deg, var(--active), var(--accent));
+  }
+
+  .budget-reset {
+    position: absolute;
+    top: -6px;
+    right: 0;
+    width: 2px;
+    height: 26px;
+    background: var(--ink);
+    opacity: 0.35;
+  }
+
+  .budget-foot {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .budget-foot .reset-tag { color: var(--ink); opacity: 0.6; }
+
+  .note {
+    margin-top: 14px;
+    padding-left: 14px;
+    border-left: 2px solid var(--active);
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .note strong { color: var(--ink); font-weight: 600; }
+
+  /* ---------- checklist (Cmd 4) ---------- */
+
+  .checklist {
+    list-style: none;
+    margin: 4px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.95rem;
+  }
+
+  .check {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    border-radius: 5px;
+    border: 1.5px solid var(--active);
+    display: grid;
+    place-items: center;
+  }
+  .check::after {
+    content: "";
+    width: 9px;
+    height: 5px;
+    border-left: 2px solid var(--active);
+    border-bottom: 2px solid var(--active);
+    transform: rotate(-45deg) translateY(-1px);
+  }
+
+  /* ---------- footer ---------- */
+
+  footer {
+    margin-top: 44px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  footer .comment { color: var(--active); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .cell { animation: rise 0.5s ease-out both; }
+    .cell:nth-of-type(1) { animation-delay: 0.02s; }
+    .cell:nth-of-type(2) { animation-delay: 0.08s; }
+    .cell:nth-of-type(3) { animation-delay: 0.14s; }
+    .cell:nth-of-type(4) { animation-delay: 0.2s; }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  }
+</style>
+
+<header>
+  <span class="eyebrow">Serverless compute &middot; student guide</span>
+  <h1>How to use the Databricks notebook</h1>
+  <p class="subhead">Serverless starts in seconds and shares a daily budget across your group — here's what to do differently because of that.</p>
+</header>
+
+<section class="cell">
+  <p class="cell-tag mono">Cmd&nbsp;1</p>
+  <div class="cell-body">
+    <h2>Getting started</h2>
+    <p>Open a notebook and attach it to <strong>Serverless</strong> from the compute dropdown, top-left. There's no cluster to wait for — it's ready in seconds.</p>
+  </div>
+</section>
+
+<section class="cell">
+  <p class="cell-tag mono">Cmd&nbsp;2</p>
+  <div class="cell-body">
+    <h2>Detach when you're not using it</h2>
+    <p>An attached notebook keeps using — and counts against your group's usage — even while it sits idle with nothing running. If you won't be actively working for the next few minutes, detach.</p>
+
+    <div class="state-diagram">
+      <div class="state-node is-active">
+        <div class="state-dot"></div>
+        <div class="state-label">Attached</div>
+        <div class="state-caption">Running a cell. This is expected — go ahead.</div>
+      </div>
+      <div class="state-connector"></div>
+      <div class="state-node is-idle">
+        <div class="state-dot"></div>
+        <div class="state-label">Idle</div>
+        <div class="state-caption">Still attached, nothing running. Still costs your group.</div>
+        <span class="state-warn">detach now</span>
+      </div>
+      <div class="state-connector"></div>
+      <div class="state-node is-detached">
+        <div class="state-dot"></div>
+        <div class="state-label">Detached</div>
+        <div class="state-caption">Costs nothing. Re-attaching takes seconds.</div>
+      </div>
+    </div>
+
+    <p>Don't count on it disconnecting itself — it may eventually happen, but there's no guaranteed timing. Walking away with a notebook attached can burn your group's budget for zero actual work.</p>
+  </div>
+</section>
+
+<section class="cell">
+  <p class="cell-tag mono">Cmd&nbsp;3</p>
+  <div class="cell-body">
+    <h2>Your group's daily quota</h2>
+    <p>Each <strong>group</strong> shares one compute-time budget per day — shared across everyone in the group, not per student. Several of you working at once, or notebooks left attached idle, all draw from the same total.</p>
+
+    <div class="budget">
+      <div class="budget-head">
+        <span class="budget-title">Group compute used today</span>
+        <span class="budget-example mono">illustrative example</span>
+      </div>
+      <div class="budget-track">
+        <div class="budget-fill"></div>
+        <div class="budget-reset"></div>
+      </div>
+      <div class="budget-foot">
+        <span>00:00</span>
+        <span class="reset-tag">resets &rarr; 24:00</span>
+      </div>
+    </div>
+
+    <p>If your group goes over the limit, you're blocked from starting <em>new</em> work — running a new cell, opening a notebook — until the reset. Anything already running when the limit is hit keeps running; you just can't start anything else.</p>
+    <p class="note"><strong>Resets at midnight.</strong> If you're blocked, there's nothing to fix or request — just wait for the reset, or plan your session around it.</p>
+  </div>
+</section>
+
+<section class="cell">
+  <p class="cell-tag mono">Cmd&nbsp;4</p>
+  <div class="cell-body">
+    <h2>Quick checklist</h2>
+    <ul class="checklist">
+      <li><span class="check"></span> Attach to <strong>Serverless</strong>, not a classic cluster.</li>
+      <li><span class="check"></span> Detach when you step away, even briefly.</li>
+      <li><span class="check"></span> Don't leave notebooks open overnight or between sessions.</li>
+      <li><span class="check"></span> Blocked? It resets at midnight — no need to contact anyone.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <span class="comment"># </span>quota resets daily at 00:00 &middot; shared per group, not per student
+</footer>

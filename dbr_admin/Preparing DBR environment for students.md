@@ -1,13 +1,7 @@
 
-2025-11-02: Must I keep using "real" clusters and not serverless?
 
-It looks like the new serverless mode has many limitations!
-https://gemini.google.com/share/215a64befbb7
 
-- strongly recommended to use Unity Catalog
-- no JAR lib , more limitations
-==> for now, I will use last year's configuration
-
+[2026-09-17 ] This version of the doc is tailored for Serverless configuration (vs. Classic clusters)
 
 # Preparing environment for students (users) in Azure + Databricks
 2025-10-30 Noam
@@ -26,9 +20,7 @@ To accomplish this, we need to use both Azure's and Databricks permissions
 
 If not done already, choose the "databricks" resource in the portal's home.
 
-**make sure to use the correct subscription!**
-
-Create. **MAKE SURE you create it in the correct subscription**
+Create. **MAKE SURE you create it in the correct subscription** and in the same **region** as the storage account you will use.
 
 ## Set user permissions
 To allow a user to see the DBR resource in her portal, she needs READER role.
@@ -65,8 +57,21 @@ Use the Terraform scripts. A detailed description is in the ../terraform/dbr/Rea
 
 This script will add the users, set their groups and provide the correct permissions (Entitlement) (step 4 in the list)
 
+
+2026-09-17: **WARNING -- disable "Serverless GPU Compute" before each semester starts.**
+Databricks now shows both "Serverless" and "Serverless GPU" in the notebook compute
+dropdown. **GPU serverless costs roughly 10-20x more per hour than CPU serverless**
+(GPU instance rates run ~$5-7/GPU-hour vs well under $1/hour for typical CPU serverless
+notebook work) -- a student picking it by accident, or out of curiosity, can burn a real,
+large bill in one session, and nothing in our quota system distinguishes GPU from CPU cost.
+**MAKE SURE this is disabled** in the workspace admin settings (click your name, top-right)
+--> **Previews** --> disable **"Serverless GPU Compute"**. This is a workspace-wide
+on/off toggle (not per-user/group), and there is no API for it (checked `workspace-conf`
+-- it rejects the plausible key names as invalid) -- it must be done manually in the UI,
+once per workspace, at the start of each semester.
+
 # Deny creation of clusters
-as of  2025-10-30, the TF script does not limit cluster creation.
+As of  2025-12-23, the TF script does limit cluster creation, so the rest of this section is informative.
 
 The default policy allows any user to create personal compute cluster with autoshutdown of about 4000 minutes. 
 
@@ -78,13 +83,32 @@ We had partial success doing it by editing cluster policy  (https://docs.databri
 And setting  
 ```
 "node_type_id": { 
-
     "type": "forbidden" 
-
   } 
 ```
 In the policy editing.
 
+# Add access to storage
+We use Unity Catalog: shared read-only course datasets are exposed as external UC volumes.
+
+Full history, the Azure RBAC prerequisites, and every gotcha hit doing this are documented in
+`../terraform/docs/course_data_storage_setup.md` -- read it before touching this again, especially
+"Key gotchas": a catalog's default storage credential is path-restricted (create a separate,
+dedicated credential); `Storage Blob Delegator` is required on the Access Connector's identity in
+addition to `Storage Blob Data Reader`; `READ_VOLUME` on the volume alone is not enough, `READ_FILES`
+on the external location is also needed per user; and grants must go to each student's email, not to
+`all_student_groups` -- group-based grants on volumes/external locations are silently accepted but
+do not actually resolve.
+
+As of 2026-09-10, this is fully managed by Terraform (`terraform/dbr-serverless/course_data.tf`, driven
+by `course_data_storage_account` / `course_data_containers` / `course_data_access_connector_id` in
+`terraform.tfvars`) -- new students in `users.csv` get the grants automatically on the next
+`terraform apply`, no manual CLI steps. The one manual, one-time step is the Azure RBAC on the Access
+Connector's managed identity (step 1 in the doc above) -- it doesn't change per semester or per
+student, so it isn't codified in Terraform here.
+
+## Verify users can read but not write to the containers
+Use the test account for this purpose.
 
 # Troubleshooting
 

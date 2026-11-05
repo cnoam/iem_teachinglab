@@ -9,32 +9,32 @@ Install terraform, databricks CLI and az CLI as described in `../dbr/readme.md` 
 
 **Workspace & auth**
 - [ ] Create the Databricks workspace in the Azure portal (with Unity Catalog; same region as the course storage).
-- [ ] `databricks auth login --host adb-<id>.<n>.azuredatabricks.net` -> creates a profile in `~/.databrickscfg`.
+- [x] `databricks auth login --host adb-<id>.<n>.azuredatabricks.net` -> creates a profile in `~/.databrickscfg`.
 - [ ] Verify identity: `databricks current-user me --profile <profile>`.
 
 **Terraform config**
-- [ ] `tf init`, then `tf workspace new <name>` (or `tf workspace select <name>`).
-- [ ] In `terraform.tfvars`:
+- [x] `tf init`, then `tf workspace new <name>` (or `tf workspace select <name>`).
+- [x] In `terraform.tfvars`:
   - `workspace_profiles` -- map the TF workspace name to the DBR profile (`safety.tf` blocks unmapped workspaces).
   - `catalog_name` -- an existing UC catalog (`databricks catalogs list`).
   - `course_data_*` -- storage account, containers, access connector ID (Azure RBAC prerequisites: `../docs/course_data_storage_setup.md`).
 
 **Students**
-- [ ] Export "Students create groups" CSV from Moodle, then
+- [x] Export "Students create groups" CSV from Moodle, then
   `python ../convert_moodle_to_tf_format.py <csv>` -> `users.csv` (one row per group, emails only).
 
 **Deploy**
-- [ ] `tf plan` -- sanity check the plan.
-- [ ] `tf apply` -- creates users, groups, UC schemas, SQL warehouse, SP secrets, course-data volumes and grants.
+- [x] `tf plan` -- sanity check the plan.
+- [x] `tf apply` -- creates users, groups, UC schemas, SQL warehouse, SP secrets, course-data volumes and grants.
 
 **Manual, once per workspace**
-- [ ] Admin console -> Settings -> Compute -> **Serverless interactive execution timeout**: set to 30-60 min (no TF/API for this).
-- [ ] Azure role assignment for the course Entra group: **Reader** on the resource group *containing the workspace*,
+- [x] Admin console -> Settings -> Compute -> **Serverless interactive execution timeout**: set to 30-60 min (no TF/API for this).
+- [x] Azure role assignment for the course Entra group: **Reader** on the resource group *containing the workspace*,
   assignment type **Active + Time bound** (not PIM Eligible!). Same for the test user `efratsupp@technion.ac.il`.
   Details: `../dbr/readme.md`, "Adding Azure Role Assignments to students".
 
 **Verify**
-- [ ] Run `docs/student_verification_checklist.md` with the test user.
+- [x] Run `docs/student_verification_checklist.md` with the test user.
 - [ ] Optional: quota monitor -- see `../../dbr_admin/`.
 
 ## Updating during the semester

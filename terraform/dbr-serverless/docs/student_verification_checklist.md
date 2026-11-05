@@ -1,4 +1,6 @@
 # Manual verification checklist -- can students actually work?
+*Updated: 2026-11-05*
+
 
 Run this once with a test user (currently `efratsupp@technion.ac.il`) before real students start, and again
 any time compute mode, UC grants, or storage wiring changes. This is not automated -- log in as the test
@@ -21,18 +23,21 @@ which is about the actual interactive student experience.
 ## 2. Workspace login
 
 - [x] User can open the Databricks workspace UI (Entra SSO).
-- [ ] User does NOT see other students'/groups' home folders under Workspace > Users (aside from their own
+- [x] User does NOT see other students'/groups' home folders under Workspace > Users (aside from their own
       and admins) -- if they do, verify they actually opened the intended workspace (see 1 above), not an
       unrelated one. [ DEFFERED -- there are no other users]
 
 ## 3. Notebook + Serverless compute
 
-- [X] User can create a new notebook.
-- [X] **Serverless** appears in the compute dropdown (if it does not, and only Serverless is absent while a
+- [x] User can create a new notebook.
+- [x] **Serverless** appears in the compute dropdown (if it does not, and only Serverless is absent while a
       classic cluster is selectable, check cluster ACLs / `single_user_name`; see `../../dbr/readme.md`,
       "Cluster ownership (service principals)"). In the current serverless-only setup, Serverless should be
       the only/default option since students have `allow_cluster_create = false` and no clusters exist.
-- [X] Attaching to Serverless succeeds and a trivial cell (`print("hello")`) runs.
+
+- [ ] ONLY "CPU serverless" can be used. Specifically, not "GPU serverless".      
+
+- [x] Attaching to Serverless succeeds and a trivial cell (`print("hello")`) runs.
 
 ## 4. Per-group UC schema (read/write, own data)
 
@@ -57,8 +62,9 @@ external volumes in section 6) are the durable storage; local paths are not.
 
 ## 5. Cross-group isolation (should FAIL)
 
-- [ ] User attempts to read/write another group's schema (e.g. `schema_02` if they're in `schema_01`) and
-      gets a permission-denied error, not data. [ DEFFERED -- there are no other users]
+- [x] User attempts to read/write another group's schema (e.g. `schema_02` if they're in `schema_01`) and
+      gets a permission-denied error, not data.
+- [x] user attempt the write to non-existing schema. should fail with "not found"
 
 ## 6. Shared course dataset (read-only) -- NEW, added 2026-09-10
 

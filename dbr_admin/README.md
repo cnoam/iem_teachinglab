@@ -1,3 +1,5 @@
+*Updated: 2026-11-05*
+
 This readme file details how to prepare for Databricks clusters deployment for a course.
 
 
@@ -143,6 +145,32 @@ and `$ chmod +x ~/*.sh`
 The output of cron itself is at `journalctl` and so are the script outputs.
 
 To see the output of the scripts which cron ran, `journalctl -t dbr_scripts` . Add `-r` to see the latest records first.
+
+## GPU usage alert (serverless)
+Serverless GPU ("AI Runtime") can't be disabled from the workspace (the `air_interactive` setting is
+`false` but effective `true` since GA -- needs Databricks account admin, request sent to IT 2026-11-05).
+Until then, `python -m dbr_admin.gpu_alert` emails `ADMIN_EMAIL` about any GPU usage found in
+`system.billing.usage`. Alert only, never blocks. Billing data is hours-delayed.
+Each (date, user, notebook) is reported once (table `gpu_alert_sent`).
+
+- **Use the dedicated admin warehouse** "Admin Checks (no students)", created by
+  `terraform/dbr-serverless/admin_warehouse.tf`. Get its ID with `tf output admin_checks_warehouse_id`.
+  In `.env`, set `GPU_ALERT_WAREHOUSE_ID=<id>`, `GPU_ALERT_STOP_WAREHOUSE=true` and optionally
+  `GPU_ALERT_LOOKBACK_DAYS` (default 3).
+  Setting `SERVERLESS_BILLING_WAREHOUSE_ID=<id>` to the same ID also activates the billing backstop.
+  Beware: the backstop **blocks** groups, using placeholder thresholds.
+- Why it's dedicated: both checks stop the warehouse after the query, which would kill students' sessions
+  on a shared warehouse. Without stopping, each run on `Serverless Starter Warehouse` (Small, 10 min
+  auto-stop) costs about $1.40. Don't use `Shared Student Warehouse`: it's classic, so a cold start takes
+  minutes and the query times out.
+- The billing-backstop query (`serverless_billing.py`) does **not** see GPU usage: GPU rows have
+  `product_features.serverless_gpu`, not `is_serverless`, and `run_as` is NULL (user is in `created_by`).
+- Cron (4x/day is enough given the hours-long billing delay), with `gpu_alert.sh` built like
+  `periodic_poll.sh` but running `timeout 150 python -m dbr_admin.gpu_alert`:
+  ```
+  23 7,12,17,22 * * * /home/azureuser/gpu_alert.sh 2>&1 | systemd-cat -t dbr_scripts
+  ```
+- On the first run it reports all GPU usage in the lookback window, including earlier sessions.
 
 
 

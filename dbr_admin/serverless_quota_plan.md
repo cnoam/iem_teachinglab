@@ -1,4 +1,5 @@
 # Adapting the usage-quota monitor to serverless compute
+*Updated: 2026-11-05*
 
 Status: plan / not yet implemented.
 Written 2026-09-16. Supersedes the "no equivalent uptime-monitor hook" paragraph in
@@ -417,10 +418,16 @@ waiting for auto_stop_mins — but it's currently **inactive** (`SERVERLESS_BILL
 unset): the obvious candidate warehouse (`Serverless Starter Warehouse`) turned out to have
 real, substantial student usage, not be the assumed-unused default, so its ACL was reverted
 and a genuinely dedicated warehouse (e.g. via Terraform) is still needed before this can be
-safely turned on. (2) "Serverless GPU Compute" was disabled workspace-wide via the Previews
+safely turned on. **2026-11-05:** added as `terraform/dbr-serverless/admin_warehouse.tf`
+("Admin Checks (no students)"). It's planned but not yet applied. Once applied, set
+`SERVERLESS_BILLING_WAREHOUSE_ID` to its ID to activate the backstop. (2) "Serverless GPU Compute" was disabled workspace-wide via the Previews
 admin page (no API for it) — unrelated to this quota system directly, but a real cost-control
 action taken in the same workspace this week; documented in both `Preparing DBR environment
-for students.md` files so it's remembered next semester.
+for students.md` files so it's remembered next semester. **2026-11-05: no longer effective**
+— it went GA as "AI Runtime" (`air_interactive`, effective `true` despite the stored `false`).
+Disabling it now needs an account admin. Meanwhile, `dbr_admin/gpu_alert.py` is an alert-only
+detector. Note: GPU usage is invisible to the billing backstop above, because GPU rows aren't
+`is_serverless` and have a NULL `run_as`.
 
 **Step 0 — done.** Both open questions resolved by live test against `94290_2026`,
 2026-09-16 (operator confirmed this workspace is free to test against): the pure-Python

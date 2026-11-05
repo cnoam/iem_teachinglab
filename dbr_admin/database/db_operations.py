@@ -193,6 +193,18 @@ class IngestWatermark(BaseModel):
         table_name = 'ingest_watermark'
 
 
+class GpuAlertSent(BaseModel):
+    """
+    Dedupe for resource_manager/gpu_alert.py: one row per already-reported
+    (usage_date|user|notebook_id|sku) key, so each GPU session is emailed once.
+    """
+    key = CharField(primary_key=True)
+    sent_at = DateTimeField(default=datetime.datetime.now)
+
+    class Meta:
+        table_name = 'gpu_alert_sent'
+
+
 # NEW: Function to handle production setup (called in poll_clusters.py)
 def initialize_production_db():
     db_instance = SqliteDatabase(DATABASE_FILE_NAME,
@@ -221,6 +233,7 @@ def initialize_production_db():
     GroupQuotaState.bind(db_instance)
     GroupDailyUsage.bind(db_instance)
     IngestWatermark.bind(db_instance)
+    GpuAlertSent.bind(db_instance)
     return db_instance
 
 
@@ -233,6 +246,7 @@ def create_tables(db_instance: SqliteDatabase):
     db_instance.create_tables([
         ClusterUptime, ClusterCumulativeUptime, ClusterInfo,
         QueryUsage, GroupQuotaState, GroupDailyUsage, IngestWatermark,
+        GpuAlertSent,
     ])
 
 def to_datetime(s):

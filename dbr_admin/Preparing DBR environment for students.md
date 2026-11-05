@@ -1,4 +1,4 @@
-
+*Updated: 2026-11-05*
 
 
 [2026-09-17 ] This version of the doc is tailored for Serverless configuration (vs. Classic clusters)
@@ -69,6 +69,15 @@ large bill in one session, and nothing in our quota system distinguishes GPU fro
 on/off toggle (not per-user/group), and there is no API for it (checked `workspace-conf`
 -- it rejects the plausible key names as invalid) -- it must be done manually in the UI,
 once per workspace, at the start of each semester.
+
+> **2026-11-05 UPDATE: the toggle above no longer works.** The feature went GA as
+> **"AI Runtime"** (setting `air_interactive`, plus `air_h100_multinode`). The workspace value
+> we set is still `false`, but the *effective* value is `true`. Check with
+> `databricks api get /api/2.1/settings/air_interactive --profile <p>`. Disabling it needs a
+> Databricks **account admin** (request sent to IT 2026-11-05). Until then,
+> `python -m dbr_admin.gpu_alert` emails the admin about any GPU usage (see `README.md`).
+> Measured cost: one real GPU session ran ~7.2 DBU/h x $0.65 = ~$4.7/h, vs CPU serverless
+> ~$0.60/h (median) to ~$2.25/h (p90) per user -- roughly 2-8x, not 10-20x (small sample).
 
 # Deny creation of clusters
 As of  2025-12-23, the TF script does limit cluster creation, so the rest of this section is informative.

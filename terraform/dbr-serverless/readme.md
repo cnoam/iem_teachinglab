@@ -44,6 +44,8 @@ append new groups at the end, never reorder/delete rows in the middle.
 ## Notes
 - State is local (`terraform.tfstate.d/<tf-workspace>/dev.tfstate`, git-ignored) -- back it up.
 - UC grants go to individual student emails (workspace-local groups don't resolve in UC).
+- `admin_warehouse.tf` creates an admin-only warehouse for `dbr_admin`'s billing and GPU-alert checks
+  (they stop it after each query). Never grant students access to it. ID: `tf output admin_checks_warehouse_id`.
 - **External apps / service principals**: students may write apps (on a laptop or VM) that connect to
   Databricks, e.g. SQL queries via the shared warehouse. Each group gets a service principal (`sp_NN`)
   limited to its own schema. Hand each group its credentials from

@@ -31,6 +31,7 @@ from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.sql import StatementState
 
 from ..database.db_operations import GpuAlertSent
+from .warehouse_stop import stop_warehouse as stop_dedicated_warehouse
 
 
 def _gpu_query(workspace_id: str, since: str) -> str:
@@ -76,10 +77,7 @@ def fetch_gpu_usage(client: WorkspaceClient, warehouse_id: str, workspace_id: st
         return _fetch(client, warehouse_id, workspace_id, lookback_days, today, extra_wait_seconds, sleep)
     finally:
         if stop_warehouse:
-            try:
-                client.warehouses.stop(warehouse_id)
-            except Exception as ex:
-                logging.getLogger('GPU_ALERT').warning(f"Could not stop warehouse {warehouse_id}: {ex}")
+            stop_dedicated_warehouse(client, warehouse_id, logging.getLogger('GPU_ALERT'))
 
 
 def _fetch(client, warehouse_id, workspace_id, lookback_days, today, extra_wait_seconds, sleep):

@@ -43,6 +43,7 @@ from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.sql import StatementState
 
 from ..database.db_operations import IngestWatermark
+from .warehouse_stop import stop_warehouse as stop_dedicated_warehouse
 
 BACKSTOP_WATERMARK_KEY = "serverless_billing_backstop"
 
@@ -102,12 +103,10 @@ def fetch_billed_seconds_per_user(client: WorkspaceClient, warehouse_id: str,
         # whether the query succeeded, failed, or raised; a failure to
         # stop is logged, never raised (the query result/error is what
         # actually matters to the caller).
-        try:
-            client.warehouses.stop(warehouse_id)
-        except Exception as stop_ex:
-            logging.getLogger('SERVERLESS_BILLING_BACKSTOP').warning(
-                f"Could not stop warehouse {warehouse_id} after billing query: {stop_ex}"
-            )
+        # stop_dedicated_warehouse() waits before stopping and re-stops if the
+        # warehouse wakes back up -- see warehouse_stop.py for why.
+        stop_dedicated_warehouse(client, warehouse_id,
+                                 logging.getLogger('SERVERLESS_BILLING_BACKSTOP'))
 
     if result.status.state != StatementState.SUCCEEDED:
         raise RuntimeError(f"system.billing.usage query did not succeed: {result.status}")

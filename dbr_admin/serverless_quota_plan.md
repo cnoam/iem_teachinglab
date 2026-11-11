@@ -1,5 +1,5 @@
 # Adapting the usage-quota monitor to serverless compute
-*Updated: 2026-11-05*
+*Updated: 2026-11-11*
 
 Status: plan / not yet implemented.
 Written 2026-09-16. Supersedes the "no equivalent uptime-monitor hook" paragraph in
@@ -411,6 +411,11 @@ verified clean. **Crontab is commented out on the operator's own instruction** �
 system is proven working but nothing fires on a schedule yet; that's a deliberate, separate
 decision from "is it ready," not an oversight.
 
+**Update 2026-11-05: the crontab is in fact active** — it was re-enabled on 2026-09-17 14:05,
+and the */15 poll and 00:07 end-of-day jobs have run since (see `journalctl -t dbr_scripts`).
+The GPU alert (`~/gpu_alert.sh`) is deployed on the server and was verified by one manual run,
+and it has its **own** cron line (4x/day, not called from `periodic_poll.sh`), added 2026-11-05.
+
 Since this doc was last substantially updated, two more things happened: (1) the billing
 backstop (2.6a) gained a decoupled cadence (`SERVERLESS_BACKSTOP_INTERVAL_MINUTES`, separate
 from the primary poll) and now actively stops its warehouse after each check rather than
@@ -419,8 +424,11 @@ unset): the obvious candidate warehouse (`Serverless Starter Warehouse`) turned 
 real, substantial student usage, not be the assumed-unused default, so its ACL was reverted
 and a genuinely dedicated warehouse (e.g. via Terraform) is still needed before this can be
 safely turned on. **2026-11-05:** added as `terraform/dbr-serverless/admin_warehouse.tf`
-("Admin Checks (no students)"). It's planned but not yet applied. Once applied, set
-`SERVERLESS_BILLING_WAREHOUSE_ID` to its ID to activate the backstop. (2) "Serverless GPU Compute" was disabled workspace-wide via the Previews
+("Admin Checks (no students)"). Applied 2026-11-05 (ID `29523217d73bd3e1`). Set `SERVERLESS_BILLING_WAREHOUSE_ID` to its ID
+to activate the backstop -- **done 2026-11-11** (same warehouse as the GPU alert), after a dry run
+showed nobody over the 300-min threshold; `periodic_poll.sh` timeout raised 30 -> 90s first (see `README.md`). Pitfall found while testing it: `warehouses.stop()`
+issued right after a system-table query is silently undone (the warehouse restarts within
+~0.4s). `resource_manager/warehouse_stop.py` waits 10s first and re-stops if needed. (2) "Serverless GPU Compute" was disabled workspace-wide via the Previews
 admin page (no API for it) — unrelated to this quota system directly, but a real cost-control
 action taken in the same workspace this week; documented in both `Preparing DBR environment
 for students.md` files so it's remembered next semester. **2026-11-05: no longer effective**

@@ -1,4 +1,4 @@
-*Updated: 2026-11-05*
+*Updated: 2026-11-11*
 
 This readme file details how to prepare for Databricks clusters deployment for a course.
 
@@ -124,7 +124,7 @@ source dbr_admin/venv/bin/activate
 
 # if you don't specify the DB absolute path, a default will be used.
 export CLUSTER_UPTIMES_DB="/home/azureuser/iem_teachinglab/cluster_uptimes.db"
-timeout 30 python -m dbr_admin.poll_clusters
+timeout 90 python -m dbr_admin.poll_clusters
 deactivate
 logger -t dbr_scripts Periodic Poll finished
 
@@ -159,6 +159,13 @@ Each (date, user, notebook) is reported once (table `gpu_alert_sent`).
   `GPU_ALERT_LOOKBACK_DAYS` (default 3).
   Setting `SERVERLESS_BILLING_WAREHOUSE_ID=<id>` to the same ID also activates the billing backstop.
   Beware: the backstop **blocks** groups, using placeholder thresholds.
+  Before enabling it, raise `timeout 30` to `timeout 90` in `~/periodic_poll.sh`: a normal poll takes 4-6s,
+  but the hourly backstop run adds a cold-start query plus ~15s of warehouse stopping (~40s total), and a
+  timeout kill is silent (no email). Threshold: `SERVERLESS_BACKSTOP_MINUTES` (default 300) of billed
+  time **per user** per day; over it, the whole group is blocked and emailed.
+  Dry run 2026-11-11 (same query on the admin warehouse, Nov 7-11, no blocking): it works, the highest
+  was 230 min (a TA in `group_20`), so nobody would have been blocked. Serverless `INTERACTIVE` rows all
+  have `run_as`; SQL-warehouse rows have none, so the backstop can't attribute them (the primary quota covers those).
 - Why it's dedicated: both checks stop the warehouse after the query, which would kill students' sessions
   on a shared warehouse. Without stopping, each run on `Serverless Starter Warehouse` (Small, 10 min
   auto-stop) costs about $1.40. Don't use `Shared Student Warehouse`: it's classic, so a cold start takes
@@ -171,6 +178,11 @@ Each (date, user, notebook) is reported once (table `gpu_alert_sent`).
   23 7,12,17,22 * * * /home/azureuser/gpu_alert.sh 2>&1 | systemd-cat -t dbr_scripts
   ```
 - On the first run it reports all GPU usage in the lookback window, including earlier sessions.
+- Emails to `ADMIN_EMAIL`: a GPU usage alert; "GPU alert check skipped" (query didn't finish, e.g.
+  warehouse cold start -- nothing was checked that run); "GPU alert check crashed!" (any other error).
+  A run killed by `timeout 150` sends **no** email: its log shows "GPU alert starting" with no "finished".
+- Verify it ran: `journalctl -t dbr_scripts --since "-2 days" --no-pager | grep GPU` -- each run logs
+  `GPU alert starting`, then `INFO:GPU_ALERT:No new GPU usage (...)` (or an alert/skip line), then `GPU alert finished`.
 
 
 

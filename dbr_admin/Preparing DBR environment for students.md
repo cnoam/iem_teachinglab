@@ -1,4 +1,4 @@
-*Updated: 2026-11-05*
+*Updated: 2026-11-11*
 
 
 [2026-09-17 ] This version of the doc is tailored for Serverless configuration (vs. Classic clusters)
@@ -32,7 +32,26 @@ To allow a user to see the DBR resource in her portal, she needs READER role.
 - - in the Members tab, "+select members".
 - - search for the ActiveDirectory (aka EntraID) for the relevant course and year and semester. Example "dds00940290". The group we want here is "dds00940290w-2025"
 - - "Select" this group
+- - In the **Assignment type** tab, choose **"Active"** (not "Eligible"). "Eligible" is a PIM
+    assignment: every user would have to activate the role themselves in PIM, which students
+    won't do, so they will not see the workspace.
 - - "Review + assign"
+
+> **Notes (2026-11-11):**
+> - Azure sends **no email** for a role assignment -- students will not get an invitation mail.
+>   It just becomes visible in their portal.
+> - After assignment, students must **sign out and back in** (token refresh); group-based role
+>   propagation can take up to ~30 minutes.
+> - If still not visible: in the portal, make sure the Technion directory is selected and the
+>   subscription is not hidden by the subscription filter (Settings --> Directories + subscriptions),
+>   then search "Azure Databricks" or "All resources".
+> - Test first with the test account (sign out/in) before chasing student reports.
+> - Verify from CLI: `az role assignment list -g <rg> --include-inherited -o table` and
+>   `az ad group member list -g <group> --query "length(@)"`.
+> - **The portal is optional.** Students who are users in the DBR workspace (Terraform step below)
+>   can open the workspace URL directly (`https://adb-<id>.<n>.azuredatabricks.net`, from
+>   `az databricks workspace show -g <rg> -n <ws> --query workspaceUrl`). Simplest: publish this URL
+>   to the students. The Reader role only lets them find the workspace in the portal.
 
 You can add specific users (who are not in the AD groups) directly: for example the TA and the test account.
 - The TA should have "contributor" role (use end date)

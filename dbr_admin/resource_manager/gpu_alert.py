@@ -155,6 +155,11 @@ def check_and_alert(client: WorkspaceClient, warehouse_id: str, host: str, admin
                                stop_warehouse=stop_warehouse)
     except QueryNotReady as ex:
         logger.warning(f"GPU check skipped this run: {ex}")
+        # Email so a stuck warehouse doesn't silently disable the check (0 skips in first 25 runs).
+        send_emails("GPU alert check skipped",
+                    f"<p>The GPU usage query did not finish this run, so GPU usage was NOT checked. "
+                    f"It will retry on the next cron run.</p><pre>{ex}</pre>",
+                    [admin_email], logger)
         return []
     fresh = new_gpu_usage(rows)
     if not fresh:

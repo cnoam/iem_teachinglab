@@ -100,7 +100,7 @@ def test_slow_warehouse_polls_then_succeeds():
     assert len(rows) == 1
 
 
-def test_too_slow_warehouse_cancels_and_skips_without_email():
+def test_too_slow_warehouse_cancels_and_emails_skip():
     c = _client([ROW])
     pending = StatementResponse(statement_id='s1', status=StatementStatus(state=StatementState.PENDING))
     c.statement_execution.execute_statement.return_value = pending
@@ -112,7 +112,10 @@ def test_too_slow_warehouse_cancels_and_skips_without_email():
     send = MagicMock()
     with patch('dbr_admin.resource_manager.gpu_alert.fetch_gpu_usage', side_effect=QueryNotReady('x')):
         assert check_and_alert(c, 'wh', 'h', 'admin@x', 3, send) == []
-    send.assert_not_called()
+    send.assert_called_once()
+    subject, _, recipients, _ = send.call_args.args
+    assert 'skipped' in subject and recipients == ['admin@x']
+    assert GpuAlertSent.select().count() == 0
 
 
 def test_no_rows_no_email():

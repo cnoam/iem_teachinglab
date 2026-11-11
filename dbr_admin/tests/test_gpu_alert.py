@@ -10,7 +10,7 @@ from databricks.sdk.service.sql import StatementResponse, StatementStatus, State
 from dbr_admin.resource_manager.gpu_alert import (
     check_and_alert, fetch_gpu_usage, _gpu_query, QueryNotReady,
 )
-from dbr_admin.database.db_operations import GpuAlertSent
+from dbr_admin.database.db_operations import GpuAlertSent, ErrorReport
 
 TEST_DB = SqliteDatabase(':memory:')
 
@@ -21,11 +21,13 @@ ROW = ['2026-09-11', 'nagham.omar@campus.technion.ac.il', '2562372908077412',
 @pytest.fixture(autouse=True)
 def db():
     GpuAlertSent.bind(TEST_DB)
+    ErrorReport.bind(TEST_DB)
     with TEST_DB.connection_context():
-        TEST_DB.create_tables([GpuAlertSent])
+        TEST_DB.create_tables([GpuAlertSent, ErrorReport])
         yield
-        TEST_DB.drop_tables([GpuAlertSent])
+        TEST_DB.drop_tables([GpuAlertSent, ErrorReport])
     GpuAlertSent.bind(None)
+    ErrorReport.bind(None)
 
 
 def _client(data_array, state=StatementState.SUCCEEDED):

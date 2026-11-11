@@ -96,7 +96,11 @@ if __name__ == "__main__":
             backend.restore(host, token, logger)
             backend.roll_up_and_reset(prod_db, logger)
             yesterday = date.today() - timedelta(days=1)
-            report_html = backend.report(yesterday)
+            from .resource_manager.error_report import health_report_html, purge_run_counts
+            # Health section: every scheduled job's runs vs expected, and open errors (plan: all
+            # errors must be reported; a missing daily report is itself the alarm).
+            report_html = backend.report(yesterday) + health_report_html(yesterday)
+            purge_run_counts()
             send_emails(subject="Daily serverless usage report", body=report_html,
                         recipients=[os.getenv('REPORT_RECIPIENT_EMAIL')], logger=logger)
             backend.report(date.today() - timedelta(days=1))

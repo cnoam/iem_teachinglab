@@ -205,6 +205,36 @@ class GpuAlertSent(BaseModel):
         table_name = 'gpu_alert_sent'
 
 
+class ErrorReport(BaseModel):
+    """
+    Open (unresolved) errors for resource_manager/error_report.py, one row per
+    (job, kind). Throttles repeat emails and triggers one "recovered" email.
+    """
+    key = CharField(primary_key=True)          # f"{job}|{kind}"
+    job = CharField()
+    kind = CharField()
+    first_at = DateTimeField()
+    last_at = DateTimeField()
+    last_emailed_at = DateTimeField(null=True)
+    count = IntegerField(default=0)
+    last_detail = TextField(default='')
+
+    class Meta:
+        table_name = 'error_report'
+
+
+class JobRunCount(BaseModel):
+    """Runs per (day, job), ok vs failed -- feeds the daily report's health section."""
+    day = DateField()
+    job = CharField()
+    ok = IntegerField(default=0)
+    failed = IntegerField(default=0)
+
+    class Meta:
+        table_name = 'job_run_count'
+        primary_key = CompositeKey('day', 'job')
+
+
 # NEW: Function to handle production setup (called in poll_clusters.py)
 def initialize_production_db():
     db_instance = SqliteDatabase(DATABASE_FILE_NAME,
@@ -234,6 +264,8 @@ def initialize_production_db():
     GroupDailyUsage.bind(db_instance)
     IngestWatermark.bind(db_instance)
     GpuAlertSent.bind(db_instance)
+    ErrorReport.bind(db_instance)
+    JobRunCount.bind(db_instance)
     return db_instance
 
 
@@ -246,7 +278,7 @@ def create_tables(db_instance: SqliteDatabase):
     db_instance.create_tables([
         ClusterUptime, ClusterCumulativeUptime, ClusterInfo,
         QueryUsage, GroupQuotaState, GroupDailyUsage, IngestWatermark,
-        GpuAlertSent,
+        GpuAlertSent, ErrorReport, JobRunCount,
     ])
 
 def to_datetime(s):

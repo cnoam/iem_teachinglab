@@ -43,6 +43,7 @@ from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.sql import StatementState
 
 from ..database.db_operations import IngestWatermark
+from .error_report import record_run, report_error, report_ok
 from .warehouse_stop import stop_warehouse as stop_dedicated_warehouse
 
 BACKSTOP_WATERMARK_KEY = "serverless_billing_backstop"
@@ -133,7 +134,13 @@ def backstop_check(client, warehouse_id, email_to_group, backstop_seconds,
         billed = fetch_billed_seconds_per_user(client, warehouse_id)
     except Exception as ex:
         logger.warning(f"Billing backstop check failed (skipping, non-fatal): {ex}")
+        # Non-fatal for the poll, but must reach the admin (throttled; never raises).
+        record_run('billing_backstop', False)
+        report_error('billing_backstop', 'query failed',
+                     f"{ex}\n\nNobody was checked against the billing backstop this run.", logger=logger)
         return set()
+    record_run('billing_backstop', True)
+    report_ok('billing_backstop', 'query failed', logger=logger)
 
     over = set()
     for user_name, seconds in billed.items():

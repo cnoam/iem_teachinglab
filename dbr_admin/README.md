@@ -115,29 +115,24 @@ In `/home/azureuser`, create the files:
 > this repo, so this rename does not update them automatically. Until they're updated, cron
 > will fail with `ModuleNotFoundError: No module named 'databricks'`.
 
+Each wrapper just calls the shared runner `dbr_admin/scripts/run_job.sh <job> <timeout> <module>`, which
+runs the job under `timeout`, then `python -m dbr_admin.job_status <job> <rc>` -- that emails `ADMIN_EMAIL` on
+**any** non-zero exit (timeout kill = rc 124, config error, crash) and counts the run (see "Error reporting").
 ```
-~$ cat periodic_poll.sh 
-#!/bin/bash -eu
-logger -t dbr_scripts Periodic Poll starting
-cd /home/azureuser/iem_teachinglab
-source dbr_admin/venv/bin/activate
+~$ cat periodic_poll.sh
+#!/bin/bash
+exec /home/azureuser/iem_teachinglab/dbr_admin/scripts/run_job.sh periodic_poll 90 dbr_admin.poll_clusters
 
-# if you don't specify the DB absolute path, a default will be used.
-export CLUSTER_UPTIMES_DB="/home/azureuser/iem_teachinglab/cluster_uptimes.db"
-timeout 90 python -m dbr_admin.poll_clusters
-deactivate
-logger -t dbr_scripts Periodic Poll finished
+~$ cat end_of_day_ops.sh
+#!/bin/bash
+exec /home/azureuser/iem_teachinglab/dbr_admin/scripts/run_job.sh end_of_day 600 dbr_admin.end_of_day_operations
 
-
-~$ cat end_of_day_ops.sh 
-#!/bin/bash -eu
-logger -t dbr_scripts EndOfDay starting
-cd /home/azureuser/iem_teachinglab
-source dbr_admin/venv/bin/activate
-python -m dbr_admin.end_of_day_operations
-deactivate
-logger -t dbr_scripts EndOfDay finished
+~$ cat gpu_alert.sh
+#!/bin/bash
+exec /home/azureuser/iem_teachinglab/dbr_admin/scripts/run_job.sh gpu_alert 150 dbr_admin.gpu_alert
 ```
+The job name must match `EXPECTED_RUNS_PER_DAY` in `resource_manager/error_report.py`. Poll timeout is 90s:
+a normal poll takes 4-6s, the hourly backstop run ~36s.
 and `$ chmod +x ~/*.sh`
 
 
@@ -145,6 +140,25 @@ and `$ chmod +x ~/*.sh`
 The output of cron itself is at `journalctl` and so are the script outputs.
 
 To see the output of the scripts which cron ran, `journalctl -t dbr_scripts` . Add `-r` to see the latest records first.
+
+## Error reporting (every error is emailed)
+Rule (2026-11-11): every error must reach `ADMIN_EMAIL`. Code: `resource_manager/error_report.py`.
+
+| Error | Reported by | Email subject |
+|---|---|---|
+| any job exits non-zero: timeout kill (rc 124), config error, crash | `run_job.sh` -> `job_status` | `ERROR: <job>: exit status` |
+| Python crash (poll, GPU check) | the job itself, with traceback | `... crashed!` (plus the line above) |
+| billing backstop query failed | `serverless_billing.backstop_check` | `ERROR: billing_backstop: query failed` |
+| GPU query didn't finish | `gpu_alert.check_and_alert` | `ERROR: gpu_alert: check skipped` |
+| admin warehouse would not stop (costs money) | `warehouse_stop.stop_warehouse` | `ERROR: warehouse_stop: not stopped` |
+
+- Throttling: first occurrence emails at once; while the same error repeats, at most one "still failing" email
+  every 6h. When it works again, one `RECOVERED: ...` email. State: table `error_report`.
+- Daily report (00:07) has a **health section**: yesterday's ok/failed runs per job vs expected
+  (poll 96, backstop 24, GPU 4, end of day 1), plus open errors. Missing runs mean cron or the server stopped.
+- What cannot email: the server being down, or email itself broken (Azure key). Then the **daily report
+  doesn't arrive** -- treat a missing daily report as an alarm. The journal still has
+  `<job>: job_status FAILED to report`.
 
 ## GPU usage alert (serverless)
 Serverless GPU ("AI Runtime") can't be disabled from the workspace (the `air_interactive` setting is
@@ -159,9 +173,8 @@ Each (date, user, notebook) is reported once (table `gpu_alert_sent`).
   `GPU_ALERT_LOOKBACK_DAYS` (default 3).
   Setting `SERVERLESS_BILLING_WAREHOUSE_ID=<id>` to the same ID also activates the billing backstop.
   Beware: the backstop **blocks** groups, using placeholder thresholds.
-  Before enabling it, raise `timeout 30` to `timeout 90` in `~/periodic_poll.sh`: a normal poll takes 4-6s,
-  but the hourly backstop run adds a cold-start query plus ~15s of warehouse stopping (~40s total), and a
-  timeout kill is silent (no email). Threshold: `SERVERLESS_BACKSTOP_MINUTES` (default 300) of billed
+  Enabled 2026-11-11. The poll needs a 90s timeout (not 30): a normal poll takes 4-6s, the hourly backstop
+  run ~36s (cold-start query plus ~15s of warehouse stopping). Threshold: `SERVERLESS_BACKSTOP_MINUTES` (default 300) of billed
   time **per user** per day; over it, the whole group is blocked and emailed.
   Dry run 2026-11-11 (same query on the admin warehouse, Nov 7-11, no blocking): it works, the highest
   was 230 min (a TA in `group_20`), so nobody would have been blocked. Serverless `INTERACTIVE` rows all
@@ -172,17 +185,17 @@ Each (date, user, notebook) is reported once (table `gpu_alert_sent`).
   minutes and the query times out.
 - The billing-backstop query (`serverless_billing.py`) does **not** see GPU usage: GPU rows have
   `product_features.serverless_gpu`, not `is_serverless`, and `run_as` is NULL (user is in `created_by`).
-- Cron (4x/day is enough given the hours-long billing delay), with `gpu_alert.sh` built like
-  `periodic_poll.sh` but running `timeout 150 python -m dbr_admin.gpu_alert`:
+- Cron (4x/day is enough given the hours-long billing delay), wrapper `~/gpu_alert.sh` as above:
   ```
   23 7,12,17,22 * * * /home/azureuser/gpu_alert.sh 2>&1 | systemd-cat -t dbr_scripts
   ```
 - On the first run it reports all GPU usage in the lookback window, including earlier sessions.
-- Emails to `ADMIN_EMAIL`: a GPU usage alert; "GPU alert check skipped" (query didn't finish, e.g.
-  warehouse cold start -- nothing was checked that run); "GPU alert check crashed!" (any other error).
-  A run killed by `timeout 150` sends **no** email: its log shows "GPU alert starting" with no "finished".
-- Verify it ran: `journalctl -t dbr_scripts --since "-2 days" --no-pager | grep GPU` -- each run logs
-  `GPU alert starting`, then `INFO:GPU_ALERT:No new GPU usage (...)` (or an alert/skip line), then `GPU alert finished`.
+- Emails to `ADMIN_EMAIL`: a GPU usage alert; "ERROR: gpu_alert: check skipped" (query didn't finish,
+  e.g. warehouse cold start -- nothing was checked that run); "GPU alert check crashed!"; and, from the
+  runner, "ERROR: gpu_alert: exit status" for a timeout kill or any non-zero exit.
+- Verify it ran: `journalctl -t dbr_scripts --since "-2 days" --no-pager | grep -i gpu` -- each run logs
+  `gpu_alert starting`, then `INFO:GPU_ALERT:No new GPU usage (...)` (or an alert/skip line), then
+  `gpu_alert finished rc=0`. Also see the health section of the daily report.
 
 
 

@@ -48,6 +48,11 @@ from .warehouse_stop import stop_warehouse as stop_dedicated_warehouse
 
 BACKSTOP_WATERMARK_KEY = "serverless_billing_backstop"
 
+# The poll starts every 15 min, a few seconds late each time, so "exactly 60 min since the last
+# run" was often missed by seconds and the backstop slipped to 75 min (seen 2026-11-12: ~19-20
+# runs/day instead of 24). Treat the interval as elapsed this much early.
+CADENCE_SLACK_SECONDS = 120
+
 
 def should_run_backstop(interval_seconds: float, now_ms: int = None) -> bool:
     """
@@ -57,7 +62,7 @@ def should_run_backstop(interval_seconds: float, now_ms: int = None) -> bool:
     """
     now_ms = now_ms if now_ms is not None else int(time.time() * 1000)
     wm, _ = IngestWatermark.get_or_create(backend=BACKSTOP_WATERMARK_KEY, defaults={'last_seen_ms': 0})
-    if now_ms - wm.last_seen_ms >= interval_seconds * 1000:
+    if now_ms - wm.last_seen_ms >= (interval_seconds - CADENCE_SLACK_SECONDS) * 1000:
         wm.last_seen_ms = now_ms
         wm.save()
         return True

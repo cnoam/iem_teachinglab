@@ -162,3 +162,13 @@ def test_should_run_backstop_advances_watermark_only_when_running():
     should_run_backstop(interval_seconds=3600, now_ms=now + 1000)
     wm = IngestWatermark.get(IngestWatermark.backend == 'serverless_billing_backstop')
     assert wm.last_seen_ms == now
+
+
+def test_should_run_backstop_tolerates_poll_start_jitter():
+    # Regression (2026-11-12): last run at :30:05, next poll at +59m57s must still run,
+    # otherwise the backstop slips to every 75 min. But a 15-min poll must not trigger it.
+    now = 1_800_000_000_000
+    assert should_run_backstop(interval_seconds=3600, now_ms=now) is True
+    assert should_run_backstop(interval_seconds=3600, now_ms=now + (3600 - 3) * 1000) is True
+    later = now + (3600 - 3) * 1000
+    assert should_run_backstop(interval_seconds=3600, now_ms=later + 45 * 60 * 1000) is False

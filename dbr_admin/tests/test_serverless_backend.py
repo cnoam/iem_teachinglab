@@ -11,10 +11,10 @@ from unittest.mock import patch, MagicMock
 from peewee import SqliteDatabase
 
 from dbr_admin.resource_manager.backends.serverless import ServerlessBackend
-from dbr_admin.database.db_operations import GroupQuotaState, GroupDailyUsage, QueryUsage, IngestWatermark
+from dbr_admin.database.db_operations import GroupQuotaState, GroupDailyUsage, GroupDailyDbu, QueryUsage, IngestWatermark
 
 TEST_DB = SqliteDatabase(':memory:')
-MODELS = [GroupQuotaState, GroupDailyUsage, QueryUsage, IngestWatermark]
+MODELS = [GroupQuotaState, GroupDailyUsage, GroupDailyDbu, QueryUsage, IngestWatermark]
 
 MOD = 'dbr_admin.resource_manager.backends.serverless'
 
@@ -38,6 +38,7 @@ def env(monkeypatch):
     monkeypatch.setenv('SERVERLESS_WARN_EXEC_MINUTES', '10')  # 600s
     monkeypatch.setenv('SERVERLESS_MAX_EXEC_MINUTES', '15')   # 900s
     monkeypatch.delenv('SERVERLESS_BILLING_WAREHOUSE_ID', raising=False)
+    monkeypatch.setenv('SERVERLESS_BACKSTOP_MAX_DBU', '8')
 
 
 # --- collect_and_enforce(): threshold decisions ---
@@ -201,6 +202,24 @@ def test_backstop_skipped_on_rapid_second_poll(MockGroups, _map, _ingest, mock_u
 @patch(f'{MOD}.backstop_check', return_value=set())
 @patch(f'{MOD}.send_emails')
 @patch(f'{MOD}.block_group')
+@patch(f'{MOD}.group_usage_seconds_for_day', return_value=0.0)
+@patch(f'{MOD}.ingest_collect')
+@patch(f'{MOD}.build_email_to_group_map', return_value={'a@test.com': 'group_01'})
+@patch(f'{MOD}.DataBricksGroups')
+def test_backstop_limit_passed_through_and_unset_means_report_only(
+        MockGroups, _map, _ingest, _usage, _block, _send, mock_backstop, monkeypatch):
+    ServerlessBackend().collect_and_enforce()
+    assert mock_backstop.call_args.args[3] == 8.0  # from the env fixture
+
+    monkeypatch.delenv('SERVERLESS_BACKSTOP_MAX_DBU')
+    IngestWatermark.delete().execute()  # let the backstop run again
+    ServerlessBackend().collect_and_enforce()
+    assert mock_backstop.call_args.args[3] is None  # report-only: backstop_check never flags
+
+
+@patch(f'{MOD}.backstop_check', return_value=set())
+@patch(f'{MOD}.send_emails')
+@patch(f'{MOD}.block_group')
 @patch(f'{MOD}.group_usage_seconds_for_day')
 @patch(f'{MOD}.ingest_collect')
 @patch(f'{MOD}.build_email_to_group_map', return_value={'a@test.com': 'group_01'})
@@ -272,6 +291,24 @@ def test_report_renders_rows_and_total():
     assert '01:30' in html  # total
 
 
+def test_report_shows_under_a_minute_and_hides_zero():
+    when = date(2026, 9, 16)
+    GroupDailyUsage.create(group_name='group_15', date=when, used_seconds=40)
+    GroupDailyUsage.create(group_name='group_18', date=when, used_seconds=0)
+    html = ServerlessBackend().report(when)
+    assert 'group_15' in html and '&lt;1 min' in html
+    assert 'group_18' not in html
+
+
 def test_report_handles_no_rows():
     html = ServerlessBackend().report(date(2026, 9, 16))
     assert 'No usage recorded' in html
+    assert 'Serverless DBU per group' in html  # DBU section present even with no query usage
+
+
+def test_report_includes_dbu_section():
+    when = date(2026, 9, 16)
+    GroupDailyUsage.create(group_name='group_01', date=when, used_seconds=3600)
+    GroupDailyDbu.create(group_name='group_01', date=when, dbu=4.25)
+    html = ServerlessBackend().report(when)
+    assert '4.25' in html and 'limit 8 DBU' in html

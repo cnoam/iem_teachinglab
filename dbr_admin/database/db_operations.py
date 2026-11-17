@@ -178,6 +178,24 @@ class GroupDailyUsage(BaseModel):
         )
 
 
+class GroupDailyDbu(BaseModel):
+    """
+    Billing backstop (resource_manager/serverless_billing.py): DBU billed per group per local day,
+    from system.billing.usage. Rewritten on every backstop run for today and yesterday (billing rows
+    arrive hours late). Kept for calibrating SERVERLESS_BACKSTOP_MAX_DBU; not purged.
+    """
+    group_name = CharField()
+    date = DateField()
+    dbu = FloatField(default=0.0)
+    updated_at = DateTimeField(null=True)
+
+    class Meta:
+        table_name = 'group_daily_dbu'
+        indexes = (
+            (('group_name', 'date'), True),
+        )
+
+
 class IngestWatermark(BaseModel):
     """
     Last-seen point for a given ingest backend, so polling can resume from
@@ -262,6 +280,7 @@ def initialize_production_db():
     QueryUsage.bind(db_instance)
     GroupQuotaState.bind(db_instance)
     GroupDailyUsage.bind(db_instance)
+    GroupDailyDbu.bind(db_instance)
     IngestWatermark.bind(db_instance)
     GpuAlertSent.bind(db_instance)
     ErrorReport.bind(db_instance)
@@ -277,7 +296,7 @@ def create_tables(db_instance: SqliteDatabase):
     # Only create tables if they do not already exist
     db_instance.create_tables([
         ClusterUptime, ClusterCumulativeUptime, ClusterInfo,
-        QueryUsage, GroupQuotaState, GroupDailyUsage, IngestWatermark,
+        QueryUsage, GroupQuotaState, GroupDailyUsage, GroupDailyDbu, IngestWatermark,
         GpuAlertSent, ErrorReport, JobRunCount,
     ])
 

@@ -1,4 +1,4 @@
-*Updated: 2026-11-11*
+*Updated: 2026-11-15*
 
 This readme file details how to prepare for Databricks clusters deployment for a course.
 
@@ -159,6 +159,20 @@ Rule (2026-11-11): every error must reach `ADMIN_EMAIL`. Code: `resource_manager
 - What cannot email: the server being down, or email itself broken (Azure key). Then the **daily report
   doesn't arrive** -- treat a missing daily report as an alarm. The journal still has
   `<job>: job_status FAILED to report`.
+- **Known issue (2026-11-13, not fixed yet):** `send_emails_azure` waits on `poller.result()` with no timeout.
+  On 2026-11-13 00:07 Azure accepted the daily report but never returned a status, so `end_of_day` hung until its
+  600s timeout (restore and roll-up had already finished), and the error email then hung the same way
+  (`end_of_day: job_status FAILED to report rc=124`). Planned fix: bounded wait (~120s) that raises, and send the
+  daily report last.
+
+## Deploying to the quota server
+Repo files reach the server only through git -- never scp:
+```
+git push origin main
+ssh quota 'git -C ~/iem_teachinglab pull --ff-only'
+```
+The server repo is on `main` (since 2026-11-11). Server-only files (`~/*.sh` wrappers, `dbr_admin/.env`) are
+edited in place; back them up as `<file>.bak-<date>` first.
 
 ## GPU usage alert (serverless)
 Serverless GPU ("AI Runtime") can't be disabled from the workspace (the `air_interactive` setting is
@@ -172,13 +186,21 @@ Each (date, user, notebook) is reported once (table `gpu_alert_sent`).
   In `.env`, set `GPU_ALERT_WAREHOUSE_ID=<id>`, `GPU_ALERT_STOP_WAREHOUSE=true` and optionally
   `GPU_ALERT_LOOKBACK_DAYS` (default 3).
   Setting `SERVERLESS_BILLING_WAREHOUSE_ID=<id>` to the same ID also activates the billing backstop.
-  Beware: the backstop **blocks** groups, using placeholder thresholds.
-  Enabled 2026-11-11. The poll needs a 90s timeout (not 30): a normal poll takes 4-6s, the hourly backstop
-  run ~36s (cold-start query plus ~15s of warehouse stopping). Threshold: `SERVERLESS_BACKSTOP_MINUTES` (default 300) of billed
-  time **per user** per day; over it, the whole group is blocked and emailed.
-  Dry run 2026-11-11 (same query on the admin warehouse, Nov 7-11, no blocking): it works, the highest
-  was 230 min (a TA in `group_20`), so nobody would have been blocked. Serverless `INTERACTIVE` rows all
-  have `run_as`; SQL-warehouse rows have none, so the backstop can't attribute them (the primary quota covers those).
+  The poll needs a 90s timeout (not 30): a normal poll takes 4-6s, the hourly backstop
+  run ~36s (cold-start query plus ~15s of warehouse stopping).
+- **Billing backstop limit is in DBU per group per day** (`SERVERLESS_BACKSTOP_MAX_DBU`, no default).
+  - **Unset = report only:** nobody is blocked or emailed. Each hourly run records every group's DBU for
+    today and yesterday (table `group_daily_dbu`), and the daily report shows the last 3 days.
+    Use a few days of that to choose the limit, then set it to enforce: over it, the whole group is
+    blocked and emailed.
+  - Why not minutes: the first version (2026-11-11 to 11-15) summed each billing row's
+    start-to-end time. That is the row's aggregation window (an hour, or 10 minutes inside an hourly
+    row), not attached time, so overlapping rows and two open notebooks were counted twice. It blocked
+    group_06 on 2026-11-13 at "320 min" for 2.36 DBU, and groups 11 and 12 on 11-14 (8-15 DBU).
+    Commented out in the server `.env` on 2026-11-15.
+  - Days are local (Python buckets the UTC billing rows). Staff not in a `group_NN` are not counted.
+    Serverless `INTERACTIVE` rows all have `run_as`; SQL-warehouse rows have none, so the backstop
+    can't attribute them (the primary quota covers those).
 - Why it's dedicated: both checks stop the warehouse after the query, which would kill students' sessions
   on a shared warehouse. Without stopping, each run on `Serverless Starter Warehouse` (Small, 10 min
   auto-stop) costs about $1.40. Don't use `Shared Student Warehouse`: it's classic, so a cold start takes

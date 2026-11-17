@@ -110,14 +110,15 @@ def test_backstop_query_failure_is_reported_and_recovery_closes_it(monkeypatch):
     from dbr_admin.resource_manager import serverless_billing as sb
     sent = MagicMock()
     monkeypatch.setattr(er, '_default_send', lambda: sent)
-    monkeypatch.setattr(sb, 'fetch_billed_seconds_per_user',
+    monkeypatch.setattr(sb, 'fetch_dbu_per_user_day',
                         MagicMock(side_effect=RuntimeError('no access to system.billing.usage')))
-    assert sb.backstop_check(MagicMock(), 'wh', {}, 300 * 60) == set()
+    monkeypatch.setattr(sb, '_record', MagicMock())
+    assert sb.backstop_check(MagicMock(), 'wh', {}, 5.0) == set()
     assert sent.call_args.args[0] == 'ERROR: billing_backstop: query failed'
     assert 'no access' in sent.call_args.args[1]
 
-    monkeypatch.setattr(sb, 'fetch_billed_seconds_per_user', MagicMock(return_value={'u@x': 99999.0}))
-    assert sb.backstop_check(MagicMock(), 'wh', {'u@x': 'group_01'}, 300 * 60) == {'group_01'}
+    monkeypatch.setattr(sb, 'fetch_dbu_per_user_day', MagicMock(return_value={('u@x', date.today()): 99.0}))
+    assert sb.backstop_check(MagicMock(), 'wh', {'u@x': 'group_01'}, 5.0) == {'group_01'}
     assert sent.call_args.args[0] == 'RECOVERED: billing_backstop: query failed'
     r = JobRunCount.get(JobRunCount.job == 'billing_backstop')
     assert (r.ok, r.failed) == (1, 1)

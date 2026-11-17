@@ -1,5 +1,5 @@
 # Adapting the usage-quota monitor to serverless compute
-*Updated: 2026-11-11*
+*Updated: 2026-11-15*
 
 Status: plan / not yet implemented.
 Written 2026-09-16. Supersedes the "no equivalent uptime-monitor hook" paragraph in
@@ -384,10 +384,13 @@ not a considered decision** — the plan's calibration steps are the actual deci
   included idle-attached time up to the 20-min autotermination window), so the true
   appropriate value is likely *lower* than the old 180/210 — these provisional numbers are a
   guess in that direction, nothing more.
-- **Backstop threshold** (`SERVERLESS_BACKSTOP_MINUTES`, 2.6a, billed minutes from
-  `system.billing.usage`) — provisional default **300** (2x the hard threshold), sized to
-  only fire on something that looks like a runaway process, not normal variance between the
-  proxy metric and true billed time. Also unvalidated against real data.
+- **Backstop threshold** (`SERVERLESS_BACKSTOP_MAX_DBU`, 2.6a, DBU per group per day from
+  `system.billing.usage`) — **no default: unset means report-only** (record DBU, block nobody).
+  Replaced the original `SERVERLESS_BACKSTOP_MINUTES` (300 billed minutes per user) on
+  2026-11-15: billing rows' start/end are aggregation windows, not attached time, so summing
+  them double-counted overlapping rows and notebooks and caused false blocks (groups 06, 11, 12
+  on 2026-11-13/14). The limit is to be chosen from a few days of report-only data; see
+  `README.md`.
 - **`SERVERLESS_BILLING_WAREHOUSE_ID`** — no default; if unset, the 2.6a backstop is skipped
   entirely (logged, not fatal) since querying `system.billing.usage` needs a SQL warehouse to
   run against. Must be set explicitly before the backstop does anything.

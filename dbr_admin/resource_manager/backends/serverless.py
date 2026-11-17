@@ -24,7 +24,7 @@ from ..dbr_host import normalize_dbr_host
 from ..group_map import build_email_to_group_map, GROUP_NAME_PATTERN
 from ..serverless_usage import collect as ingest_collect, group_usage_seconds_for_day
 from ..serverless_enforcement import block_group, restore_group
-from ..serverless_billing import backstop_check, should_run_backstop
+from ..serverless_billing import backstop_check, should_run_backstop, dbu_report_html
 from ..user_mail import send_emails
 from ..cluster_uptime import format_timedelta_to_hhmm
 from ...database.db_operations import GroupQuotaState, GroupDailyUsage, QueryUsage
@@ -33,7 +33,6 @@ from ...database.db_operations import GroupQuotaState, GroupDailyUsage, QueryUsa
 # recalibrate once real data exists.
 DEFAULT_WARN_MINUTES = 120
 DEFAULT_MAX_MINUTES = 150
-DEFAULT_BACKSTOP_MINUTES = 300
 
 # The backstop runs on its own, slower cadence than the primary poll cycle
 # (operator request 2026-09-16: was previously running every single
@@ -47,6 +46,13 @@ DEFAULT_BACKSTOP_INTERVAL_MINUTES = 60
 RETENTION_DAYS = 35
 
 
+def backstop_max_dbu():
+    """SERVERLESS_BACKSTOP_MAX_DBU (DBU per group per day), or None = report-only (no default:
+    the limit is chosen from a few days of recorded data, see serverless_billing.py)."""
+    raw = (os.getenv('SERVERLESS_BACKSTOP_MAX_DBU') or '').strip()
+    return float(raw) if raw else None
+
+
 class ServerlessBackend(UsageBackend):
 
     def collect_and_enforce(self):
@@ -55,7 +61,7 @@ class ServerlessBackend(UsageBackend):
         token = os.getenv('DATABRICKS_TOKEN')
         warn_seconds = float(os.getenv('SERVERLESS_WARN_EXEC_MINUTES', DEFAULT_WARN_MINUTES)) * 60
         max_seconds = float(os.getenv('SERVERLESS_MAX_EXEC_MINUTES', DEFAULT_MAX_MINUTES)) * 60
-        backstop_seconds = float(os.getenv('SERVERLESS_BACKSTOP_MINUTES', DEFAULT_BACKSTOP_MINUTES)) * 60
+        max_dbu = backstop_max_dbu()
         backstop_interval_seconds = float(
             os.getenv('SERVERLESS_BACKSTOP_INTERVAL_MINUTES', DEFAULT_BACKSTOP_INTERVAL_MINUTES)
         ) * 60
@@ -85,7 +91,7 @@ class ServerlessBackend(UsageBackend):
         if not should_run_backstop(backstop_interval_seconds):
             return
         for group_name in backstop_check(client, billing_warehouse_id,
-                                          email_to_group, backstop_seconds, logger):
+                                          email_to_group, max_dbu, logger):
             state, _ = GroupQuotaState.get_or_create(group_name=group_name, day=today)
             if state.blocked:
                 # Same re-assert-but-never-re-notify rule as the primary
@@ -102,11 +108,12 @@ class ServerlessBackend(UsageBackend):
                     groups_api, group_name,
                     subject=f"'{group_name}' blocked (billing backstop)",
                     body=(
-                        "Your group's actual billed compute time today exceeded a safety "
-                        "threshold, even though it looked within quota by our normal check. "
-                        "This usually means code left running unattended. You are blocked "
-                        "from starting new work until the quota resets at midnight. Work "
-                        "already running is not affected."
+                        f"Your group's billed serverless compute today exceeded the safety "
+                        f"limit of {max_dbu:g} DBU, even though it looked within quota by our "
+                        f"normal check. This usually means a notebook left attached or code "
+                        f"left running unattended. You are blocked from starting new work "
+                        f"until the quota resets at midnight. Work already running is not "
+                        f"affected."
                     ),
                     logger=logger,
                 )
@@ -204,7 +211,7 @@ class ServerlessBackend(UsageBackend):
         lines = [f"<h1>Daily Serverless Usage Report - {when}</h1>"]
         if not rows:
             lines.append(f"<p>No usage recorded for {when}.</p>")
-            return "\n".join(lines)
+            return "\n".join(lines) + "\n" + dbu_report_html(when, max_dbu=backstop_max_dbu())
 
         lines.append('<table border="1" style="border-collapse: collapse; width: 50%;">')
         lines.append(
@@ -214,14 +221,18 @@ class ServerlessBackend(UsageBackend):
         total_seconds = 0.0
         for row in rows:
             total_seconds += row.used_seconds
+            if row.used_seconds <= 0:
+                continue  # rows exist but add up to nothing -- not worth a line
+            # HH:MM truncates seconds, so 40s of real use would read as a misleading 00:00.
+            shown = ('&lt;1 min' if row.used_seconds < 60
+                     else format_timedelta_to_hhmm(timedelta(seconds=row.used_seconds)))
             lines.append(
                 f'<tr><td style="text-align:left;">{row.group_name}</td>'
-                f'<td style="text-align:right;">'
-                f'{format_timedelta_to_hhmm(timedelta(seconds=row.used_seconds))}</td></tr>'
+                f'<td style="text-align:right;">{shown}</td></tr>'
             )
         lines.append('</table>')
         lines.append(
             f"<h2>Total Daily Recorded Usage: "
             f"{format_timedelta_to_hhmm(timedelta(seconds=total_seconds))}</h2>"
         )
-        return "\n".join(lines)
+        return "\n".join(lines) + "\n" + dbu_report_html(when, max_dbu=backstop_max_dbu())

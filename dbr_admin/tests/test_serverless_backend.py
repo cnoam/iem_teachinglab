@@ -303,7 +303,7 @@ def test_report_shows_under_a_minute_and_hides_zero():
 def test_report_handles_no_rows():
     html = ServerlessBackend().report(date(2026, 9, 16))
     assert 'No usage recorded' in html
-    assert 'Serverless DBU per group' in html  # DBU section present even with no query usage
+    assert 'Serverless cost leaderboard' in html  # DBU section present even with no query usage
 
 
 def test_report_includes_dbu_section():

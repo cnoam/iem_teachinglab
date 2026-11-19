@@ -233,6 +233,25 @@ def test_dbu_report_lists_groups_by_last_day_desc():
     assert '12.29' in html and '2.36' in html and '<td style="text-align:right;">-</td>' in html
 
 
+def test_dbu_report_leaderboard_dollars_rank_and_total(monkeypatch):
+    monkeypatch.setenv('DBU_PRICE_USD', '0.5')
+    GroupDailyDbu.create(group_name='group_02', date=TODAY, dbu=10.0)
+    GroupDailyDbu.create(group_name='group_01', date=TODAY, dbu=20.0)
+    GroupDailyDbu.create(group_name='group_01', date=YESTERDAY, dbu=4.0)
+    GroupDailyDbu.create(group_name='group_03', date=YESTERDAY, dbu=6.0)   # nothing today: last
+    html = dbu_report_html(TODAY)
+    assert html.index('group_01') < html.index('group_02') < html.index('group_03')
+    assert '<b>10.00</b>' in html            # group_01 today: 20 DBU x 0.5
+    assert '>12.00<' in html                 # group_01 3-day: 24 x 0.5
+    assert '<b>15.00</b>' in html            # class total today: 30 x 0.5
+    assert 'DBU x 0.5' in html
+
+
+def test_dbu_report_default_price():
+    GroupDailyDbu.create(group_name='group_01', date=TODAY, dbu=10.0)
+    assert '<b>6.00</b>' in dbu_report_html(TODAY, price=None)
+
+
 def test_dbu_report_empty_and_enforcing_wording():
     html = dbu_report_html(TODAY, max_dbu=8)
     assert 'No DBU recorded' in html and 'limit 8 DBU' in html

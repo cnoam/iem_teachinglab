@@ -35,6 +35,7 @@ should_run_backstop() / SERVERLESS_BACKSTOP_INTERVAL_MINUTES in
 backends/serverless.py.
 """
 import logging
+import os
 import time
 from collections import defaultdict
 from datetime import date, datetime, timedelta
@@ -189,28 +190,51 @@ def backstop_check(client, warehouse_id, email_to_group, max_dbu,
     return {g for g, dbu in todays.items() if dbu >= max_dbu}
 
 
-def dbu_report_html(last_day: date, days: int = 3, max_dbu: float = None) -> str:
-    """Daily-report section: DBU per group for the `days` days ending last_day (from GroupDailyDbu)."""
+# Azure's effective price per serverless notebook DBU (the "Promo DBU" meter): $156.48 for
+# 261.46 DBU on 2026-11-18, vs $0.95 list. Estimate only -- override with DBU_PRICE_USD.
+DEFAULT_DBU_PRICE_USD = 0.60
+
+
+def dbu_report_html(last_day: date, days: int = 3, max_dbu: float = None, price: float = None) -> str:
+    """
+    Daily-report section: a $ leaderboard of groups for last_day (rank by estimated cost), with
+    DBU for each of the `days` days ending last_day and a class total (from GroupDailyDbu).
+    """
+    if price is None:
+        price = float(os.getenv('DBU_PRICE_USD') or DEFAULT_DBU_PRICE_USD)
     day_list = [last_day - timedelta(days=i) for i in range(days - 1, -1, -1)]
     rows = list(GroupDailyDbu.select().where(GroupDailyDbu.date.between(day_list[0], last_day)))
     limit = (f"limit {max_dbu:g} DBU per group per day (enforcing)" if max_dbu is not None
              else "no limit set: report only, nobody is blocked")
-    lines = [f"<h2>Serverless DBU per group (billing backstop, {limit})</h2>"]
+    lines = [f"<h2>Serverless cost leaderboard, {last_day} (billing backstop, {limit})</h2>"]
     if not rows:
         lines.append("<p>No DBU recorded (is SERVERLESS_BILLING_WAREHOUSE_ID set?).</p>")
         return "\n".join(lines)
     table = defaultdict(dict)
     for r in rows:
         table[r.group_name][r.date] = r.dbu
+    right = 'style="text-align:right;"'
     lines.append('<table border="1" style="border-collapse: collapse;">')
-    lines.append('<tr><th style="text-align:left;">Group</th>'
-                 + ''.join(f'<th style="text-align:right;">{d}</th>' for d in day_list) + '</tr>')
-    for group_name in sorted(table, key=lambda g: -table[g].get(last_day, 0.0)):
-        cells = ''.join(
-            f'<td style="text-align:right;">{table[group_name][d]:.2f}</td>' if d in table[group_name]
-            else '<td style="text-align:right;">-</td>' for d in day_list)
-        lines.append(f'<tr><td style="text-align:left;">{group_name}</td>{cells}</tr>')
+    lines.append(f'<tr><th>#</th><th style="text-align:left;">Group</th><th {right}>~$ {last_day}</th>'
+                 f'<th {right}>~$ {days} days</th>'
+                 + ''.join(f'<th {right}>DBU {d}</th>' for d in day_list) + '</tr>')
+    ranked = sorted(table, key=lambda g: (-table[g].get(last_day, 0.0), g))
+    for rank, group_name in enumerate(ranked, 1):
+        g = table[group_name]
+        cells = ''.join(f'<td {right}>{g[d]:.2f}</td>' if d in g else f'<td {right}>-</td>'
+                        for d in day_list)
+        lines.append(f'<tr><td {right}>{rank}</td><td style="text-align:left;">{group_name}</td>'
+                     f'<td {right}><b>{g.get(last_day, 0.0) * price:.2f}</b></td>'
+                     f'<td {right}>{sum(g.values()) * price:.2f}</td>{cells}</tr>')
+    day_totals = [sum(table[x].get(d, 0.0) for x in table) for d in day_list]
+    lines.append(f'<tr><td></td><td style="text-align:left;"><b>Total</b></td>'
+                 f'<td {right}><b>{day_totals[-1] * price:.2f}</b></td>'
+                 f'<td {right}><b>{sum(day_totals) * price:.2f}</b></td>'
+                 + ''.join(f'<td {right}><b>{t:.2f}</b></td>' for t in day_totals) + '</tr>')
     lines.append('</table>')
-    lines.append("<p>Billing data arrives hours late: the last column is likely incomplete, "
-                 "and earlier days are updated only while they are today or yesterday.</p>")
+    lines.append(f"<p>$ = DBU x {price:g} (DBU_PRICE_USD; Azure's effective serverless notebook rate), "
+                 "an estimate: Azure Cost Management is the real bill. Serverless notebooks and jobs "
+                 "of group members only (no SQL warehouses, no staff). Billing data arrives hours late: "
+                 "the last day is likely incomplete, and earlier days are updated only while they are "
+                 "today or yesterday.</p>")
     return "\n".join(lines)

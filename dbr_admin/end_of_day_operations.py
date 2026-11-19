@@ -99,7 +99,9 @@ if __name__ == "__main__":
             from .resource_manager.error_report import health_report_html, purge_run_counts
             # Health section: every scheduled job's runs vs expected, and open errors (plan: all
             # errors must be reported; a missing daily report is itself the alarm).
-            report_html = backend.report(yesterday) + health_report_html(yesterday)
+            from .resource_manager.spark_connect_report import spark_connect_report_html
+            report_html = (backend.report(yesterday) + spark_connect_report_html(yesterday, logger=logger)
+                           + health_report_html(yesterday))
             purge_run_counts()
             send_emails(subject="Daily serverless usage report", body=report_html,
                         recipients=[os.getenv('REPORT_RECIPIENT_EMAIL')], logger=logger)

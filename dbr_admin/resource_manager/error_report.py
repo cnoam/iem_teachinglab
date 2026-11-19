@@ -27,6 +27,7 @@ EXPECTED_RUNS_PER_DAY = {
     'billing_backstop': 24,   # inside the poll, SERVERLESS_BACKSTOP_INTERVAL_MINUTES=60
     'gpu_alert': 4,           # 23 7,12,17,22
     'end_of_day': 1,          # 7 0
+    'spark_connect_report': 1,  # inside end_of_day
 }
 
 

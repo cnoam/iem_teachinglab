@@ -1,4 +1,4 @@
-*Updated: 2026-11-15*
+*Updated: 2026-11-19*
 
 This readme file details how to prepare for Databricks clusters deployment for a course.
 
@@ -155,7 +155,7 @@ Rule (2026-11-11): every error must reach `ADMIN_EMAIL`. Code: `resource_manager
 - Throttling: first occurrence emails at once; while the same error repeats, at most one "still failing" email
   every 6h. When it works again, one `RECOVERED: ...` email. State: table `error_report`.
 - Daily report (00:07) has a **health section**: yesterday's ok/failed runs per job vs expected
-  (poll 96, backstop 24, GPU 4, end of day 1), plus open errors. Missing runs mean cron or the server stopped.
+  (poll 96, backstop 24, GPU 4, end of day 1, Spark Connect report 1), plus open errors. Missing runs mean cron or the server stopped.
 - What cannot email: the server being down, or email itself broken (Azure key). Then the **daily report
   doesn't arrive** -- treat a missing daily report as an alarm. The journal still has
   `<job>: job_status FAILED to report`.
@@ -201,6 +201,12 @@ Each (date, user, notebook) is reported once (table `gpu_alert_sent`).
   - Days are local (Python buckets the UTC billing rows). Staff not in a `group_NN` are not counted.
     Serverless `INTERACTIVE` rows all have `run_as`; SQL-warehouse rows have none, so the backstop
     can't attribute them (the primary quota covers those).
+- **Databricks Connect section of the daily report** (`resource_manager/spark_connect_report.py`): users with
+  `SPARK_CONNECT_MIN_SESSIONS` (default 10) or more Spark Connect sessions yesterday, from `system.query.history`,
+  on the same admin warehouse. Why: on 2026-11-18 two students running scripts from their laptops (one through an
+  AI agent) opened 61 and 11 sessions and used 44 and 33 DBU for 15-21 minutes of query time. Every new Python
+  process is a new billed serverless session, and the primary quota (query time) barely sees it. Student
+  notice: `Student notice - Databricks Connect and AI agents.md`.
 - Why it's dedicated: both checks stop the warehouse after the query, which would kill students' sessions
   on a shared warehouse. Without stopping, each run on `Serverless Starter Warehouse` (Small, 10 min
   auto-stop) costs about $1.40. Don't use `Shared Student Warehouse`: it's classic, so a cold start takes
